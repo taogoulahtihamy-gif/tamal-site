@@ -5,7 +5,7 @@ const path = require("path")
 const fs = require("fs")
 
 const app = express()
-const PORT = 5000
+const PORT = process.env.PORT || 5000
 
 app.use(cors())
 app.use(express.json())
@@ -384,5 +384,5 @@ app.delete("/api/admins/:id", verifierSuperAdmin, (req, res) => {
 })
 
 app.listen(PORT, () => {
-  console.log(`Serveur backend lancé sur http://localhost:${PORT}`)
+  console.log("Serveur backend lancé sur le port " + PORT)
 })
