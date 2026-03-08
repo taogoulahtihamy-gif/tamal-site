@@ -4,6 +4,7 @@ import { Navigate, Link } from "react-router-dom"
 export default function GestionAdmins() {
   const estConnecte = localStorage.getItem("adminAuth") === "true"
   const adminUser = JSON.parse(localStorage.getItem("adminUser") || "null")
+  const API_URL = import.meta.env.VITE_API_URL
 
   const [admins, setAdmins] = useState([])
   const [username, setUsername] = useState("")
@@ -26,7 +27,7 @@ export default function GestionAdmins() {
 
   const chargerAdmins = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/admins", {
+      const response = await fetch(`${API_URL}/api/admins`, {
         headers: headersAdmin,
       })
 
@@ -71,7 +72,7 @@ export default function GestionAdmins() {
     }
 
     try {
-      const response = await fetch("http://localhost:5000/api/admins", {
+      const response = await fetch(`${API_URL}/api/admins`, {
         method: "POST",
         headers: headersAdmin,
         body: JSON.stringify({
@@ -110,7 +111,7 @@ export default function GestionAdmins() {
 
     try {
       const response = await fetch(
-        `http://localhost:5000/api/admins/${id}/password`,
+        `${API_URL}/api/admins/${id}/password`,
         {
           method: "PATCH",
           headers: headersAdmin,
@@ -153,7 +154,7 @@ export default function GestionAdmins() {
     if (!confirmation) return
 
     try {
-      const response = await fetch(`http://localhost:5000/api/admins/${id}`, {
+      const response = await fetch(`${API_URL}/api/admins/${id}`, {
         method: "DELETE",
         headers: headersAdmin,
       })

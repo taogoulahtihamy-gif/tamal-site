@@ -10,9 +10,10 @@ export default function Admin() {
 
   const estConnecte = localStorage.getItem("adminAuth") === "true"
   const adminUser = JSON.parse(localStorage.getItem("adminUser") || "null")
+  const API_URL = import.meta.env.VITE_API_URL
 
   const chargerDemandes = () => {
-    fetch("http://localhost:5000/api/demandes")
+    fetch(`${API_URL}/api/demandes`)
       .then((res) => res.json())
       .then((data) => {
         setDemandes(data)
@@ -35,7 +36,7 @@ export default function Admin() {
   const changerStatut = async (id, nouveauStatut) => {
     try {
       const response = await fetch(
-        `http://localhost:5000/api/demandes/${id}/statut`,
+        `${API_URL}/api/demandes/${id}/statut`,
         {
           method: "PATCH",
           headers: {
@@ -283,7 +284,7 @@ export default function Admin() {
                   <td className="p-3">
                     {d.document ? (
                       <a
-                        href={`http://localhost:5000/uploads/${d.document}`}
+                        href={`${API_URL}/uploads/${d.document}`}
                         target="_blank"
                         rel="noreferrer"
                         className="text-yellow-400 underline"
@@ -298,7 +299,7 @@ export default function Admin() {
                   <td className="p-3">
                     {d.photo ? (
                       <img
-                        src={`http://localhost:5000/uploads/${d.photo}`}
+                        src={`${API_URL}/uploads/${d.photo}`}
                         alt="photo objet"
                         className="mx-auto h-16 w-16 rounded object-cover"
                       />

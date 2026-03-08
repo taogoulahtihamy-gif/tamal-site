@@ -19,6 +19,8 @@ export default function Formulaire() {
   const [messageErreur, setMessageErreur] = useState("")
   const [chargement, setChargement] = useState(false)
 
+  const API_URL = import.meta.env.VITE_API_URL
+
   const handleChange = (e) => {
     const { name, value } = e.target
 
@@ -97,7 +99,7 @@ export default function Formulaire() {
         dataToSend.append("photo", photoFile)
       }
 
-      const response = await fetch("http://localhost:5000/api/demandes", {
+      const response = await fetch(`${API_URL}/api/demandes`, {
         method: "POST",
         body: dataToSend,
       })
