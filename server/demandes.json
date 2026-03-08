@@ -1,0 +1,67 @@
+[
+  {
+    "id": 4,
+    "nom": "Test Client",
+    "telephone": "770000000",
+    "montant": "30000",
+    "typeObjet": "Téléphone",
+    "typePiece": "Carte nationale",
+    "description": "Test",
+    "document": null,
+    "photo": null,
+    "statut": "acceptée",
+    "dateCreation": "2026-03-08T04:29:29.051Z"
+  },
+  {
+    "id": 5,
+    "nom": "tihamy tao goulah",
+    "telephone": "77849279",
+    "montant": "200000",
+    "typeObjet": "Ordinateur",
+    "typePiece": "Passeport",
+    "description": "en etat",
+    "document": "1772951195621-galerie2.jpg",
+    "photo": "1772951195627-galerie1.jpg",
+    "statut": "refusée",
+    "dateCreation": "2026-03-08T06:26:35.633Z"
+  },
+  {
+    "id": 6,
+    "nom": "tihamy tao goulah",
+    "telephone": "77849279",
+    "montant": "200000",
+    "typeObjet": "Électroménager",
+    "typePiece": "Carte nationale d'identité",
+    "description": "bien",
+    "document": "1772953535404-galerie.jpg",
+    "photo": "1772953535405-galerie2.jpg",
+    "statut": "acceptée",
+    "dateCreation": "2026-03-08T07:05:35.408Z"
+  },
+  {
+    "id": 7,
+    "nom": "tihamy tao goulah",
+    "telephone": "77849279",
+    "montant": "5000",
+    "typeObjet": "Téléphone",
+    "typePiece": "Carte nationale d'identité",
+    "description": "bien",
+    "document": "1772954402373-galerie1.jpg",
+    "photo": "1772954402374-logo.png",
+    "statut": "refusée",
+    "dateCreation": "2026-03-08T07:20:02.376Z"
+  },
+  {
+    "id": 8,
+    "nom": "tihamy tao goulah",
+    "telephone": "77849279",
+    "montant": "100000",
+    "typeObjet": "Téléphone",
+    "typePiece": "Carte nationale d'identité",
+    "description": "gyg",
+    "document": "1772963278338-galerie.jpg",
+    "photo": "1772963278341-galerie2.jpg",
+    "statut": "en attente",
+    "dateCreation": "2026-03-08T09:47:58.346Z"
+  }
+]
