@@ -63,9 +63,9 @@ export default function Admin() {
   }
 
   const couleurStatut = (statut) => {
-    if (statut === "acceptée") return "text-green-400"
-    if (statut === "refusée") return "text-red-400"
-    return "text-yellow-400"
+    if (statut === "acceptée") return "text-green-600"
+    if (statut === "refusée") return "text-red-600"
+    return "text-yellow-600"
   }
 
   const formaterDate = (date) => {
@@ -126,27 +126,27 @@ export default function Admin() {
   }
 
   return (
-    <section className="min-h-screen bg-black p-6 text-white md:p-10">
+    <section className="min-h-screen bg-[#f5f3ed] p-6 text-gray-900 md:p-10">
       <div className="mb-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-4">
           <img
             src={logo}
             alt="TAMAL"
-            className="h-14 w-14 rounded-full object-cover"
+            className="h-14 w-14 rounded-full border-2 border-yellow-500 bg-white p-1 object-cover shadow-md"
           />
 
           <div>
-            <h1 className="text-2xl font-bold text-yellow-500">TAMAL</h1>
-            <p className="text-sm text-gray-400">
+            <h1 className="text-2xl font-bold text-yellow-600">TAMAL</h1>
+            <p className="text-sm text-gray-600">
               Service Liquidité Immédiate
             </p>
             <p className="mt-1 text-xs text-gray-500">
               Connecté en tant que{" "}
-              <span className="font-semibold text-white">
+              <span className="font-semibold text-gray-900">
                 {adminUser?.username}
               </span>{" "}
               —{" "}
-              <span className="text-yellow-400">
+              <span className="text-yellow-600">
                 {adminUser?.role === "super_admin"
                   ? "Super Admin"
                   : "Gestionnaire"}
@@ -158,7 +158,7 @@ export default function Admin() {
         <div className="flex flex-wrap gap-3">
           <button
             onClick={() => (window.location.href = "/admin")}
-            className="rounded-full border border-yellow-500 px-4 py-2 text-sm font-semibold text-yellow-400 hover:bg-yellow-500 hover:text-black"
+            className="rounded-full border border-yellow-500 px-4 py-2 text-sm font-semibold text-yellow-600 hover:bg-yellow-500 hover:text-black"
           >
             Gestion des demandes
           </button>
@@ -166,7 +166,7 @@ export default function Admin() {
           {adminUser?.role === "super_admin" && (
             <button
               onClick={() => (window.location.href = "/gestion-admins")}
-              className="rounded-full border border-yellow-500 px-4 py-2 text-sm font-semibold text-yellow-400 hover:bg-yellow-500 hover:text-black"
+              className="rounded-full border border-yellow-500 px-4 py-2 text-sm font-semibold text-yellow-600 hover:bg-yellow-500 hover:text-black"
             >
               Gestion des admins
             </button>
@@ -174,7 +174,7 @@ export default function Admin() {
 
           <button
             onClick={deconnexion}
-            className="rounded-full border border-white/20 px-4 py-2 text-sm font-semibold text-white hover:border-red-500 hover:text-red-400"
+            className="rounded-full border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-800 hover:border-red-500 hover:text-red-500"
           >
             Déconnexion
           </button>
@@ -182,36 +182,36 @@ export default function Admin() {
       </div>
 
       <div className="mb-10 grid gap-4 md:grid-cols-4">
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-          <p className="text-sm text-gray-400">Total demandes</p>
-          <p className="mt-2 text-3xl font-bold text-white">{totalDemandes}</p>
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+          <p className="text-sm text-gray-500">Total demandes</p>
+          <p className="mt-2 text-3xl font-bold text-gray-900">{totalDemandes}</p>
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-          <p className="text-sm text-gray-400">En attente</p>
-          <p className="mt-2 text-3xl font-bold text-yellow-400">
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+          <p className="text-sm text-gray-500">En attente</p>
+          <p className="mt-2 text-3xl font-bold text-yellow-600">
             {totalEnAttente}
           </p>
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-          <p className="text-sm text-gray-400">Acceptées</p>
-          <p className="mt-2 text-3xl font-bold text-green-400">
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+          <p className="text-sm text-gray-500">Acceptées</p>
+          <p className="mt-2 text-3xl font-bold text-green-600">
             {totalAcceptees}
           </p>
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-          <p className="text-sm text-gray-400">Refusées</p>
-          <p className="mt-2 text-3xl font-bold text-red-400">
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+          <p className="text-sm text-gray-500">Refusées</p>
+          <p className="mt-2 text-3xl font-bold text-red-600">
             {totalRefusees}
           </p>
         </div>
       </div>
 
-      <div className="mb-6 rounded-2xl border border-white/10 bg-white/5 p-5">
+      <div className="mb-6 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
         <div className="mb-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <h2 className="text-xl font-bold text-yellow-400">
+          <h2 className="text-xl font-bold text-yellow-600">
             Historique des demandes
           </h2>
 
@@ -238,13 +238,13 @@ export default function Admin() {
             value={recherche}
             onChange={(e) => setRecherche(e.target.value)}
             placeholder="Rechercher par nom, téléphone, objet ou montant"
-            className="rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:border-yellow-500"
+            className="rounded-xl border border-gray-200 bg-[#faf9f5] px-4 py-3 text-gray-900 outline-none focus:border-yellow-500"
           />
 
           <select
             value={filtreStatut}
             onChange={(e) => setFiltreStatut(e.target.value)}
-            className="rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:border-yellow-500"
+            className="rounded-xl border border-gray-200 bg-[#faf9f5] px-4 py-3 text-gray-900 outline-none focus:border-yellow-500"
           >
             <option value="tous">Tous les statuts</option>
             <option value="en attente">En attente</option>
@@ -254,32 +254,32 @@ export default function Admin() {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-white/10">
+      <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white shadow-sm">
         <table className="w-full">
-          <thead className="bg-white/5">
+          <thead className="bg-[#faf9f5]">
             <tr>
-              <th className="p-3">ID</th>
-              <th className="p-3">Nom</th>
-              <th className="p-3">Téléphone</th>
-              <th className="p-3">Objet</th>
-              <th className="p-3">Montant</th>
-              <th className="p-3">Document</th>
-              <th className="p-3">Photo</th>
-              <th className="p-3">Statut</th>
-              <th className="p-3">Date</th>
-              <th className="p-3">Actions</th>
+              <th className="p-3 text-gray-700">ID</th>
+              <th className="p-3 text-gray-700">Nom</th>
+              <th className="p-3 text-gray-700">Téléphone</th>
+              <th className="p-3 text-gray-700">Objet</th>
+              <th className="p-3 text-gray-700">Montant</th>
+              <th className="p-3 text-gray-700">Document</th>
+              <th className="p-3 text-gray-700">Photo</th>
+              <th className="p-3 text-gray-700">Statut</th>
+              <th className="p-3 text-gray-700">Date</th>
+              <th className="p-3 text-gray-700">Actions</th>
             </tr>
           </thead>
 
           <tbody>
             {demandesFiltrees.length > 0 ? (
               demandesFiltrees.map((d) => (
-                <tr key={d.id} className="border-t border-white/10 text-center">
-                  <td className="p-3">{d.id}</td>
-                  <td className="p-3">{d.nom}</td>
-                  <td className="p-3">{d.telephone}</td>
-                  <td className="p-3">{d.typeObjet}</td>
-                  <td className="p-3">{d.montant} FCFA</td>
+                <tr key={d.id} className="border-t border-gray-200 text-center">
+                  <td className="p-3 text-gray-800">{d.id}</td>
+                  <td className="p-3 text-gray-800">{d.nom}</td>
+                  <td className="p-3 text-gray-800">{d.telephone}</td>
+                  <td className="p-3 text-gray-800">{d.typeObjet}</td>
+                  <td className="p-3 text-gray-800">{d.montant} FCFA</td>
 
                   <td className="p-3">
                     {d.document ? (
@@ -287,7 +287,7 @@ export default function Admin() {
                         href={`${API_URL}/uploads/${d.document}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-yellow-400 underline"
+                        className="text-yellow-600 underline"
                       >
                         Voir
                       </a>
@@ -312,7 +312,7 @@ export default function Admin() {
                     {d.statut}
                   </td>
 
-                  <td className="p-3 text-sm text-gray-300">
+                  <td className="p-3 text-sm text-gray-600">
                     {formaterDate(d.dateCreation)}
                   </td>
 
@@ -337,7 +337,7 @@ export default function Admin() {
               ))
             ) : (
               <tr>
-                <td colSpan="10" className="p-6 text-center text-gray-400">
+                <td colSpan="10" className="p-6 text-center text-gray-500">
                   Aucune demande trouvée.
                 </td>
               </tr>

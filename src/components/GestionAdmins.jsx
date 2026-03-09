@@ -110,16 +110,13 @@ export default function GestionAdmins() {
     }
 
     try {
-      const response = await fetch(
-        `${API_URL}/api/admins/${id}/password`,
-        {
-          method: "PATCH",
-          headers: headersAdmin,
-          body: JSON.stringify({
-            password: nouveauMotDePasse.trim(),
-          }),
-        }
-      )
+      const response = await fetch(`${API_URL}/api/admins/${id}/password`, {
+        method: "PATCH",
+        headers: headersAdmin,
+        body: JSON.stringify({
+          password: nouveauMotDePasse.trim(),
+        }),
+      })
 
       const data = await response.json()
 
@@ -179,40 +176,40 @@ export default function GestionAdmins() {
   }
 
   return (
-    <section className="min-h-screen bg-black p-6 text-white md:p-10">
+    <section className="min-h-screen bg-[#f5f3ed] p-6 text-gray-900 md:p-10">
       <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-yellow-500">
+          <h1 className="text-3xl font-bold text-yellow-600">
             Gestion des admins
           </h1>
-          <p className="mt-2 text-sm text-gray-400">
+          <p className="mt-2 text-sm text-gray-600">
             Connecté en tant que{" "}
-            <span className="font-semibold text-white">
+            <span className="font-semibold text-gray-900">
               {adminUser?.username}
             </span>{" "}
-            — <span className="text-yellow-400">Super Admin</span>
+            — <span className="text-yellow-600">Super Admin</span>
           </p>
         </div>
 
         <div className="flex flex-wrap gap-3">
           <Link
             to="/admin"
-            className="rounded-full border border-white/20 px-4 py-2 text-sm font-semibold text-white hover:border-yellow-500 hover:text-yellow-400"
+            className="rounded-full border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-800 hover:border-yellow-500 hover:text-yellow-600"
           >
             Retour dashboard
           </Link>
 
           <button
             onClick={deconnexion}
-            className="rounded-full border border-white/20 px-4 py-2 text-sm font-semibold text-white hover:border-red-500 hover:text-red-400"
+            className="rounded-full border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-800 hover:border-red-500 hover:text-red-500"
           >
             Déconnexion
           </button>
         </div>
       </div>
 
-      <div className="mb-10 rounded-3xl border border-white/10 bg-white/5 p-6">
-        <h2 className="text-xl font-bold text-yellow-400">Ajouter un admin</h2>
+      <div className="mb-10 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+        <h2 className="text-xl font-bold text-yellow-600">Ajouter un admin</h2>
 
         <form
           onSubmit={ajouterAdmin}
@@ -223,7 +220,7 @@ export default function GestionAdmins() {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             placeholder="Nom d'utilisateur"
-            className="rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:border-yellow-500"
+            className="rounded-xl border border-gray-200 bg-[#faf9f5] px-4 py-3 text-gray-900 outline-none focus:border-yellow-500"
           />
 
           <div>
@@ -232,10 +229,10 @@ export default function GestionAdmins() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Mot de passe"
-              className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:border-yellow-500"
+              className="w-full rounded-xl border border-gray-200 bg-[#faf9f5] px-4 py-3 text-gray-900 outline-none focus:border-yellow-500"
             />
 
-            <label className="mt-2 flex items-center gap-2 text-sm text-gray-400">
+            <label className="mt-2 flex items-center gap-2 text-sm text-gray-600">
               <input
                 type="checkbox"
                 checked={afficherMotDePasseAjout}
@@ -250,7 +247,7 @@ export default function GestionAdmins() {
           <select
             value={role}
             onChange={(e) => setRole(e.target.value)}
-            className="rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:border-yellow-500"
+            className="rounded-xl border border-gray-200 bg-[#faf9f5] px-4 py-3 text-gray-900 outline-none focus:border-yellow-500"
           >
             <option value="admin">admin</option>
             <option value="super_admin">super_admin</option>
@@ -266,20 +263,29 @@ export default function GestionAdmins() {
           </div>
         </form>
 
-        {message && <p className="mt-4 text-sm text-green-400">{message}</p>}
-        {erreur && <p className="mt-4 text-sm text-red-400">{erreur}</p>}
+        {message && (
+          <div className="mt-4 rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+            {message}
+          </div>
+        )}
+
+        {erreur && (
+          <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {erreur}
+          </div>
+        )}
       </div>
 
-      <div className="overflow-x-auto rounded-3xl border border-white/10">
+      <div className="overflow-x-auto rounded-3xl border border-gray-200 bg-white shadow-sm">
         <table className="w-full">
-          <thead className="bg-white/5">
+          <thead className="bg-[#faf9f5]">
             <tr>
-              <th className="p-3 text-center">ID</th>
-              <th className="p-3 text-center">Nom d'utilisateur</th>
-              <th className="p-3 text-center">Rôle</th>
-              <th className="p-3 text-center">Mot de passe actuel</th>
-              <th className="p-3 text-center">Nouveau mot de passe</th>
-              <th className="p-3 text-center">Actions</th>
+              <th className="p-3 text-center text-gray-700">ID</th>
+              <th className="p-3 text-center text-gray-700">Nom d'utilisateur</th>
+              <th className="p-3 text-center text-gray-700">Rôle</th>
+              <th className="p-3 text-center text-gray-700">Mot de passe actuel</th>
+              <th className="p-3 text-center text-gray-700">Nouveau mot de passe</th>
+              <th className="p-3 text-center text-gray-700">Actions</th>
             </tr>
           </thead>
 
@@ -288,16 +294,16 @@ export default function GestionAdmins() {
               admins.map((admin) => (
                 <tr
                   key={admin.id}
-                  className="border-t border-white/10 text-center"
+                  className="border-t border-gray-200 text-center"
                 >
-                  <td className="p-3">{admin.id}</td>
-                  <td className="p-3">{admin.username}</td>
+                  <td className="p-3 text-gray-800">{admin.id}</td>
+                  <td className="p-3 text-gray-800">{admin.username}</td>
                   <td className="p-3">
                     <span
                       className={
                         admin.role === "super_admin"
-                          ? "font-semibold text-yellow-400"
-                          : "text-white"
+                          ? "font-semibold text-yellow-600"
+                          : "text-gray-800"
                       }
                     >
                       {admin.role}
@@ -310,10 +316,10 @@ export default function GestionAdmins() {
                         type={afficherMotsDePasseActuels[admin.id] ? "text" : "password"}
                         value={admin.password || ""}
                         readOnly
-                        className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-2 text-center text-white outline-none"
+                        className="w-full rounded-xl border border-gray-200 bg-[#faf9f5] px-4 py-2 text-center text-gray-900 outline-none"
                       />
 
-                      <label className="flex items-center gap-2 text-sm text-gray-400">
+                      <label className="flex items-center gap-2 text-sm text-gray-600">
                         <input
                           type="checkbox"
                           checked={!!afficherMotsDePasseActuels[admin.id]}
@@ -341,10 +347,10 @@ export default function GestionAdmins() {
                           }))
                         }
                         placeholder="Nouveau mot de passe"
-                        className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-2 text-white outline-none focus:border-yellow-500"
+                        className="w-full rounded-xl border border-gray-200 bg-[#faf9f5] px-4 py-2 text-gray-900 outline-none focus:border-yellow-500"
                       />
 
-                      <label className="flex items-center gap-2 text-sm text-gray-400">
+                      <label className="flex items-center gap-2 text-sm text-gray-600">
                         <input
                           type="checkbox"
                           checked={!!afficherMotsDePasseEdition[admin.id]}
@@ -382,7 +388,7 @@ export default function GestionAdmins() {
               ))
             ) : (
               <tr>
-                <td colSpan="6" className="p-6 text-center text-gray-400">
+                <td colSpan="6" className="p-6 text-center text-gray-500">
                   Aucun admin disponible.
                 </td>
               </tr>

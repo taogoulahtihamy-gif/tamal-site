@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom"
+import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom"
+import { useEffect } from "react"
 
 import Navbar from "./components/Navbar"
 import Hero from "./components/Hero"
@@ -13,35 +14,89 @@ import Admin from "./components/Admin"
 import LoginAdmin from "./components/LoginAdmin"
 import GestionAdmins from "./components/GestionAdmins"
 
-function SiteClient() {
+function LayoutPublic({ children }) {
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-[#f8f8f6] text-black">
       <Navbar />
-      <Hero />
-      <HowItWorks />
-      <Conditions />
-      <Simulateur />
-      <Formulaire />
-      <Contact />
+      {children}
       <Footer />
     </div>
   )
+}
+
+function AccueilPage() {
+  return (
+    <LayoutPublic>
+      <Hero />
+      <Contact />
+    </LayoutPublic>
+  )
+}
+
+function CommentCaMarchePage() {
+  return (
+    <LayoutPublic>
+      <HowItWorks />
+    </LayoutPublic>
+  )
+}
+
+function ConditionsPage() {
+  return (
+    <LayoutPublic>
+      <Conditions />
+    </LayoutPublic>
+  )
+}
+
+function SimulateurPage() {
+  return (
+    <LayoutPublic>
+      <Simulateur />
+    </LayoutPublic>
+  )
+}
+
+function DemandePage() {
+  return (
+    <LayoutPublic>
+      <Formulaire />
+    </LayoutPublic>
+  )
+}
+
+function ContactRedirectPage() {
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    navigate("/")
+
+    setTimeout(() => {
+      const section = document.getElementById("contact")
+      if (section) {
+        section.scrollIntoView({ behavior: "smooth" })
+      }
+    }, 200)
+  }, [navigate])
+
+  return null
 }
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* SITE CLIENT */}
-        <Route path="/" element={<SiteClient />} />
+        <Route path="/" element={<AccueilPage />} />
+        <Route path="/comment-ca-marche" element={<CommentCaMarchePage />} />
+        <Route path="/conditions" element={<ConditionsPage />} />
+        <Route path="/simulateur" element={<SimulateurPage />} />
+        <Route path="/demande" element={<DemandePage />} />
 
-        {/* LOGIN ADMIN */}
+        {/* Route technique : /contact ramène vers le bloc contact de l'accueil */}
+        <Route path="/contact" element={<ContactRedirectPage />} />
+
         <Route path="/login-admin" element={<LoginAdmin />} />
-
-        {/* DASHBOARD ADMIN */}
         <Route path="/admin" element={<Admin />} />
-
-        {/* GESTION DES ADMINS (SUPER ADMIN) */}
         <Route path="/gestion-admins" element={<GestionAdmins />} />
       </Routes>
     </BrowserRouter>
