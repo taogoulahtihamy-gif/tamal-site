@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from "react"
 import { Navigate } from "react-router-dom"
-import * as XLSX from "xlsx"
 import logo from "../assets/logo.jpeg"
 
-export default function Admin() {
+export default function ListeDemandes() {
   const [demandes, setDemandes] = useState([])
   const [recherche, setRecherche] = useState("")
   const [filtreStatut, setFiltreStatut] = useState("tous")
@@ -33,35 +32,6 @@ export default function Admin() {
     return <Navigate to="/login-admin" replace />
   }
 
-  const changerStatut = async (id, nouveauStatut) => {
-    try {
-      const response = await fetch(
-        `${API_URL}/api/demandes/${id}/statut`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ statut: nouveauStatut }),
-        }
-      )
-
-      if (!response.ok) {
-        throw new Error("Erreur lors de la mise à jour du statut")
-      }
-
-      setDemandes((prev) =>
-        prev.map((demande) =>
-          demande.id === id
-            ? { ...demande, statut: nouveauStatut }
-            : demande
-        )
-      )
-    } catch (error) {
-      console.error("Erreur :", error)
-    }
-  }
-
   const couleurStatut = (statut) => {
     if (statut === "acceptée") return "text-green-600"
     if (statut === "refusée") return "text-red-600"
@@ -71,6 +41,18 @@ export default function Admin() {
   const formaterDate = (date) => {
     if (!date) return "-"
     return new Date(date).toLocaleString("fr-FR")
+  }
+
+  const calculerDateRemboursement = (demande) => {
+    if (!demande?.dateCreation) return "-"
+
+    const montant = Number(demande.montant || 0)
+    const duree = montant >= 30000 ? 14 : 7
+
+    const date = new Date(demande.dateCreation)
+    date.setDate(date.getDate() + duree)
+
+    return date.toLocaleString("fr-FR")
   }
 
   const demandesFiltrees = useMemo(() => {
@@ -89,35 +71,6 @@ export default function Admin() {
       return matchRecherche && matchStatut
     })
   }, [demandes, recherche, filtreStatut])
-
-  const totalDemandes = demandes.length
-  const totalEnAttente = demandes.filter((d) => d.statut === "en attente").length
-  const totalAcceptees = demandes.filter((d) => d.statut === "acceptée").length
-  const totalRefusees = demandes.filter((d) => d.statut === "refusée").length
-
-  const exporterExcel = () => {
-    const dataExport = demandesFiltrees.map((d) => ({
-      ID: d.id,
-      Nom: d.nom || "",
-      Téléphone: d.telephone || "",
-      Objet: d.typeObjet || "",
-      Montant: d.montant || "",
-      Description: d.description || "",
-      Document: d.document || "",
-      Photo: d.photo || "",
-      Statut: d.statut || "",
-      "Date de création": formaterDate(d.dateCreation),
-    }))
-
-    const worksheet = XLSX.utils.json_to_sheet(dataExport)
-    const workbook = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Demandes TAMAL")
-    XLSX.writeFile(workbook, "historique_demandes_tamal.xlsx")
-  }
-
-  const imprimerPage = () => {
-    window.print()
-  }
 
   const deconnexion = () => {
     localStorage.removeItem("adminAuth")
@@ -158,14 +111,14 @@ export default function Admin() {
         <div className="flex flex-wrap gap-3">
           <button
             onClick={() => (window.location.href = "/admin")}
-            className="rounded-full border border-yellow-500 bg-yellow-500 px-4 py-2 text-sm font-semibold text-black"
+            className="rounded-full border border-yellow-500 px-4 py-2 text-sm font-semibold text-yellow-600 hover:bg-yellow-500 hover:text-black"
           >
             Gestion des demandes
           </button>
 
           <button
             onClick={() => (window.location.href = "/liste-demandes")}
-            className="rounded-full border border-yellow-500 px-4 py-2 text-sm font-semibold text-yellow-600 hover:bg-yellow-500 hover:text-black"
+            className="rounded-full border border-yellow-500 bg-yellow-500 px-4 py-2 text-sm font-semibold text-black"
           >
             Liste des demandes
           </button>
@@ -188,55 +141,11 @@ export default function Admin() {
         </div>
       </div>
 
-      <div className="mb-10 grid gap-4 md:grid-cols-4">
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-          <p className="text-sm text-gray-500">Total demandes</p>
-          <p className="mt-2 text-3xl font-bold text-gray-900">{totalDemandes}</p>
-        </div>
-
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-          <p className="text-sm text-gray-500">En attente</p>
-          <p className="mt-2 text-3xl font-bold text-yellow-600">
-            {totalEnAttente}
-          </p>
-        </div>
-
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-          <p className="text-sm text-gray-500">Acceptées</p>
-          <p className="mt-2 text-3xl font-bold text-green-600">
-            {totalAcceptees}
-          </p>
-        </div>
-
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-          <p className="text-sm text-gray-500">Refusées</p>
-          <p className="mt-2 text-3xl font-bold text-red-600">
-            {totalRefusees}
-          </p>
-        </div>
-      </div>
-
       <div className="mb-6 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-        <div className="mb-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="mb-4">
           <h2 className="text-xl font-bold text-yellow-600">
-            Historique des demandes
+            Liste complète des demandes
           </h2>
-
-          <div className="flex flex-wrap gap-3">
-            <button
-              onClick={exporterExcel}
-              className="rounded-full bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-500"
-            >
-              Exporter Excel
-            </button>
-
-            <button
-              onClick={imprimerPage}
-              className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
-            >
-              Imprimer
-            </button>
-          </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
@@ -270,11 +179,9 @@ export default function Admin() {
               <th className="p-3 text-gray-700">Téléphone</th>
               <th className="p-3 text-gray-700">Objet</th>
               <th className="p-3 text-gray-700">Montant</th>
-              <th className="p-3 text-gray-700">Document</th>
-              <th className="p-3 text-gray-700">Photo</th>
               <th className="p-3 text-gray-700">Statut</th>
-              <th className="p-3 text-gray-700">Date</th>
-              <th className="p-3 text-gray-700">Actions</th>
+              <th className="p-3 text-gray-700">Date demande</th>
+              <th className="p-3 text-gray-700">Date remboursement</th>
             </tr>
           </thead>
 
@@ -287,64 +194,20 @@ export default function Admin() {
                   <td className="p-3 text-gray-800">{d.telephone}</td>
                   <td className="p-3 text-gray-800">{d.typeObjet}</td>
                   <td className="p-3 text-gray-800">{d.montant} FCFA</td>
-
-                  <td className="p-3">
-                    {d.document ? (
-                      <a
-                        href={`${API_URL}/uploads/${d.document}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-yellow-600 underline"
-                      >
-                        Voir
-                      </a>
-                    ) : (
-                      "-"
-                    )}
-                  </td>
-
-                  <td className="p-3">
-                    {d.photo ? (
-                      <img
-                        src={`${API_URL}/uploads/${d.photo}`}
-                        alt="photo objet"
-                        className="mx-auto h-16 w-16 rounded object-cover"
-                      />
-                    ) : (
-                      "-"
-                    )}
-                  </td>
-
                   <td className={`p-3 font-semibold ${couleurStatut(d.statut)}`}>
                     {d.statut}
                   </td>
-
                   <td className="p-3 text-sm text-gray-600">
                     {formaterDate(d.dateCreation)}
                   </td>
-
-                  <td className="p-3">
-                    <div className="flex justify-center gap-2">
-                      <button
-                        onClick={() => changerStatut(d.id, "acceptée")}
-                        className="rounded-full bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-500"
-                      >
-                        Accepter
-                      </button>
-
-                      <button
-                        onClick={() => changerStatut(d.id, "refusée")}
-                        className="rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500"
-                      >
-                        Refuser
-                      </button>
-                    </div>
+                  <td className="p-3 text-sm text-gray-600">
+                    {calculerDateRemboursement(d)}
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="10" className="p-6 text-center text-gray-500">
+                <td colSpan="8" className="p-6 text-center text-gray-500">
                   Aucune demande trouvée.
                 </td>
               </tr>

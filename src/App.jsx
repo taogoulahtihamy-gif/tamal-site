@@ -13,6 +13,7 @@ import Footer from "./components/Footer"
 import Admin from "./components/Admin"
 import LoginAdmin from "./components/LoginAdmin"
 import GestionAdmins from "./components/GestionAdmins"
+import ListeDemandes from "./components/ListeDemandes"
 
 function LayoutPublic({ children }) {
   return (
@@ -91,13 +92,12 @@ function App() {
         <Route path="/conditions" element={<ConditionsPage />} />
         <Route path="/simulateur" element={<SimulateurPage />} />
         <Route path="/demande" element={<DemandePage />} />
-
-        {/* Route technique : /contact ramène vers le bloc contact de l'accueil */}
         <Route path="/contact" element={<ContactRedirectPage />} />
 
         <Route path="/login-admin" element={<LoginAdmin />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/gestion-admins" element={<GestionAdmins />} />
+        <Route path="/liste-demandes" element={<ListeDemandes />} />
       </Routes>
     </BrowserRouter>
   )
