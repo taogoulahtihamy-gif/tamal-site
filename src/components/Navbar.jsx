@@ -183,115 +183,113 @@ export default function Navbar() {
     navigate(path)
   }
 
+  const estActif = (path) => location.pathname === path
+
+  const lienDesktopClass = (path) =>
+    `relative pb-1 text-sm font-medium transition ${
+      estActif(path) ? "text-yellow-600" : "text-gray-600 hover:text-gray-950"
+    }`
+
+  const lienMobileClass = (path) =>
+    `rounded-2xl px-4 py-4 text-left text-base transition ${
+      estActif(path)
+        ? "bg-yellow-50 text-yellow-700"
+        : "text-gray-800 hover:bg-gray-100"
+    }`
+
   return (
     <>
-      <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
-          <Link to="/" className="flex items-center gap-3" onClick={fermerTout}>
-            <img
-              src="/logo-tamal.jpeg"
-              alt="TAMAL"
-              className="h-14 w-14 rounded-full border-2 border-yellow-500 bg-white p-1 object-cover shadow-md"
-            />
+      <header className="sticky top-0 z-50 border-b border-black/5 bg-[#f8f8f6]/92 backdrop-blur-xl">
+        <div className="mx-auto max-w-7xl px-4">
+          <div className="flex h-[88px] items-center justify-between">
+            <Link to="/" className="flex items-center gap-3" onClick={fermerTout}>
+              <img
+                src="/logo-tamal.jpeg"
+                alt="TAMAL"
+                className="h-14 w-14 rounded-full border-2 border-yellow-500 bg-white p-1 object-cover shadow-sm"
+              />
 
-            <div className="leading-tight">
-              <h1 className="text-sm font-bold uppercase tracking-wide text-yellow-600">
-                TAMAL
-              </h1>
-              <p className="text-xs text-gray-600">
-                Service Liquidité Immédiate
-              </p>
-            </div>
-          </Link>
+              <div className="leading-tight">
+                <h1 className="text-base font-bold uppercase tracking-wide text-yellow-600">
+                  TAMAL
+                </h1>
+                <p className="text-sm text-gray-500">
+                  Service Liquidité Immédiate
+                </p>
+              </div>
+            </Link>
 
-          <nav className="hidden items-center gap-6 text-sm font-medium text-gray-700 xl:flex">
-            <button
-              type="button"
-              onClick={() => allerVers("/")}
-              className="transition hover:text-yellow-600"
-            >
-              Accueil
-            </button>
-
-            <button
-              type="button"
-              onClick={() => allerVers("/comment-ca-marche")}
-              className="transition hover:text-yellow-600"
-            >
-              Comment ça marche
-            </button>
-
-            <button
-              type="button"
-              onClick={() => allerVers("/conditions")}
-              className="transition hover:text-yellow-600"
-            >
-              Conditions
-            </button>
-
-            <button
-              type="button"
-              onClick={() => allerVers("/simulateur")}
-              className="transition hover:text-yellow-600"
-            >
-              Simulateur
-            </button>
-
-            <button
-              type="button"
-              onClick={() => allerVers("/demande")}
-              className="transition hover:text-yellow-600"
-            >
-              Demande
-            </button>
-
-            <button
-              type="button"
-              onClick={() => allerVers("/contact")}
-              className="transition hover:text-yellow-600"
-            >
-              Contact
-            </button>
-          </nav>
-
-          <div className="relative flex items-center gap-3">
-            <button
-              type="button"
-              onClick={toggleRecherche}
-              className="hidden h-11 w-11 items-center justify-center rounded-full border border-gray-200 text-gray-700 transition hover:bg-gray-100 md:flex"
-              aria-label="Recherche"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="1.8"
+            <nav className="hidden items-center gap-9 xl:flex">
+              <button
+                type="button"
+                onClick={() => allerVers("/")}
+                className={lienDesktopClass("/")}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            </button>
+                Accueil
+                {estActif("/") && (
+                  <span className="absolute -bottom-1 left-1/2 h-[3px] w-8 -translate-x-1/2 rounded-full bg-yellow-500" />
+                )}
+              </button>
 
-            <a
-              href="https://wa.me/221778492779"
-              target="_blank"
-              rel="noreferrer"
-              className="hidden rounded-full bg-yellow-500 px-4 py-2 text-sm font-semibold text-black transition hover:bg-yellow-400 md:inline-flex"
-            >
-              WhatsApp
-            </a>
+              <button
+                type="button"
+                onClick={() => allerVers("/comment-ca-marche")}
+                className={lienDesktopClass("/comment-ca-marche")}
+              >
+                Comment ça marche
+                {estActif("/comment-ca-marche") && (
+                  <span className="absolute -bottom-1 left-1/2 h-[3px] w-8 -translate-x-1/2 rounded-full bg-yellow-500" />
+                )}
+              </button>
 
-            <div className="flex items-center gap-2 xl:hidden">
+              <button
+                type="button"
+                onClick={() => allerVers("/conditions")}
+                className={lienDesktopClass("/conditions")}
+              >
+                Conditions
+                {estActif("/conditions") && (
+                  <span className="absolute -bottom-1 left-1/2 h-[3px] w-8 -translate-x-1/2 rounded-full bg-yellow-500" />
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => allerVers("/simulateur")}
+                className={lienDesktopClass("/simulateur")}
+              >
+                Simulateur
+                {estActif("/simulateur") && (
+                  <span className="absolute -bottom-1 left-1/2 h-[3px] w-8 -translate-x-1/2 rounded-full bg-yellow-500" />
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => allerVers("/demande")}
+                className={lienDesktopClass("/demande")}
+              >
+                Demande
+                {estActif("/demande") && (
+                  <span className="absolute -bottom-1 left-1/2 h-[3px] w-8 -translate-x-1/2 rounded-full bg-yellow-500" />
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => allerVers("/contact")}
+                className="relative pb-1 text-sm font-medium text-gray-600 transition hover:text-gray-950"
+              >
+                Contact
+              </button>
+            </nav>
+
+            <div className="relative flex items-center gap-3">
               <button
                 type="button"
                 onClick={toggleRecherche}
-                className="flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 text-gray-700 transition hover:bg-gray-100"
-                aria-label="Ouvrir la recherche"
+                className="hidden h-11 w-11 items-center justify-center rounded-full border border-black/10 bg-white text-gray-700 transition hover:bg-gray-50 md:flex"
+                aria-label="Recherche"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -309,80 +307,113 @@ export default function Navbar() {
                 </svg>
               </button>
 
-              <button
-                type="button"
-                onClick={toggleMenu}
-                className="flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 text-gray-700 transition hover:bg-gray-100"
-                aria-label="Ouvrir le menu"
+              <a
+                href="https://wa.me/221778492779"
+                target="_blank"
+                rel="noreferrer"
+                className="hidden rounded-full bg-yellow-500 px-6 py-3 text-sm font-semibold text-black transition hover:bg-yellow-400 md:inline-flex"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
+                WhatsApp
+              </a>
+
+              <div className="flex items-center gap-2 xl:hidden">
+                <button
+                  type="button"
+                  onClick={toggleRecherche}
+                  className="flex h-11 w-11 items-center justify-center rounded-full border border-black/10 bg-white text-gray-700 transition hover:bg-gray-50"
+                  aria-label="Ouvrir la recherche"
                 >
-                  {menuOuvert ? (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      d="M6 18L18 6M6 6l12 12"
+                      d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z"
                     />
-                  ) : (
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M4 7h16M4 12h16M4 17h16"
-                    />
-                  )}
-                </svg>
-              </button>
-            </div>
+                  </svg>
+                </button>
 
-            {rechercheOuverte && (
-              <div className="absolute right-0 top-14 hidden w-80 rounded-3xl border border-gray-200 bg-white p-4 shadow-2xl md:block">
-                <input
-                  type="text"
-                  value={recherche}
-                  onChange={(e) => setRecherche(e.target.value)}
-                  placeholder="Rechercher sur le site..."
-                  className="w-full rounded-2xl border border-gray-200 bg-[#faf9f5] px-4 py-3 text-gray-900 outline-none focus:border-yellow-500"
-                />
-
-                <div className="mt-3 space-y-2">
-                  {resultatsRecherche.length > 0 ? (
-                    resultatsRecherche.map((item) => (
-                      <button
-                        key={item.label}
-                        type="button"
-                        onClick={() => allerVers(item.path)}
-                        className="block w-full rounded-2xl px-3 py-3 text-left text-sm text-gray-800 transition hover:bg-gray-100"
-                      >
-                        {item.label}
-                      </button>
-                    ))
-                  ) : (
-                    <p className="px-3 py-2 text-sm text-gray-500">
-                      Aucun résultat.
-                    </p>
-                  )}
-                </div>
+                <button
+                  type="button"
+                  onClick={toggleMenu}
+                  className="flex h-11 w-11 items-center justify-center rounded-full border border-black/10 bg-white text-gray-700 transition hover:bg-gray-50"
+                  aria-label="Ouvrir le menu"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                  >
+                    {menuOuvert ? (
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    ) : (
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M4 7h16M4 12h16M4 17h16"
+                      />
+                    )}
+                  </svg>
+                </button>
               </div>
-            )}
+
+              {rechercheOuverte && (
+                <div className="absolute right-0 top-14 hidden w-80 rounded-[28px] border border-black/10 bg-white p-4 shadow-2xl md:block">
+                  <input
+                    type="text"
+                    value={recherche}
+                    onChange={(e) => setRecherche(e.target.value)}
+                    placeholder="Rechercher sur le site..."
+                    className="w-full rounded-2xl border border-black/10 bg-[#faf9f5] px-4 py-3 text-gray-900 outline-none transition focus:border-yellow-500"
+                  />
+
+                  <div className="mt-3 space-y-2">
+                    {resultatsRecherche.length > 0 ? (
+                      resultatsRecherche.map((item) => (
+                        <button
+                          key={item.label}
+                          type="button"
+                          onClick={() => allerVers(item.path)}
+                          className="block w-full rounded-2xl px-3 py-3 text-left text-sm text-gray-800 transition hover:bg-gray-100"
+                        >
+                          {item.label}
+                        </button>
+                      ))
+                    ) : (
+                      <p className="px-3 py-2 text-sm text-gray-500">
+                        Aucun résultat.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
         {rechercheOuverte && (
-          <div className="border-t border-gray-200 bg-white px-4 pb-4 pt-3 md:hidden">
+          <div className="border-t border-black/5 bg-[#f8f8f6] px-4 pb-4 pt-3 md:hidden">
             <div className="mx-auto max-w-7xl">
-              <div className="rounded-3xl border border-gray-200 bg-white p-3 shadow-lg">
+              <div className="rounded-[28px] border border-black/10 bg-white p-3 shadow-lg">
                 <input
                   type="text"
                   value={recherche}
                   onChange={(e) => setRecherche(e.target.value)}
                   placeholder="Rechercher sur tout le site..."
-                  className="w-full rounded-2xl border border-gray-200 bg-[#faf9f5] px-4 py-3 text-gray-900 outline-none focus:border-yellow-500"
+                  className="w-full rounded-2xl border border-black/10 bg-[#faf9f5] px-4 py-3 text-gray-900 outline-none focus:border-yellow-500"
                 />
 
                 <div className="mt-3 max-h-72 space-y-2 overflow-y-auto">
@@ -419,7 +450,7 @@ export default function Navbar() {
           />
 
           <div className="absolute right-0 top-0 h-full w-[88%] max-w-sm overflow-y-auto bg-white shadow-2xl">
-            <div className="flex items-center justify-between border-b border-gray-200 px-5 py-5">
+            <div className="flex items-center justify-between border-b border-black/5 px-5 py-5">
               <div className="flex items-center gap-3">
                 <img
                   src="/logo-tamal.jpeg"
@@ -428,7 +459,7 @@ export default function Navbar() {
                 />
                 <div>
                   <p className="text-sm font-bold text-yellow-600">TAMAL</p>
-                  <p className="text-xs text-gray-600">
+                  <p className="text-xs text-gray-500">
                     Service Liquidité Immédiate
                   </p>
                 </div>
@@ -437,7 +468,7 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={fermerTout}
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-gray-700"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-black/10 text-gray-700"
               >
                 ✕
               </button>
@@ -447,7 +478,7 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={() => allerVers("/")}
-                className="rounded-2xl px-4 py-4 text-left text-base text-gray-800 transition hover:bg-gray-100"
+                className={lienMobileClass("/")}
               >
                 Accueil
               </button>
@@ -455,7 +486,7 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={() => allerVers("/comment-ca-marche")}
-                className="rounded-2xl px-4 py-4 text-left text-base text-gray-800 transition hover:bg-gray-100"
+                className={lienMobileClass("/comment-ca-marche")}
               >
                 Comment ça marche
               </button>
@@ -463,7 +494,7 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={() => allerVers("/conditions")}
-                className="rounded-2xl px-4 py-4 text-left text-base text-gray-800 transition hover:bg-gray-100"
+                className={lienMobileClass("/conditions")}
               >
                 Conditions
               </button>
@@ -471,7 +502,7 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={() => allerVers("/simulateur")}
-                className="rounded-2xl px-4 py-4 text-left text-base text-gray-800 transition hover:bg-gray-100"
+                className={lienMobileClass("/simulateur")}
               >
                 Simulateur
               </button>
@@ -479,7 +510,7 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={() => allerVers("/demande")}
-                className="rounded-2xl px-4 py-4 text-left text-base text-gray-800 transition hover:bg-gray-100"
+                className={lienMobileClass("/demande")}
               >
                 Demande
               </button>
@@ -495,18 +526,18 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={() => allerVers("/login-admin")}
-                className="rounded-2xl px-4 py-4 text-left text-base text-gray-800 transition hover:bg-gray-100"
+                className={lienMobileClass("/login-admin")}
               >
                 Espace admin
               </button>
             </div>
 
-            <div className="border-t border-gray-100 px-5 py-5">
+            <div className="border-t border-black/5 px-5 py-5">
               <a
                 href="https://wa.me/221778492779"
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex w-full justify-center rounded-full bg-yellow-500 px-4 py-3 text-sm font-semibold text-black hover:bg-yellow-400"
+                className="inline-flex w-full justify-center rounded-full bg-yellow-500 px-4 py-3 text-sm font-semibold text-black transition hover:bg-yellow-400"
               >
                 WhatsApp
               </a>

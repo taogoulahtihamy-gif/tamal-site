@@ -1,217 +1,292 @@
 import { Link } from "react-router-dom"
-import { useMemo, useState } from "react"
 import RevealOnScroll from "./RevealOnScroll"
 
 export default function Hero() {
-  const [montant, setMontant] = useState("30000")
-
-  const montantNombre = Number(montant)
-  const montantValide = montant !== "" && montantNombre >= 5000
-
-  const duree = useMemo(() => {
-    if (!montantValide) return "--"
-    return montantNombre >= 30000 ? "14 jours" : "7 jours"
-  }, [montantNombre, montantValide])
-
-  const remboursement = useMemo(() => {
-    if (!montantValide) return "--"
-    return `${Math.round(montantNombre * 1.3).toLocaleString("fr-FR")} FCFA`
-  }, [montantNombre, montantValide])
-
   return (
     <section className="bg-[#f5f3ed] text-gray-900">
-      <div className="mx-auto max-w-7xl px-4 pb-16 pt-4 md:pb-20 md:pt-6">
-        {/* IMAGE EN HAUT */}
+      <div className="mx-auto max-w-7xl px-4 pb-16 pt-6 md:pb-24 md:pt-8">
+        {/* HERO */}
         <RevealOnScroll>
-          <div className="relative mb-10 overflow-hidden rounded-[28px] border border-yellow-500/20 bg-white shadow-[0_20px_60px_rgba(0,0,0,0.08)]">
-            <img
-              src="/pret-gage.jpeg"
-              alt="Illustration prêt sur gage"
-              className="h-56 w-full object-cover md:h-80"
-            />
+          <div className="relative overflow-hidden rounded-[32px] border border-black/10 bg-[#161616] shadow-[0_24px_80px_rgba(0,0,0,0.18)]">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.10),transparent_40%)]" />
+            <div className="absolute inset-0 bg-[linear-gradient(120deg,rgba(255,255,255,0.03),transparent_25%,transparent_75%,rgba(255,255,255,0.03))]" />
 
-            <div className="absolute inset-0 bg-gradient-to-r from-black/25 via-black/10 to-transparent" />
-
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent p-5 md:p-8">
-              <div className="max-w-2xl">
-                <p className="inline-block rounded-full border border-white/20 bg-white/15 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-white backdrop-blur-sm">
+            <div className="relative flex min-h-[220px] items-center justify-center px-6 py-12 text-center md:min-h-[260px] md:px-10">
+              <div className="max-w-4xl">
+                <p className="mb-5 inline-flex rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-white/80">
                   TAMAL • Prêt sur gage
                 </p>
 
-                <h2 className="mt-4 text-2xl font-bold text-white md:text-4xl">
+                <h1 className="text-3xl font-bold leading-tight text-white md:text-5xl md:leading-[1.1]">
                   Une solution simple pour obtenir rapidement de la liquidité
-                </h2>
+                </h1>
 
-                <p className="mt-3 max-w-xl text-sm text-white/90 md:text-base">
-                  Déposez votre objet, faites étudier votre dossier et obtenez
-                  une réponse rapide avec un cadre clair et sécurisé.
+                <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-white/75 md:text-lg">
+                  Un service clair, rapide et sécurisé pour répondre à vos
+                  besoins de trésorerie avec un accompagnement sérieux.
                 </p>
+
+                <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
+                  <Link
+                    to="/demande"
+                    className="inline-flex min-w-[210px] items-center justify-center rounded-full bg-yellow-500 px-8 py-4 text-sm font-semibold text-black transition hover:bg-yellow-400"
+                  >
+                    Faire une demande
+                  </Link>
+
+                  <Link
+                    to="/simulateur"
+                    className="inline-flex min-w-[210px] items-center justify-center rounded-full border border-white/20 bg-white/5 px-8 py-4 text-sm font-semibold text-white transition hover:bg-white/10"
+                  >
+                    Simuler mon prêt
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
         </RevealOnScroll>
 
-        {/* CONTENU HERO */}
-        <div className="grid items-start gap-12 md:grid-cols-2">
-          {/* TEXTE */}
+        {/* A PROPOS */}
+        <div className="mt-16 grid items-center gap-12 md:mt-24 md:grid-cols-2 md:gap-16">
           <div>
             <RevealOnScroll>
-              <div className="mb-6 inline-block rounded-full bg-yellow-100 px-4 py-2 text-sm font-semibold text-yellow-700">
-                Réponse rapide • En 24H
-              </div>
-            </RevealOnScroll>
-
-            <RevealOnScroll delay={100}>
-              <h1 className="text-5xl font-bold leading-tight">
-                Prêt sur gage{" "}
-                <span className="text-yellow-600">rapide</span>
-                <br />
-                et sécurisé
-              </h1>
-            </RevealOnScroll>
-
-            <RevealOnScroll delay={200}>
-              <p className="mt-6 text-lg text-gray-600">
-                Obtenez votre prêt en 24h : simple, rapide et sans mauvaises
-                surprises.
+              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500">
+                À propos
               </p>
             </RevealOnScroll>
 
-            <RevealOnScroll delay={300}>
+            <RevealOnScroll delay={100}>
+              <h2 className="mt-5 text-4xl font-bold leading-tight text-slate-950 md:text-6xl md:leading-[1.02]">
+                Avec TAMAL, vous bénéficiez d’un service de qualité
+              </h2>
+            </RevealOnScroll>
+
+            <RevealOnScroll delay={180}>
+              <p className="mt-6 text-lg leading-8 text-slate-600">
+                TAMAL vous accompagne pour accéder à une liquidité immédiate
+                grâce à un processus simple, humain et rassurant.
+              </p>
+            </RevealOnScroll>
+
+            <RevealOnScroll delay={260}>
+              <p className="mt-5 text-base leading-8 text-slate-600">
+                Notre service est pensé pour offrir une solution rapide aux
+                besoins urgents de trésorerie, tout en maintenant un cadre
+                sérieux, transparent et sécurisé pour chaque client.
+              </p>
+            </RevealOnScroll>
+
+            <RevealOnScroll delay={340}>
+              <p className="mt-5 text-base leading-8 text-slate-600">
+                Nous misons sur la clarté des conditions, la rapidité de
+                traitement des demandes et un accompagnement accessible, que ce
+                soit pour une première demande ou pour un besoin ponctuel de
+                financement.
+              </p>
+            </RevealOnScroll>
+
+            <RevealOnScroll delay={420}>
               <div className="mt-8 flex flex-col gap-4 sm:flex-row">
                 <Link
-                  to="/demande"
-                  className="rounded-full bg-yellow-500 px-8 py-4 text-center font-semibold text-black shadow-sm transition hover:bg-yellow-400"
+                  to="/comment-ca-marche"
+                  className="inline-flex items-center justify-center rounded-full bg-slate-950 px-7 py-4 text-sm font-semibold text-white transition hover:bg-slate-800"
                 >
-                  Faire une demande
+                  Comment ça marche
                 </Link>
 
                 <a
                   href="https://wa.me/221778492779"
                   target="_blank"
                   rel="noreferrer"
-                  className="rounded-full border border-gray-300 bg-white px-8 py-4 text-center transition hover:bg-gray-50"
+                  className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-7 py-4 text-sm font-semibold text-slate-900 transition hover:bg-slate-50"
                 >
-                  Parler à un agent
+                  Contacter un agent
                 </a>
               </div>
             </RevealOnScroll>
-
-            <div className="mt-10 space-y-4">
-              <RevealOnScroll delay={350}>
-                <div className="rounded-2xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
-                  ✓ Réponse rapide
-                </div>
-              </RevealOnScroll>
-
-              <RevealOnScroll delay={450}>
-                <div className="rounded-2xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
-                  ✓ Paiement cash ou mobile money
-                </div>
-              </RevealOnScroll>
-
-              <RevealOnScroll delay={550}>
-                <div className="rounded-2xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
-                  ✓ Processus simple
-                </div>
-              </RevealOnScroll>
-
-              <RevealOnScroll delay={650}>
-                <div className="rounded-2xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
-                  ✓ Dépôt du gage en agence
-                </div>
-              </RevealOnScroll>
-            </div>
           </div>
 
-          {/* MINI SIMULATEUR PREMIUM */}
-          <RevealOnScroll delay={200} direction="left">
-            <div className="relative overflow-hidden rounded-[28px] border border-yellow-500/20 bg-white shadow-[0_20px_60px_rgba(0,0,0,0.08)]">
-              <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-300" />
-
-              <div className="p-6 md:p-7">
-                <div className="mb-5 flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-sm font-semibold uppercase tracking-[0.16em] text-yellow-600">
-                      Simulation
-                    </p>
-                    <h3 className="mt-2 text-2xl font-bold text-gray-900">
-                      Simulez votre prêt
-                    </h3>
-                    <p className="mt-2 text-sm leading-6 text-gray-600">
-                      Entrez le montant souhaité pour voir automatiquement la
-                      durée et le remboursement estimé.
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl bg-[#faf9f5] px-4 py-3 text-right">
-                    <p className="text-xs uppercase tracking-wide text-gray-500">
-                      Réponse
-                    </p>
-                    <p className="mt-1 text-lg font-bold text-yellow-600">
-                      24H
-                    </p>
-                  </div>
-                </div>
-
-                <div className="rounded-3xl border border-gray-200 bg-[#fcfbf8] p-4 md:p-5">
-                  <label className="mb-3 block text-sm font-medium text-gray-700">
-                    Montant souhaité (FCFA)
-                  </label>
-
-                  <input
-                    type="number"
-                    value={montant}
-                    onChange={(e) => setMontant(e.target.value)}
-                    placeholder="Ex : 30000"
-                    className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-4 text-xl font-semibold text-gray-900 outline-none transition focus:border-yellow-500"
-                  />
-
-                  {!montantValide && (
-                    <p className="mt-3 text-sm text-red-500">
-                      Veuillez entrer un montant valide d’au moins 5 000 FCFA.
-                    </p>
-                  )}
-
-                  <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                    <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-                      <p className="text-sm text-gray-500">Durée</p>
-                      <p className="mt-2 text-3xl font-bold text-yellow-600">
-                        {duree}
-                      </p>
-                    </div>
-
-                    <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-                      <p className="text-sm text-gray-500">Remboursement</p>
-                      <p className="mt-2 text-3xl font-bold text-yellow-600">
-                        {remboursement}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-5 rounded-2xl border border-yellow-200 bg-yellow-50/80 p-4">
-                  <p className="text-sm font-semibold text-gray-800">
-                    Règles en cas de retard
+          <RevealOnScroll delay={180} direction="left">
+            <div className="rounded-[32px] border border-black/5 bg-white p-8 shadow-[0_24px_80px_rgba(0,0,0,0.08)] md:p-10">
+              <div className="grid gap-5">
+                <div className="rounded-[24px] border border-yellow-200 bg-yellow-50 p-5">
+                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-yellow-700">
+                    Réponse rapide
                   </p>
-
-                  <p className="mt-2 text-sm leading-6 text-gray-600">
-                    À partir d’un jour de dépassement, le taux passe à{" "}
-                    <span className="font-semibold text-yellow-600">35 %</span>,
-                    puis une pénalité de{" "}
-                    <span className="font-semibold text-yellow-600">
-                      2 000 FCFA
-                    </span>{" "}
-                    par jour s’applique jusqu’au remboursement.
+                  <p className="mt-2 text-3xl font-bold text-slate-950">
+                    En 24H
+                  </p>
+                  <p className="mt-3 text-sm leading-7 text-slate-600">
+                    Votre dossier est étudié rapidement avec un retour clair sur
+                    la faisabilité de votre demande.
                   </p>
                 </div>
 
-                <div className="mt-4 rounded-2xl border border-gray-200 bg-[#faf9f5] p-4">
-                  <p className="text-sm text-gray-600">
-                    ⚠️ Les frais de transaction sont supportés par le client.
+                <div className="rounded-[24px] border border-slate-200 bg-slate-50 p-5">
+                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-700">
+                    Processus simple
+                  </p>
+                  <p className="mt-2 text-2xl font-bold text-slate-950">
+                    Dépôt, étude et réponse
+                  </p>
+                  <p className="mt-3 text-sm leading-7 text-slate-600">
+                    Un parcours fluide et compréhensible, conçu pour aller à
+                    l’essentiel sans complexité inutile.
+                  </p>
+                </div>
+
+                <div className="rounded-[24px] border border-slate-200 bg-white p-5">
+                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-700">
+                    Sécurité
+                  </p>
+                  <p className="mt-2 text-2xl font-bold text-slate-950">
+                    Cadre clair et rassurant
+                  </p>
+                  <p className="mt-3 text-sm leading-7 text-slate-600">
+                    Conditions transparentes, accompagnement humain et traitement
+                    sérieux de chaque demande.
                   </p>
                 </div>
               </div>
+            </div>
+          </RevealOnScroll>
+        </div>
+
+        {/* COMMENT CA MARCHE */}
+        <div className="mt-16 md:mt-24">
+          <RevealOnScroll>
+            <div className="text-center">
+              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500">
+                Comment ça marche
+              </p>
+              <h3 className="mt-4 text-3xl font-bold text-slate-950 md:text-5xl">
+                Un parcours simple en 4 étapes
+              </h3>
+              <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600 md:text-lg">
+                De la demande à la remise des fonds, tout est pensé pour rester
+                rapide, clair et rassurant.
+              </p>
+            </div>
+          </RevealOnScroll>
+
+          <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+            <RevealOnScroll>
+              <div className="rounded-[28px] border border-black/5 bg-white p-6 shadow-sm">
+                <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-yellow-500 text-lg font-bold text-black">
+                  1
+                </div>
+                <h4 className="mt-5 text-xl font-bold text-slate-950">
+                  Déposez votre demande
+                </h4>
+                <p className="mt-3 text-sm leading-7 text-slate-600">
+                  Remplissez le formulaire en ligne avec vos informations et le
+                  montant souhaité.
+                </p>
+              </div>
+            </RevealOnScroll>
+
+            <RevealOnScroll delay={120}>
+              <div className="rounded-[28px] border border-black/5 bg-white p-6 shadow-sm">
+                <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-yellow-500 text-lg font-bold text-black">
+                  2
+                </div>
+                <h4 className="mt-5 text-xl font-bold text-slate-950">
+                  Étude du dossier
+                </h4>
+                <p className="mt-3 text-sm leading-7 text-slate-600">
+                  Notre équipe analyse votre demande et vous donne un retour
+                  rapide sur la faisabilité.
+                </p>
+              </div>
+            </RevealOnScroll>
+
+            <RevealOnScroll delay={240}>
+              <div className="rounded-[28px] border border-black/5 bg-white p-6 shadow-sm">
+                <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-yellow-500 text-lg font-bold text-black">
+                  3
+                </div>
+                <h4 className="mt-5 text-xl font-bold text-slate-950">
+                  Dépôt du gage
+                </h4>
+                <p className="mt-3 text-sm leading-7 text-slate-600">
+                  Vous déposez votre objet en agence dans un cadre sécurisé et
+                  avec des conditions claires.
+                </p>
+              </div>
+            </RevealOnScroll>
+
+            <RevealOnScroll delay={360}>
+              <div className="rounded-[28px] border border-black/5 bg-white p-6 shadow-sm">
+                <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-yellow-500 text-lg font-bold text-black">
+                  4
+                </div>
+                <h4 className="mt-5 text-xl font-bold text-slate-950">
+                  Versement rapide
+                </h4>
+                <p className="mt-3 text-sm leading-7 text-slate-600">
+                  Après validation finale, vous recevez votre prêt rapidement
+                  selon les modalités convenues.
+                </p>
+              </div>
+            </RevealOnScroll>
+          </div>
+
+          <RevealOnScroll delay={120}>
+            <div className="mt-8 flex justify-center">
+              <Link
+                to="/comment-ca-marche"
+                className="inline-flex items-center justify-center rounded-full bg-slate-950 px-7 py-4 text-sm font-semibold text-white transition hover:bg-slate-800"
+              >
+                Voir le détail du fonctionnement
+              </Link>
+            </div>
+          </RevealOnScroll>
+        </div>
+
+        {/* AVANTAGES */}
+        <div className="mt-16 grid gap-5 md:mt-20 md:grid-cols-3">
+          <RevealOnScroll>
+            <div className="rounded-[28px] border border-black/5 bg-white p-6 shadow-sm">
+              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-yellow-100 text-xl">
+                ✓
+              </div>
+              <h3 className="text-xl font-bold text-slate-950">
+                Réponse rapide
+              </h3>
+              <p className="mt-3 text-sm leading-7 text-slate-600">
+                Votre demande est étudiée rapidement avec un retour clair sur la
+                suite du dossier.
+              </p>
+            </div>
+          </RevealOnScroll>
+
+          <RevealOnScroll delay={120}>
+            <div className="rounded-[28px] border border-black/5 bg-white p-6 shadow-sm">
+              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-yellow-100 text-xl">
+                🔒
+              </div>
+              <h3 className="text-xl font-bold text-slate-950">
+                Cadre sécurisé
+              </h3>
+              <p className="mt-3 text-sm leading-7 text-slate-600">
+                Chaque étape est encadrée pour garantir un traitement sérieux et
+                transparent.
+              </p>
+            </div>
+          </RevealOnScroll>
+
+          <RevealOnScroll delay={240}>
+            <div className="rounded-[28px] border border-black/5 bg-white p-6 shadow-sm">
+              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-yellow-100 text-xl">
+                ⚡
+              </div>
+              <h3 className="text-xl font-bold text-slate-950">
+                Processus simple
+              </h3>
+              <p className="mt-3 text-sm leading-7 text-slate-600">
+                Une démarche fluide, compréhensible et adaptée à un besoin de
+                liquidité immédiate.
+              </p>
             </div>
           </RevealOnScroll>
         </div>

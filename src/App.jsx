@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom"
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom"
 import { useEffect } from "react"
 
 import Navbar from "./components/Navbar"
@@ -7,19 +7,34 @@ import HowItWorks from "./components/HowItWorks"
 import Conditions from "./components/Conditions"
 import Simulateur from "./components/Simulateur"
 import Formulaire from "./components/Formulaire"
-import Contact from "./components/Contact"
 import Footer from "./components/Footer"
 
 import Admin from "./components/Admin"
 import LoginAdmin from "./components/LoginAdmin"
 import GestionAdmins from "./components/GestionAdmins"
 import ListeDemandes from "./components/ListeDemandes"
+import FloatingWhatsapp from "./components/FloatingWhatsapp"
+function ScrollToTop() {
+  const { pathname } = useLocation()
+
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "smooth",
+    })
+  }, [pathname])
+
+  return null
+}
+
 function LayoutPublic({ children }) {
   return (
     <div className="min-h-screen bg-[#f8f8f6] text-black">
       <Navbar />
       {children}
       <Footer />
+      <FloatingWhatsapp />
     </div>
   )
 }
@@ -28,7 +43,6 @@ function AccueilPage() {
   return (
     <LayoutPublic>
       <Hero />
-      <Contact />
     </LayoutPublic>
   )
 }
@@ -74,9 +88,9 @@ function ContactRedirectPage() {
     setTimeout(() => {
       const section = document.getElementById("contact")
       if (section) {
-        section.scrollIntoView({ behavior: "smooth" })
+        section.scrollIntoView({ behavior: "smooth", block: "start" })
       }
-    }, 200)
+    }, 350)
   }, [navigate])
 
   return null
@@ -85,6 +99,8 @@ function ContactRedirectPage() {
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
+
       <Routes>
         <Route path="/" element={<AccueilPage />} />
         <Route path="/comment-ca-marche" element={<CommentCaMarchePage />} />
