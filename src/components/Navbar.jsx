@@ -111,19 +111,6 @@ export default function Navbar() {
         "agent",
       ],
     },
-    {
-      label: "Espace admin",
-      path: "/login-admin",
-      motsCles: [
-        "admin",
-        "login",
-        "connexion",
-        "dashboard",
-        "gestion",
-        "liste demandes",
-        "admins",
-      ],
-    },
   ]
 
   const resultatsRecherche = useMemo(() => {
@@ -521,14 +508,6 @@ export default function Navbar() {
                 className="rounded-2xl px-4 py-4 text-left text-base text-gray-800 transition hover:bg-gray-100"
               >
                 Contact
-              </button>
-
-              <button
-                type="button"
-                onClick={() => allerVers("/login-admin")}
-                className={lienMobileClass("/login-admin")}
-              >
-                Espace admin
               </button>
             </div>
 
