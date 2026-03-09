@@ -3,78 +3,51 @@ const cors = require("cors")
 const multer = require("multer")
 const path = require("path")
 const fs = require("fs")
+const { Pool } = require("pg")
 
 const app = express()
 const PORT = process.env.PORT || 5000
 
 app.use(cors())
 app.use(express.json())
-app.use("/uploads", express.static(path.join(__dirname, "uploads")))
 
-const demandesFile = path.join(__dirname, "demandes.json")
-const adminsFile = path.join(__dirname, "admins.json")
 const uploadsDir = path.join(__dirname, "uploads")
+app.use("/uploads", express.static(uploadsDir))
 
 const ULTRAMSG_INSTANCE_ID = process.env.ULTRAMSG_INSTANCE_ID
 const ULTRAMSG_TOKEN = process.env.ULTRAMSG_TOKEN
 const WHATSAPP_ADMIN_NUMBER = process.env.WHATSAPP_ADMIN_NUMBER
 
-// Créer le dossier uploads s'il n'existe pas
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DATABASE_URL
+    ? { rejectUnauthorized: false }
+    : false,
+})
+
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true })
 }
 
 // =========================
-// DEMANDES
+// CONFIGURATION UPLOAD
 // =========================
 
-const lireDemandes = () => {
-  if (!fs.existsSync(demandesFile)) {
-    fs.writeFileSync(demandesFile, JSON.stringify([], null, 2))
-  }
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadsDir)
+  },
+  filename: (req, file, cb) => {
+    const uniqueName = Date.now() + "-" + file.originalname
+    cb(null, uniqueName)
+  },
+})
 
-  const data = fs.readFileSync(demandesFile, "utf-8")
-  return JSON.parse(data)
-}
-
-const enregistrerDemandes = (demandes) => {
-  fs.writeFileSync(demandesFile, JSON.stringify(demandes, null, 2))
-}
+const upload = multer({ storage })
 
 // =========================
-// ADMINS
+// MIDDLEWARE
 // =========================
-
-const initialiserAdmins = () => {
-  if (!fs.existsSync(adminsFile)) {
-    const adminsParDefaut = [
-      {
-        id: 1,
-        username: "superadmin",
-        password: "123456",
-        role: "super_admin",
-      },
-      {
-        id: 2,
-        username: "admin1",
-        password: "123456",
-        role: "admin",
-      },
-    ]
-
-    fs.writeFileSync(adminsFile, JSON.stringify(adminsParDefaut, null, 2))
-  }
-}
-
-const lireAdmins = () => {
-  initialiserAdmins()
-  const data = fs.readFileSync(adminsFile, "utf-8")
-  return JSON.parse(data)
-}
-
-const enregistrerAdmins = (admins) => {
-  fs.writeFileSync(adminsFile, JSON.stringify(admins, null, 2))
-}
 
 const verifierSuperAdmin = (req, res, next) => {
   const role = req.headers["x-admin-role"]
@@ -141,22 +114,6 @@ const envoyerNotificationWhatsApp = async (demande) => {
 }
 
 // =========================
-// CONFIGURATION UPLOAD
-// =========================
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadsDir)
-  },
-  filename: (req, file, cb) => {
-    const uniqueName = Date.now() + "-" + file.originalname
-    cb(null, uniqueName)
-  },
-})
-
-const upload = multer({ storage })
-
-// =========================
 // ROUTES TEST
 // =========================
 
@@ -164,8 +121,14 @@ app.get("/", (req, res) => {
   res.send("Backend TAMAL en cours de fonctionnement")
 })
 
-app.get("/api/test", (req, res) => {
-  res.json({ message: "API TAMAL OK" })
+app.get("/api/test", async (req, res) => {
+  try {
+    await pool.query("SELECT 1")
+    res.json({ message: "API TAMAL OK" })
+  } catch (error) {
+    console.error("Erreur test base :", error)
+    res.status(500).json({ message: "Connexion base de données échouée" })
+  }
 })
 
 // =========================
@@ -180,23 +143,41 @@ app.post(
   ]),
   async (req, res) => {
     try {
-      const demandes = lireDemandes()
-
       const formData = req.body
       const documentFile = req.files?.document ? req.files.document[0] : null
       const photoFile = req.files?.photo ? req.files.photo[0] : null
 
-      const demande = {
-        id: demandes.length > 0 ? demandes[demandes.length - 1].id + 1 : 1,
-        ...formData,
-        document: documentFile ? documentFile.filename : null,
-        photo: photoFile ? photoFile.filename : null,
-        statut: "en attente",
-        dateCreation: new Date().toISOString(),
-      }
+      const result = await pool.query(
+        `
+        INSERT INTO demandes
+        (nom, telephone, montant, typeobjet, typepiece, description, document, photo, statut, datecreation)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'en attente', CURRENT_TIMESTAMP)
+        RETURNING
+          id,
+          nom,
+          telephone,
+          montant,
+          typeobjet AS "typeObjet",
+          typepiece AS "typePiece",
+          description,
+          document,
+          photo,
+          statut,
+          datecreation AS "dateCreation"
+        `,
+        [
+          formData.nom || null,
+          formData.telephone || null,
+          formData.montant ? Number(formData.montant) : null,
+          formData.typeObjet || null,
+          formData.typePiece || null,
+          formData.description || null,
+          documentFile ? documentFile.filename : null,
+          photoFile ? photoFile.filename : null,
+        ]
+      )
 
-      demandes.push(demande)
-      enregistrerDemandes(demandes)
+      const demande = result.rows[0]
 
       console.log("Nouvelle demande reçue :")
       console.log(demande)
@@ -216,10 +197,26 @@ app.post(
   }
 )
 
-app.get("/api/demandes", (req, res) => {
+app.get("/api/demandes", async (req, res) => {
   try {
-    const demandes = lireDemandes()
-    res.json(demandes)
+    const result = await pool.query(`
+      SELECT
+        id,
+        nom,
+        telephone,
+        montant,
+        typeobjet AS "typeObjet",
+        typepiece AS "typePiece",
+        description,
+        document,
+        photo,
+        statut,
+        datecreation AS "dateCreation"
+      FROM demandes
+      ORDER BY id DESC
+    `)
+
+    res.json(result.rows)
   } catch (error) {
     console.error("Erreur lors de la lecture des demandes :", error)
     res.status(500).json({
@@ -228,10 +225,8 @@ app.get("/api/demandes", (req, res) => {
   }
 })
 
-app.patch("/api/demandes/:id/statut", (req, res) => {
+app.patch("/api/demandes/:id/statut", async (req, res) => {
   try {
-    const demandes = lireDemandes()
-
     const id = Number(req.params.id)
     const statut = req.body?.statut
 
@@ -239,18 +234,34 @@ app.patch("/api/demandes/:id/statut", (req, res) => {
       return res.status(400).json({ message: "Le statut est obligatoire" })
     }
 
-    const demande = demandes.find((d) => d.id === id)
+    const result = await pool.query(
+      `
+      UPDATE demandes
+      SET statut = $1
+      WHERE id = $2
+      RETURNING
+        id,
+        nom,
+        telephone,
+        montant,
+        typeobjet AS "typeObjet",
+        typepiece AS "typePiece",
+        description,
+        document,
+        photo,
+        statut,
+        datecreation AS "dateCreation"
+      `,
+      [statut, id]
+    )
 
-    if (!demande) {
+    if (result.rowCount === 0) {
       return res.status(404).json({ message: "Demande introuvable" })
     }
 
-    demande.statut = statut
-    enregistrerDemandes(demandes)
-
     res.json({
       message: "Statut mis à jour avec succès",
-      data: demande,
+      data: result.rows[0],
     })
   } catch (error) {
     console.error("Erreur lors de la mise à jour du statut :", error)
@@ -264,7 +275,7 @@ app.patch("/api/demandes/:id/statut", (req, res) => {
 // ROUTES AUTH ADMIN
 // =========================
 
-app.post("/api/admin/login", (req, res) => {
+app.post("/api/admin/login", async (req, res) => {
   try {
     const { username, password } = req.body
 
@@ -274,11 +285,17 @@ app.post("/api/admin/login", (req, res) => {
       })
     }
 
-    const admins = lireAdmins()
-
-    const admin = admins.find(
-      (a) => a.username === username && a.password === password
+    const result = await pool.query(
+      `
+      SELECT id, username, password, role
+      FROM admins
+      WHERE username = $1 AND password = $2
+      LIMIT 1
+      `,
+      [username, password]
     )
+
+    const admin = result.rows[0]
 
     if (!admin) {
       return res.status(401).json({
@@ -304,10 +321,15 @@ app.post("/api/admin/login", (req, res) => {
 // ROUTES GESTION ADMINS
 // =========================
 
-app.get("/api/admins", verifierSuperAdmin, (req, res) => {
+app.get("/api/admins", verifierSuperAdmin, async (req, res) => {
   try {
-    const admins = lireAdmins()
-    res.json(admins)
+    const result = await pool.query(`
+      SELECT id, username, password, role
+      FROM admins
+      ORDER BY id ASC
+    `)
+
+    res.json(result.rows)
   } catch (error) {
     console.error("Erreur lecture admins :", error)
     res.status(500).json({
@@ -316,7 +338,7 @@ app.get("/api/admins", verifierSuperAdmin, (req, res) => {
   }
 })
 
-app.post("/api/admins", verifierSuperAdmin, (req, res) => {
+app.post("/api/admins", verifierSuperAdmin, async (req, res) => {
   try {
     const { username, password, role } = req.body
 
@@ -332,31 +354,29 @@ app.post("/api/admins", verifierSuperAdmin, (req, res) => {
       })
     }
 
-    const admins = lireAdmins()
+    const adminExiste = await pool.query(
+      "SELECT id FROM admins WHERE username = $1 LIMIT 1",
+      [username]
+    )
 
-    const adminExiste = admins.find((a) => a.username === username)
-
-    if (adminExiste) {
+    if (adminExiste.rowCount > 0) {
       return res.status(400).json({
         message: "Ce nom d'utilisateur existe déjà.",
       })
     }
 
-    const nouvelAdmin = {
-      id: admins.length > 0 ? Math.max(...admins.map((a) => a.id)) + 1 : 1,
-      username,
-      password,
-      role,
-    }
-
-    admins.push(nouvelAdmin)
-    enregistrerAdmins(admins)
-
-    const { password: _, ...adminSansPassword } = nouvelAdmin
+    const result = await pool.query(
+      `
+      INSERT INTO admins (username, password, role)
+      VALUES ($1, $2, $3)
+      RETURNING id, username, role
+      `,
+      [username, password, role]
+    )
 
     res.status(201).json({
       message: "Admin ajouté avec succès.",
-      admin: adminSansPassword,
+      admin: result.rows[0],
     })
   } catch (error) {
     console.error("Erreur ajout admin :", error)
@@ -366,7 +386,7 @@ app.post("/api/admins", verifierSuperAdmin, (req, res) => {
   }
 })
 
-app.patch("/api/admins/:id/password", verifierSuperAdmin, (req, res) => {
+app.patch("/api/admins/:id/password", verifierSuperAdmin, async (req, res) => {
   try {
     const id = Number(req.params.id)
     const { password } = req.body
@@ -377,17 +397,21 @@ app.patch("/api/admins/:id/password", verifierSuperAdmin, (req, res) => {
       })
     }
 
-    const admins = lireAdmins()
-    const index = admins.findIndex((a) => a.id === id)
+    const result = await pool.query(
+      `
+      UPDATE admins
+      SET password = $1
+      WHERE id = $2
+      RETURNING id
+      `,
+      [password, id]
+    )
 
-    if (index === -1) {
+    if (result.rowCount === 0) {
       return res.status(404).json({
         message: "Admin introuvable.",
       })
     }
-
-    admins[index].password = password
-    enregistrerAdmins(admins)
 
     res.json({
       message: "Mot de passe mis à jour avec succès.",
@@ -400,12 +424,16 @@ app.patch("/api/admins/:id/password", verifierSuperAdmin, (req, res) => {
   }
 })
 
-app.delete("/api/admins/:id", verifierSuperAdmin, (req, res) => {
+app.delete("/api/admins/:id", verifierSuperAdmin, async (req, res) => {
   try {
     const id = Number(req.params.id)
-    const admins = lireAdmins()
 
-    const adminASupprimer = admins.find((a) => a.id === id)
+    const adminResult = await pool.query(
+      "SELECT id, role FROM admins WHERE id = $1 LIMIT 1",
+      [id]
+    )
+
+    const adminASupprimer = adminResult.rows[0]
 
     if (!adminASupprimer) {
       return res.status(404).json({
@@ -419,8 +447,7 @@ app.delete("/api/admins/:id", verifierSuperAdmin, (req, res) => {
       })
     }
 
-    const adminsMisAJour = admins.filter((a) => a.id !== id)
-    enregistrerAdmins(adminsMisAJour)
+    await pool.query("DELETE FROM admins WHERE id = $1", [id])
 
     res.json({
       message: "Admin supprimé avec succès.",
