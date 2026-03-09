@@ -15,6 +15,10 @@ const demandesFile = path.join(__dirname, "demandes.json")
 const adminsFile = path.join(__dirname, "admins.json")
 const uploadsDir = path.join(__dirname, "uploads")
 
+const ULTRAMSG_INSTANCE_ID = process.env.ULTRAMSG_INSTANCE_ID
+const ULTRAMSG_TOKEN = process.env.ULTRAMSG_TOKEN
+const WHATSAPP_ADMIN_NUMBER = process.env.WHATSAPP_ADMIN_NUMBER
+
 // Créer le dossier uploads s'il n'existe pas
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true })
@@ -24,7 +28,6 @@ if (!fs.existsSync(uploadsDir)) {
 // DEMANDES
 // =========================
 
-// Lire les demandes
 const lireDemandes = () => {
   if (!fs.existsSync(demandesFile)) {
     fs.writeFileSync(demandesFile, JSON.stringify([], null, 2))
@@ -34,7 +37,6 @@ const lireDemandes = () => {
   return JSON.parse(data)
 }
 
-// Sauvegarder les demandes
 const enregistrerDemandes = (demandes) => {
   fs.writeFileSync(demandesFile, JSON.stringify(demandes, null, 2))
 }
@@ -43,7 +45,6 @@ const enregistrerDemandes = (demandes) => {
 // ADMINS
 // =========================
 
-// Initialiser admins.json si absent
 const initialiserAdmins = () => {
   if (!fs.existsSync(adminsFile)) {
     const adminsParDefaut = [
@@ -65,19 +66,16 @@ const initialiserAdmins = () => {
   }
 }
 
-// Lire les admins
 const lireAdmins = () => {
   initialiserAdmins()
   const data = fs.readFileSync(adminsFile, "utf-8")
   return JSON.parse(data)
 }
 
-// Sauvegarder les admins
 const enregistrerAdmins = (admins) => {
   fs.writeFileSync(adminsFile, JSON.stringify(admins, null, 2))
 }
 
-// Middleware simple pour autoriser seulement le super admin
 const verifierSuperAdmin = (req, res, next) => {
   const role = req.headers["x-admin-role"]
 
@@ -88,6 +86,58 @@ const verifierSuperAdmin = (req, res, next) => {
   }
 
   next()
+}
+
+// =========================
+// WHATSAPP NOTIFICATION
+// =========================
+
+const envoyerNotificationWhatsApp = async (demande) => {
+  try {
+    if (!ULTRAMSG_INSTANCE_ID || !ULTRAMSG_TOKEN || !WHATSAPP_ADMIN_NUMBER) {
+      console.warn("Configuration UltraMsg absente : notification WhatsApp ignorée.")
+      return
+    }
+
+    const message = [
+      "📩 Nouvelle demande TAMAL",
+      `Nom : ${demande.nom || "-"}`,
+      `Téléphone : ${demande.telephone || "-"}`,
+      `Montant : ${demande.montant || "-"} FCFA`,
+      `Objet : ${demande.typeObjet || "-"}`,
+      `Statut : ${demande.statut || "-"}`,
+      "➡️ Consultez l’espace admin pour la traiter.",
+    ].join("\n")
+
+    const body = new URLSearchParams({
+      token: ULTRAMSG_TOKEN,
+      to: WHATSAPP_ADMIN_NUMBER,
+      body: message,
+    })
+
+    const response = await fetch(
+      `https://api.ultramsg.com/${ULTRAMSG_INSTANCE_ID}/messages/chat`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: body.toString(),
+      }
+    )
+
+    const data = await response.text()
+
+    if (!response.ok) {
+      console.error("Erreur envoi WhatsApp UltraMsg :", data)
+      return
+    }
+
+    console.log("Notification WhatsApp envoyée avec succès.")
+    console.log(data)
+  } catch (error) {
+    console.error("Erreur lors de l'envoi de la notification WhatsApp :", error)
+  }
 }
 
 // =========================
@@ -128,7 +178,7 @@ app.post(
     { name: "document", maxCount: 1 },
     { name: "photo", maxCount: 1 },
   ]),
-  (req, res) => {
+  async (req, res) => {
     try {
       const demandes = lireDemandes()
 
@@ -151,8 +201,7 @@ app.post(
       console.log("Nouvelle demande reçue :")
       console.log(demande)
 
-      console.log("Demandes enregistrées dans le fichier :")
-      console.log(demandes)
+      await envoyerNotificationWhatsApp(demande)
 
       res.status(201).json({
         message: "Demande reçue avec succès",
@@ -160,7 +209,9 @@ app.post(
       })
     } catch (error) {
       console.error("Erreur lors de la création de la demande :", error)
-      res.status(500).json({ message: "Erreur serveur lors de l'envoi de la demande" })
+      res.status(500).json({
+        message: "Erreur serveur lors de l'envoi de la demande",
+      })
     }
   }
 )
@@ -171,7 +222,9 @@ app.get("/api/demandes", (req, res) => {
     res.json(demandes)
   } catch (error) {
     console.error("Erreur lors de la lecture des demandes :", error)
-    res.status(500).json({ message: "Erreur serveur lors de la lecture des demandes" })
+    res.status(500).json({
+      message: "Erreur serveur lors de la lecture des demandes",
+    })
   }
 })
 
@@ -193,7 +246,6 @@ app.patch("/api/demandes/:id/statut", (req, res) => {
     }
 
     demande.statut = statut
-
     enregistrerDemandes(demandes)
 
     res.json({
@@ -202,7 +254,9 @@ app.patch("/api/demandes/:id/statut", (req, res) => {
     })
   } catch (error) {
     console.error("Erreur lors de la mise à jour du statut :", error)
-    res.status(500).json({ message: "Erreur serveur lors de la mise à jour du statut" })
+    res.status(500).json({
+      message: "Erreur serveur lors de la mise à jour du statut",
+    })
   }
 })
 
@@ -250,7 +304,6 @@ app.post("/api/admin/login", (req, res) => {
 // ROUTES GESTION ADMINS
 // =========================
 
-// Voir la liste des admins
 app.get("/api/admins", verifierSuperAdmin, (req, res) => {
   try {
     const admins = lireAdmins()
@@ -263,7 +316,6 @@ app.get("/api/admins", verifierSuperAdmin, (req, res) => {
   }
 })
 
-// Ajouter un admin
 app.post("/api/admins", verifierSuperAdmin, (req, res) => {
   try {
     const { username, password, role } = req.body
@@ -314,7 +366,6 @@ app.post("/api/admins", verifierSuperAdmin, (req, res) => {
   }
 })
 
-// Modifier mot de passe admin
 app.patch("/api/admins/:id/password", verifierSuperAdmin, (req, res) => {
   try {
     const id = Number(req.params.id)
@@ -349,7 +400,6 @@ app.patch("/api/admins/:id/password", verifierSuperAdmin, (req, res) => {
   }
 })
 
-// Supprimer un admin
 app.delete("/api/admins/:id", verifierSuperAdmin, (req, res) => {
   try {
     const id = Number(req.params.id)
