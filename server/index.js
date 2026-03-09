@@ -468,6 +468,15 @@ app.get("/api/debug-admins", async (req, res) => {
     res.status(500).json({ message: error.message })
   }
 })
+app.get("/api/debug-admins", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT * FROM admins")
+    res.json(result.rows)
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ error: error.message })
+  }
+})
 app.listen(PORT, () => {
   console.log("Serveur backend lancé sur le port " + PORT)
 })
