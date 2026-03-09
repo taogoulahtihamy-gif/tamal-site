@@ -9,13 +9,13 @@ export default function Hero() {
         <div>
           <RevealOnScroll>
             <div className="inline-block rounded-full bg-yellow-100 px-4 py-2 text-sm font-semibold text-yellow-700 mb-6">
-              Réponse rapide • Dépôt du gage en agence
+              Réponse rapide • En 24H
             </div>
           </RevealOnScroll>
 
           <RevealOnScroll delay={100}>
             <h1 className="text-5xl font-bold leading-tight">
-              Prêt sur gage{" "}
+              Prêt{" "}
               <span className="text-yellow-600">rapide</span>
               <br />
               et sécurisé
@@ -24,7 +24,7 @@ export default function Hero() {
 
           <RevealOnScroll delay={200}>
             <p className="mt-6 text-lg text-gray-600">
-              Faites votre demande en ligne, présentez votre objet en agence et recevez votre prêt après validation complète de votre dossier.
+             Obtenez votre prêt en 24h : simple, rapide et sans mauvaises surprises.
             </p>
           </RevealOnScroll>
 

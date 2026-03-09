@@ -139,6 +139,7 @@ export default function Simulateur() {
                       ? `${formatMontant(remboursementNormal)} FCFA`
                       : "--"}
                   </p>
+
                 </div>
 
                 <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5">
@@ -158,6 +159,11 @@ export default function Simulateur() {
                 </span>{" "}
                 par jour s’applique ensuite jusqu’au remboursement complet.
               </div>
+               <div className="mt-4 rounded-xl border border-yellow-200 bg-yellow-50 p-4 text-sm text-gray-700">
+                ⚠️ Les frais de transaction (Mobile Money ou autre moyen de paiement) 
+                sont entièrement supportés par le client et ne sont pas inclus dans 
+                le montant du remboursement affiché dans ce simulateur.
+                 </div>
             </div>
           </RevealOnScroll>
 
