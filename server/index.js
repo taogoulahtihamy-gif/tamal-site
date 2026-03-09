@@ -459,7 +459,15 @@ app.delete("/api/admins/:id", verifierSuperAdmin, async (req, res) => {
     })
   }
 })
-
+app.get("/api/debug-admins", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT id, username, role FROM admins ORDER BY id ASC")
+    res.json(result.rows)
+  } catch (error) {
+    console.error("Erreur debug admins :", error)
+    res.status(500).json({ message: error.message })
+  }
+})
 app.listen(PORT, () => {
   console.log("Serveur backend lancé sur le port " + PORT)
 })
