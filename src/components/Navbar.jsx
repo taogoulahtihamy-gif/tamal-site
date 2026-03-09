@@ -10,22 +10,134 @@ export default function Navbar() {
   const location = useLocation()
 
   const liensRecherche = [
-    { label: "Accueil", path: "/" },
-    { label: "Comment ça marche", path: "/comment-ca-marche" },
-    { label: "Conditions", path: "/conditions" },
-    { label: "Simulateur", path: "/simulateur" },
-    { label: "Demande", path: "/demande" },
-    { label: "Contact", path: "/contact" },
-    { label: "Espace admin", path: "/login-admin" },
+    {
+      label: "Accueil",
+      path: "/",
+      motsCles: [
+        "accueil",
+        "home",
+        "tamal",
+        "pret",
+        "prêt",
+        "gage",
+        "liquidité",
+        "liquidite",
+        "rapide",
+        "sécurisé",
+        "securise",
+      ],
+    },
+    {
+      label: "Comment ça marche",
+      path: "/comment-ca-marche",
+      motsCles: [
+        "comment",
+        "marche",
+        "fonctionnement",
+        "etapes",
+        "étapes",
+        "processus",
+        "demande en ligne",
+        "rendez-vous",
+        "validation",
+        "versement",
+      ],
+    },
+    {
+      label: "Conditions",
+      path: "/conditions",
+      motsCles: [
+        "condition",
+        "conditions",
+        "documents",
+        "document",
+        "cni",
+        "passeport",
+        "certificat",
+        "résidence",
+        "residence",
+        "acceptation",
+        "dépôt",
+        "depot",
+      ],
+    },
+    {
+      label: "Simulateur",
+      path: "/simulateur",
+      motsCles: [
+        "simulateur",
+        "simulation",
+        "montant",
+        "durée",
+        "duree",
+        "remboursement",
+        "retard",
+        "penalite",
+        "pénalité",
+        "calcul",
+        "fcfa",
+      ],
+    },
+    {
+      label: "Demande",
+      path: "/demande",
+      motsCles: [
+        "demande",
+        "formulaire",
+        "soumettre",
+        "nom",
+        "telephone",
+        "téléphone",
+        "photo",
+        "document",
+        "piece",
+        "pièce",
+        "objet",
+        "gager",
+      ],
+    },
+    {
+      label: "Contact",
+      path: "/contact",
+      motsCles: [
+        "contact",
+        "whatsapp",
+        "appel",
+        "telephone",
+        "téléphone",
+        "adresse",
+        "dakar",
+        "horaires",
+        "agent",
+      ],
+    },
+    {
+      label: "Espace admin",
+      path: "/login-admin",
+      motsCles: [
+        "admin",
+        "login",
+        "connexion",
+        "dashboard",
+        "gestion",
+        "liste demandes",
+        "admins",
+      ],
+    },
   ]
 
   const resultatsRecherche = useMemo(() => {
     const texte = recherche.trim().toLowerCase()
+
     if (!texte) return liensRecherche
 
-    return liensRecherche.filter((item) =>
-      item.label.toLowerCase().includes(texte)
-    )
+    return liensRecherche.filter((item) => {
+      const dansLabel = item.label.toLowerCase().includes(texte)
+      const dansMotsCles = item.motsCles.some((mot) =>
+        mot.toLowerCase().includes(texte)
+      )
+      return dansLabel || dansMotsCles
+    })
   }, [recherche])
 
   const fermerTout = () => {
@@ -36,17 +148,19 @@ export default function Navbar() {
 
   const toggleMenu = () => {
     setMenuOuvert((prev) => !prev)
-    setRechercheOuverte(false)
   }
 
   const toggleRecherche = () => {
     setRechercheOuverte((prev) => !prev)
-    setMenuOuvert(false)
-    if (rechercheOuverte) setRecherche("")
+    if (rechercheOuverte) {
+      setRecherche("")
+    }
   }
 
   const allerVers = (path) => {
-    fermerTout()
+    setMenuOuvert(false)
+    setRechercheOuverte(false)
+    setRecherche("")
 
     if (path === "/contact") {
       if (location.pathname !== "/") {
@@ -98,6 +212,7 @@ export default function Navbar() {
             >
               Accueil
             </button>
+
             <button
               type="button"
               onClick={() => allerVers("/comment-ca-marche")}
@@ -105,6 +220,7 @@ export default function Navbar() {
             >
               Comment ça marche
             </button>
+
             <button
               type="button"
               onClick={() => allerVers("/conditions")}
@@ -112,6 +228,7 @@ export default function Navbar() {
             >
               Conditions
             </button>
+
             <button
               type="button"
               onClick={() => allerVers("/simulateur")}
@@ -119,6 +236,7 @@ export default function Navbar() {
             >
               Simulateur
             </button>
+
             <button
               type="button"
               onClick={() => allerVers("/demande")}
@@ -126,6 +244,7 @@ export default function Navbar() {
             >
               Demande
             </button>
+
             <button
               type="button"
               onClick={() => allerVers("/contact")}
@@ -167,35 +286,59 @@ export default function Navbar() {
               WhatsApp
             </a>
 
-            <button
-              type="button"
-              onClick={toggleMenu}
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 text-gray-700 transition hover:bg-gray-100 xl:hidden"
-              aria-label="Ouvrir le menu"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="1.8"
+            <div className="flex items-center gap-2 xl:hidden">
+              <button
+                type="button"
+                onClick={toggleRecherche}
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 text-gray-700 transition hover:bg-gray-100"
+                aria-label="Ouvrir la recherche"
               >
-                {menuOuvert ? (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    d="M6 18L18 6M6 6l12 12"
+                    d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z"
                   />
-                ) : (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M4 7h16M4 12h16M4 17h16"
-                  />
-                )}
-              </svg>
-            </button>
+                </svg>
+              </button>
+
+              <button
+                type="button"
+                onClick={toggleMenu}
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 text-gray-700 transition hover:bg-gray-100"
+                aria-label="Ouvrir le menu"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                >
+                  {menuOuvert ? (
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  ) : (
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M4 7h16M4 12h16M4 17h16"
+                    />
+                  )}
+                </svg>
+              </button>
+            </div>
 
             {rechercheOuverte && (
               <div className="absolute right-0 top-14 hidden w-80 rounded-3xl border border-gray-200 bg-white p-4 shadow-2xl md:block">
@@ -203,7 +346,7 @@ export default function Navbar() {
                   type="text"
                   value={recherche}
                   onChange={(e) => setRecherche(e.target.value)}
-                  placeholder="Rechercher une page..."
+                  placeholder="Rechercher sur le site..."
                   className="w-full rounded-2xl border border-gray-200 bg-[#faf9f5] px-4 py-3 text-gray-900 outline-none focus:border-yellow-500"
                 />
 
@@ -229,6 +372,41 @@ export default function Navbar() {
             )}
           </div>
         </div>
+
+        {rechercheOuverte && (
+          <div className="border-t border-gray-200 bg-white px-4 pb-4 pt-3 md:hidden">
+            <div className="mx-auto max-w-7xl">
+              <div className="rounded-3xl border border-gray-200 bg-white p-3 shadow-lg">
+                <input
+                  type="text"
+                  value={recherche}
+                  onChange={(e) => setRecherche(e.target.value)}
+                  placeholder="Rechercher sur tout le site..."
+                  className="w-full rounded-2xl border border-gray-200 bg-[#faf9f5] px-4 py-3 text-gray-900 outline-none focus:border-yellow-500"
+                />
+
+                <div className="mt-3 max-h-72 space-y-2 overflow-y-auto">
+                  {resultatsRecherche.length > 0 ? (
+                    resultatsRecherche.map((item) => (
+                      <button
+                        key={item.label}
+                        type="button"
+                        onClick={() => allerVers(item.path)}
+                        className="block w-full rounded-2xl px-3 py-3 text-left text-sm text-gray-800 transition hover:bg-gray-100"
+                      >
+                        {item.label}
+                      </button>
+                    ))
+                  ) : (
+                    <p className="px-3 py-2 text-sm text-gray-500">
+                      Aucun résultat.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </header>
 
       {menuOuvert && (
@@ -263,48 +441,6 @@ export default function Navbar() {
               >
                 ✕
               </button>
-            </div>
-
-            <div className="border-b border-gray-100 px-5 py-4">
-              <button
-                type="button"
-                onClick={toggleRecherche}
-                className="flex w-full items-center justify-between rounded-2xl border border-gray-200 bg-[#faf9f5] px-4 py-3 text-sm text-gray-700"
-              >
-                <span>Recherche</span>
-                <span>⌕</span>
-              </button>
-
-              {rechercheOuverte && (
-                <div className="mt-3 rounded-2xl border border-gray-200 bg-white p-3">
-                  <input
-                    type="text"
-                    value={recherche}
-                    onChange={(e) => setRecherche(e.target.value)}
-                    placeholder="Rechercher une page..."
-                    className="w-full rounded-2xl border border-gray-200 bg-[#faf9f5] px-4 py-3 text-gray-900 outline-none focus:border-yellow-500"
-                  />
-
-                  <div className="mt-3 space-y-2">
-                    {resultatsRecherche.length > 0 ? (
-                      resultatsRecherche.map((item) => (
-                        <button
-                          key={item.label}
-                          type="button"
-                          onClick={() => allerVers(item.path)}
-                          className="block w-full rounded-2xl px-3 py-3 text-left text-sm text-gray-800 transition hover:bg-gray-100"
-                        >
-                          {item.label}
-                        </button>
-                      ))
-                    ) : (
-                      <p className="px-3 py-2 text-sm text-gray-500">
-                        Aucun résultat.
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
 
             <div className="flex flex-col px-4 py-4">
