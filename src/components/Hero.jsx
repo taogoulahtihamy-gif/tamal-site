@@ -38,7 +38,7 @@ export default function Hero() {
               </Link>
 
               <a
-                href="https://wa.me/221772616753"
+                href="https://wa.me/221778492779"
                 className="rounded-full border border-gray-300 px-8 py-4 text-center hover:bg-gray-100"
               >
                 Parler à un agent

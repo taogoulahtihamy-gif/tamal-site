@@ -159,7 +159,7 @@ export default function Navbar() {
             </button>
 
             <a
-              href="https://wa.me/221772616753"
+              href="https://wa.me/221778492779"
               target="_blank"
               rel="noreferrer"
               className="hidden rounded-full bg-yellow-500 px-4 py-2 text-sm font-semibold text-black transition hover:bg-yellow-400 md:inline-flex"
@@ -367,7 +367,7 @@ export default function Navbar() {
 
             <div className="border-t border-gray-100 px-5 py-5">
               <a
-                href="https://wa.me/221772616753"
+                href="https://wa.me/221778492779"
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex w-full justify-center rounded-full bg-yellow-500 px-4 py-3 text-sm font-semibold text-black hover:bg-yellow-400"

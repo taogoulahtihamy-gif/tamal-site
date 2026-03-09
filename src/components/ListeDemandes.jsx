@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { Navigate } from "react-router-dom"
+import * as XLSX from "xlsx"
 import logo from "../assets/logo.jpeg"
 
 export default function ListeDemandes() {
@@ -32,19 +33,8 @@ export default function ListeDemandes() {
     return <Navigate to="/login-admin" replace />
   }
 
-  const couleurStatut = (statut) => {
-    if (statut === "acceptée") return "text-green-600"
-    if (statut === "refusée") return "text-red-600"
-    return "text-yellow-600"
-  }
-
-  const formaterDate = (date) => {
-    if (!date) return "-"
-    return new Date(date).toLocaleString("fr-FR")
-  }
-
   const calculerDateRemboursement = (demande) => {
-    if (!demande?.dateCreation) return "-"
+    if (!demande?.dateCreation) return null
 
     const montant = Number(demande.montant || 0)
     const duree = montant >= 30000 ? 14 : 7
@@ -52,7 +42,78 @@ export default function ListeDemandes() {
     const date = new Date(demande.dateCreation)
     date.setDate(date.getDate() + duree)
 
-    return date.toLocaleString("fr-FR")
+    return date
+  }
+
+  const formaterDate = (date) => {
+    if (!date) return "-"
+    return new Date(date).toLocaleString("fr-FR")
+  }
+
+  const getEtatCRM = (demande) => {
+    if (demande.statut === "remboursée") {
+      return {
+        label: "Remboursée",
+        color: "text-green-600",
+        bg: "bg-green-50",
+        border: "border-green-200",
+      }
+    }
+
+    if (demande.statut === "refusée") {
+      return {
+        label: "Refusée",
+        color: "text-gray-600",
+        bg: "bg-gray-50",
+        border: "border-gray-200",
+      }
+    }
+
+    const dateRemboursement = calculerDateRemboursement(demande)
+    if (!dateRemboursement) {
+      return {
+        label: "En attente",
+        color: "text-yellow-600",
+        bg: "bg-yellow-50",
+        border: "border-yellow-200",
+      }
+    }
+
+    const maintenant = new Date()
+    const diffMs = dateRemboursement - maintenant
+    const diffJours = diffMs / (1000 * 60 * 60 * 24)
+
+    if (diffJours < 0 && demande.statut !== "remboursée") {
+      return {
+        label: "En retard",
+        color: "text-red-600",
+        bg: "bg-red-50",
+        border: "border-red-200",
+      }
+    }
+
+    if (diffJours <= 2 && demande.statut !== "remboursée") {
+      return {
+        label: "Proche remboursement",
+        color: "text-yellow-700",
+        bg: "bg-yellow-50",
+        border: "border-yellow-200",
+      }
+    }
+
+    return {
+      label: "En cours",
+      color: "text-blue-600",
+      bg: "bg-blue-50",
+      border: "border-blue-200",
+    }
+  }
+
+  const couleurStatut = (statut) => {
+    if (statut === "acceptée") return "text-green-600"
+    if (statut === "refusée") return "text-red-600"
+    if (statut === "remboursée") return "text-emerald-600"
+    return "text-yellow-600"
   }
 
   const demandesFiltrees = useMemo(() => {
@@ -71,6 +132,29 @@ export default function ListeDemandes() {
       return matchRecherche && matchStatut
     })
   }, [demandes, recherche, filtreStatut])
+
+  const exporterExcel = () => {
+    const dataExport = demandesFiltrees.map((d) => ({
+      ID: d.id,
+      Nom: d.nom || "",
+      Téléphone: d.telephone || "",
+      Objet: d.typeObjet || "",
+      Montant: d.montant || "",
+      Statut: d.statut || "",
+      "État CRM": getEtatCRM(d).label,
+      "Date demande": formaterDate(d.dateCreation),
+      "Date remboursement": formaterDate(calculerDateRemboursement(d)),
+    }))
+
+    const worksheet = XLSX.utils.json_to_sheet(dataExport)
+    const workbook = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Liste demandes")
+    XLSX.writeFile(workbook, "liste_demandes_tamal.xlsx")
+  }
+
+  const imprimerPage = () => {
+    window.print()
+  }
 
   const deconnexion = () => {
     localStorage.removeItem("adminAuth")
@@ -142,10 +226,26 @@ export default function ListeDemandes() {
       </div>
 
       <div className="mb-6 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-        <div className="mb-4">
+        <div className="mb-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <h2 className="text-xl font-bold text-yellow-600">
             Liste complète des demandes
           </h2>
+
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={exporterExcel}
+              className="rounded-full bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-500"
+            >
+              Exporter Excel
+            </button>
+
+            <button
+              onClick={imprimerPage}
+              className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
+            >
+              Imprimer
+            </button>
+          </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
@@ -166,6 +266,7 @@ export default function ListeDemandes() {
             <option value="en attente">En attente</option>
             <option value="acceptée">Acceptée</option>
             <option value="refusée">Refusée</option>
+            <option value="remboursée">Remboursée</option>
           </select>
         </div>
       </div>
@@ -180,6 +281,7 @@ export default function ListeDemandes() {
               <th className="p-3 text-gray-700">Objet</th>
               <th className="p-3 text-gray-700">Montant</th>
               <th className="p-3 text-gray-700">Statut</th>
+              <th className="p-3 text-gray-700">État CRM</th>
               <th className="p-3 text-gray-700">Date demande</th>
               <th className="p-3 text-gray-700">Date remboursement</th>
             </tr>
@@ -187,27 +289,42 @@ export default function ListeDemandes() {
 
           <tbody>
             {demandesFiltrees.length > 0 ? (
-              demandesFiltrees.map((d) => (
-                <tr key={d.id} className="border-t border-gray-200 text-center">
-                  <td className="p-3 text-gray-800">{d.id}</td>
-                  <td className="p-3 text-gray-800">{d.nom}</td>
-                  <td className="p-3 text-gray-800">{d.telephone}</td>
-                  <td className="p-3 text-gray-800">{d.typeObjet}</td>
-                  <td className="p-3 text-gray-800">{d.montant} FCFA</td>
-                  <td className={`p-3 font-semibold ${couleurStatut(d.statut)}`}>
-                    {d.statut}
-                  </td>
-                  <td className="p-3 text-sm text-gray-600">
-                    {formaterDate(d.dateCreation)}
-                  </td>
-                  <td className="p-3 text-sm text-gray-600">
-                    {calculerDateRemboursement(d)}
-                  </td>
-                </tr>
-              ))
+              demandesFiltrees.map((d) => {
+                const etatCRM = getEtatCRM(d)
+
+                return (
+                  <tr key={d.id} className="border-t border-gray-200 text-center">
+                    <td className="p-3 text-gray-800">{d.id}</td>
+                    <td className="p-3 text-gray-800">{d.nom}</td>
+                    <td className="p-3 text-gray-800">{d.telephone}</td>
+                    <td className="p-3 text-gray-800">{d.typeObjet}</td>
+                    <td className="p-3 text-gray-800">{d.montant} FCFA</td>
+
+                    <td className={`p-3 font-semibold ${couleurStatut(d.statut)}`}>
+                      {d.statut}
+                    </td>
+
+                    <td className="p-3">
+                      <span
+                        className={`inline-block rounded-full border px-3 py-1 text-xs font-semibold ${etatCRM.color} ${etatCRM.bg} ${etatCRM.border}`}
+                      >
+                        {etatCRM.label}
+                      </span>
+                    </td>
+
+                    <td className="p-3 text-sm text-gray-600">
+                      {formaterDate(d.dateCreation)}
+                    </td>
+
+                    <td className="p-3 text-sm text-gray-600">
+                      {formaterDate(calculerDateRemboursement(d))}
+                    </td>
+                  </tr>
+                )
+              })
             ) : (
               <tr>
-                <td colSpan="8" className="p-6 text-center text-gray-500">
+                <td colSpan="9" className="p-6 text-center text-gray-500">
                   Aucune demande trouvée.
                 </td>
               </tr>
