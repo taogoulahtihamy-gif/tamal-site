@@ -4,89 +4,131 @@ export default function Contact() {
   return (
     <section
       id="contact"
-      className="border-t border-gray-200 bg-[#f5f3ed] py-20 text-gray-900"
+      className="border-t border-gray-200 bg-[#f5f3ed] pt-40 pb-10 text-gray-900"
     >
       <div className="mx-auto max-w-7xl px-4">
+
         <RevealOnScroll>
-          <div className="mx-auto max-w-2xl text-center">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-yellow-600">
-              Contact
-            </p>
+          <div className="overflow-hidden rounded-[32px] border border-white/10 bg-[#0b0b0b] text-white shadow-[0_20px_60px_rgba(0,0,0,0.2)]">
+            
+            <div className="grid gap-10 px-6 py-10 md:grid-cols-2 md:px-10 md:py-12">
 
-            <h3 className="mt-4 text-3xl font-bold md:text-4xl">
-              Contactez TAMAL
-            </h3>
+              {/* CONTACT */}
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-yellow-500">
+                  Nous contacter
+                </p>
 
-            <p className="mt-4 text-gray-600">
-              Besoin d’informations complémentaires ? Un agent peut vous répondre
-              rapidement par téléphone ou par WhatsApp.
-            </p>
+                <h4 className="mt-4 text-3xl font-bold">
+                  Restons en contact
+                </h4>
+
+                <p className="mt-4 max-w-xl text-sm leading-7 text-gray-300">
+                  Pour toute demande d'information concernant un prêt sur gage,
+                  notre équipe reste disponible par téléphone ou WhatsApp.
+                </p>
+
+                <div className="mt-8 space-y-5">
+
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-gray-400">
+                      Téléphone
+                    </p>
+                    <p className="mt-1 text-lg font-semibold text-white">
+                      +221 77 849 27 79
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-gray-400">
+                      WhatsApp
+                    </p>
+                    <p className="mt-1 text-lg font-semibold text-white">
+                      +221 77 849 27 79
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-gray-400">
+                      Adresse
+                    </p>
+                    <p className="mt-1 text-lg font-semibold text-white">
+                      Dakar, Sénégal
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-gray-400">
+                      Horaires
+                    </p>
+                    <p className="mt-1 text-lg font-semibold text-white">
+                      Lun - Sam : 08h00 - 19h00
+                    </p>
+                  </div>
+
+                </div>
+              </div>
+
+              {/* LIENS RAPIDES */}
+              <div className="flex flex-col justify-between">
+
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.2em] text-yellow-500">
+                    Navigation
+                  </p>
+
+                  <div className="mt-6 grid gap-3">
+
+                    <a
+                      href="/"
+                      className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm transition hover:border-yellow-500 hover:text-yellow-400"
+                    >
+                      Accueil
+                    </a>
+
+                    <a
+                      href="/demande"
+                      className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm transition hover:border-yellow-500 hover:text-yellow-400"
+                    >
+                      Faire une demande
+                    </a>
+
+                    <a
+                      href="/contact"
+                      className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm transition hover:border-yellow-500 hover:text-yellow-400"
+                    >
+                      Contact
+                    </a>
+
+                  </div>
+                </div>
+
+                <div className="mt-8 flex flex-col gap-4 sm:flex-row md:flex-col lg:flex-row">
+
+                  <a
+                    href="https://wa.me/221778492779"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex justify-center rounded-full bg-yellow-500 px-6 py-3 font-semibold text-black transition hover:bg-yellow-400"
+                  >
+                    WhatsApp
+                  </a>
+
+                  <a
+                    href="tel:+221778492779"
+                    className="inline-flex justify-center rounded-full border border-white/20 px-6 py-3 font-semibold text-white transition hover:border-yellow-500 hover:text-yellow-400"
+                  >
+                    Appeler
+                  </a>
+
+                </div>
+
+              </div>
+
+            </div>
           </div>
         </RevealOnScroll>
 
-        <div className="mt-12 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-          <RevealOnScroll delay={0}>
-            <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-yellow-300 hover:shadow-lg">
-              <p className="text-sm font-semibold uppercase tracking-wide text-yellow-600">
-                Téléphone
-              </p>
-              <p className="mt-4 text-lg font-semibold text-gray-900">
-                +221 778492779
-              </p>
-            </div>
-          </RevealOnScroll>
-
-          <RevealOnScroll delay={100}>
-            <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-yellow-300 hover:shadow-lg">
-              <p className="text-sm font-semibold uppercase tracking-wide text-yellow-600">
-                WhatsApp
-              </p>
-              <p className="mt-4 text-lg font-semibold text-gray-900">
-                +221 778492779
-              </p>
-            </div>
-          </RevealOnScroll>
-
-          <RevealOnScroll delay={200}>
-            <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-yellow-300 hover:shadow-lg">
-              <p className="text-sm font-semibold uppercase tracking-wide text-yellow-600">
-                Adresse
-              </p>
-              <p className="mt-4 text-lg font-semibold text-gray-900">
-                Dakar, Sénégal
-              </p>
-            </div>
-          </RevealOnScroll>
-
-          <RevealOnScroll delay={300}>
-            <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-yellow-300 hover:shadow-lg">
-              <p className="text-sm font-semibold uppercase tracking-wide text-yellow-600">
-                Horaires
-              </p>
-              <p className="mt-4 text-lg font-semibold text-gray-900">
-                Lun - Sam : 08h00 - 19h00
-              </p>
-            </div>
-          </RevealOnScroll>
-        </div>
-
-        <RevealOnScroll delay={350}>
-          <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <a
-              href="https://wa.me/221778492779"
-              className="rounded-full bg-yellow-500 px-6 py-3 font-semibold text-black transition duration-300 hover:-translate-y-0.5 hover:bg-yellow-400 hover:shadow-md"
-            >
-              Écrire sur WhatsApp
-            </a>
-
-            <a
-              href="tel:+221778492779"
-              className="rounded-full border border-gray-300 px-6 py-3 font-semibold text-gray-800 transition duration-300 hover:-translate-y-0.5 hover:border-yellow-500 hover:text-yellow-600 hover:shadow-sm"
-            >
-              Appeler maintenant
-            </a>
-          </div>
-        </RevealOnScroll>
       </div>
     </section>
   )

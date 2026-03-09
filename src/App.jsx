@@ -14,7 +14,6 @@ import Admin from "./components/Admin"
 import LoginAdmin from "./components/LoginAdmin"
 import GestionAdmins from "./components/GestionAdmins"
 import ListeDemandes from "./components/ListeDemandes"
-
 function LayoutPublic({ children }) {
   return (
     <div className="min-h-screen bg-[#f8f8f6] text-black">
