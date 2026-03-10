@@ -352,7 +352,6 @@ app.post(
     }
   }
 )
-
 app.get("/api/demandes", async (req, res) => {
   try {
     const result = await pool.query(`
@@ -368,7 +367,13 @@ app.get("/api/demandes", async (req, res) => {
         document,
         photo,
         statut,
-        datecreation AS "dateCreation"
+        datecreation AS "dateCreation",
+        date_remboursement AS "dateRemboursement",
+        etat_crm AS "etatCrm",
+        montant_accorde AS "montantAccorde",
+        montant_remboursement AS "montantRemboursement",
+        statut_paiement AS "statutPaiement",
+        date_dernier_rappel AS "dateDernierRappel"
       FROM demandes
       ORDER BY id DESC
     `)
