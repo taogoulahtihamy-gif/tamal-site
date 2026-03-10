@@ -22,6 +22,7 @@ const WHATSAPP_ADMIN_NUMBER = process.env.WHATSAPP_ADMIN_NUMBER
 
 const BREVO_API_KEY = process.env.BREVO_API_KEY
 const MAIL_FROM = process.env.MAIL_FROM
+const MAIL_FROM_NAME = process.env.MAIL_FROM_NAME || "TAMAL"
 const MAIL_TO = process.env.MAIL_TO
 
 if (!fs.existsSync(uploadsDir)) {
@@ -116,23 +117,6 @@ const envoyerNotificationWhatsApp = async (demande) => {
 // EMAILS BREVO
 // =========================
 
-const parseEmailIdentity = (value) => {
-  if (!value) return { email: "", name: "TAMAL" }
-
-  const match = value.match(/^(.*)<(.+)>$/)
-
-  if (match) {
-    return {
-      name: match[1].trim().replace(/^"|"$/g, "") || "TAMAL",
-      email: match[2].trim(),
-    }
-  }
-
-  return {
-    name: "TAMAL",
-    email: value.trim(),
-  }
-}
 
 const envoyerEmailBrevo = async ({ to, subject, htmlContent }) => {
   try {
@@ -140,8 +124,6 @@ const envoyerEmailBrevo = async ({ to, subject, htmlContent }) => {
       console.warn("Configuration Brevo absente : email ignoré.")
       return
     }
-
-    const sender = parseEmailIdentity(MAIL_FROM)
 
     const response = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
@@ -151,7 +133,10 @@ const envoyerEmailBrevo = async ({ to, subject, htmlContent }) => {
         Accept: "application/json",
       },
       body: JSON.stringify({
-        sender,
+        sender: {
+          name: MAIL_FROM_NAME,
+          email: MAIL_FROM,
+        },
         to: [{ email: to }],
         subject,
         htmlContent,
@@ -170,7 +155,6 @@ const envoyerEmailBrevo = async ({ to, subject, htmlContent }) => {
     console.error("Erreur lors de l'envoi via Brevo :", error)
   }
 }
-
 const envoyerEmailInterne = async (demande) => {
   try {
     if (!MAIL_TO) {
