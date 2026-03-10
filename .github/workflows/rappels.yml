@@ -1,0 +1,35 @@
+name: Rappels TAMAL
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+jobs:
+  rappels:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: server
+
+    steps:
+      - name: Checkout du projet
+        uses: actions/checkout@v4
+
+      - name: Installer Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Installer les dépendances
+        run: npm install
+
+      - name: Lancer les rappels
+        run: npm run rappels
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          BREVO_API_KEY: ${{ secrets.BREVO_API_KEY }}
+          MAIL_FROM: ${{ secrets.MAIL_FROM }}
+          MAIL_FROM_NAME: ${{ secrets.MAIL_FROM_NAME }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
