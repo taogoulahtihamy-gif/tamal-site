@@ -1,231 +1,131 @@
-import { Link, useNavigate, useLocation } from "react-router-dom"
+import { useNavigate, useLocation } from "react-router-dom"
 
 export default function Footer() {
   const navigate = useNavigate()
   const location = useLocation()
 
-  const allerEnHaut = (path) => {
-    if (path === "/contact") {
-      if (location.pathname !== "/") {
-        navigate("/")
-        setTimeout(() => {
-          const section = document.getElementById("contact")
-          if (section) {
-            section.scrollIntoView({ behavior: "smooth", block: "start" })
-          }
-        }, 350)
-      } else {
-        const section = document.getElementById("contact")
-        if (section) {
-          section.scrollIntoView({ behavior: "smooth", block: "start" })
-        }
-      }
-      return
-    }
-
-    navigate(path)
-
-    setTimeout(() => {
+  const allerEnHaut = () => {
+    if (location.pathname !== "/") {
+      navigate("/")
+      setTimeout(() => {
+        window.scrollTo({
+          top: 0,
+          behavior: "smooth",
+        })
+      }, 200)
+    } else {
       window.scrollTo({
         top: 0,
-        left: 0,
         behavior: "smooth",
       })
-    }, 50)
+    }
   }
 
   return (
-    <footer
-      id="contact"
-      className="mt-16 bg-[#050505] text-white md:mt-24"
-    >
-      <div className="mx-auto max-w-7xl px-4 py-14 md:py-20">
-        <div className="grid gap-12 md:grid-cols-[1.1fr_1fr_0.9fr] md:gap-10">
+    <footer id="contact" className="mt-16 bg-[#050505] text-white md:mt-20">
+      <div className="mx-auto max-w-6xl px-4 py-10">
+
+        <div className="grid gap-10 md:grid-cols-2">
+
           {/* COLONNE 1 */}
           <div>
             <div className="flex items-center gap-4">
               <img
                 src="/logo-tamal.jpeg"
                 alt="TAMAL"
-                className="h-14 w-14 rounded-full border-2 border-yellow-500 bg-white p-1 object-cover"
+                className="h-12 w-12 rounded-full border-2 border-yellow-500 bg-white p-1 object-cover"
               />
 
               <div className="leading-tight">
-                <h4 className="text-xl font-bold uppercase tracking-wide text-yellow-500">
+                <h4 className="text-lg font-bold uppercase tracking-wide text-yellow-500">
                   TAMAL
                 </h4>
-                <p className="text-sm text-gray-400">
+                <p className="text-xs text-gray-400">
                   Service Liquidité Immédiate
                 </p>
               </div>
             </div>
 
-            <p className="mt-6 max-w-md text-sm leading-7 text-gray-300 md:text-base">
-              Votre solution de prêt sur gage à Dakar pour obtenir rapidement de
-              la liquidité dans un cadre simple, clair et sécurisé.
+            <p className="mt-4 max-w-sm text-sm leading-6 text-gray-300">
+              Votre solution de prêt sur gage pour obtenir rapidement
+              de la liquidité dans un cadre simple, clair et sécurisé.
             </p>
 
-            <div className="mt-8 flex flex-col gap-4 sm:flex-row">
+            {/* BOUTONS */}
+            <div className="mt-5 flex flex-wrap gap-3">
               <a
                 href="https://wa.me/221778492779"
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex justify-center rounded-full bg-yellow-500 px-6 py-3 font-semibold text-black transition hover:bg-yellow-400"
+                className="rounded-full bg-yellow-500 px-5 py-2 text-sm font-semibold text-black transition hover:bg-yellow-400"
               >
                 WhatsApp
               </a>
 
               <a
                 href="tel:+221778492779"
-                className="inline-flex justify-center rounded-full border border-white/15 px-6 py-3 font-semibold text-white transition hover:border-yellow-500 hover:text-yellow-400"
+                className="rounded-full border border-white/20 px-5 py-2 text-sm font-semibold text-white transition hover:border-yellow-500 hover:text-yellow-400"
               >
                 Appeler
               </a>
+
+              <button
+                onClick={allerEnHaut}
+                className="rounded-full border border-white/20 px-5 py-2 text-sm font-semibold text-white transition hover:border-yellow-500 hover:text-yellow-400"
+              >
+                Accueil
+              </button>
             </div>
           </div>
 
           {/* COLONNE 2 */}
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-yellow-500">
+            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-yellow-500">
               Informations de contact
             </p>
 
-            <div className="mt-6 space-y-6">
+            <div className="mt-4 space-y-4 text-sm">
+
               <div>
-                <p className="text-xs uppercase tracking-wide text-gray-500">
-                  Téléphone
-                </p>
+                <p className="text-gray-500 text-xs uppercase">Téléphone</p>
+                <p className="font-semibold">+221 77 849 27 79</p>
+              </div>
+
+              <div>
+                <p className="text-gray-500 text-xs uppercase">WhatsApp</p>
+                <p className="font-semibold">+221 77 849 27 79</p>
+              </div>
+
+              <div>
+                <p className="text-gray-500 text-xs uppercase">Email</p>
                 <a
-                  href="tel:+221778492779"
-                  className="mt-2 block text-lg font-semibold text-white transition hover:text-yellow-400"
+                  href="mailto:tamaladmin1@gmail.com"
+                  className="font-semibold hover:text-yellow-400"
                 >
-                  +221 77 849 27 79
+                  tamaladmin1@gmail.com
                 </a>
               </div>
 
               <div>
-                <p className="text-xs uppercase tracking-wide text-gray-500">
-                  WhatsApp
-                </p>
-                <a
-                  href="https://wa.me/221778492779"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-2 block text-lg font-semibold text-white transition hover:text-yellow-400"
-                >
-                  +221 77 849 27 79
-                </a>
+                <p className="text-gray-500 text-xs uppercase">Adresse</p>
+                <p className="font-semibold">Dakar, Sénégal</p>
               </div>
 
               <div>
-                <p className="text-xs uppercase tracking-wide text-gray-500">
-                  Adresse
-                </p>
-                <p className="mt-2 text-lg font-semibold text-white">
-                  Dakar, Sénégal
-                </p>
+                <p className="text-gray-500 text-xs uppercase">Horaires</p>
+                <p className="font-semibold">Lun - Sam : 08h00 - 19h00</p>
               </div>
 
-              <div>
-                <p className="text-xs uppercase tracking-wide text-gray-500">
-                  Horaires
-                </p>
-                <p className="mt-2 text-lg font-semibold text-white">
-                  Lun - Sam : 08h00 - 19h00
-                </p>
-              </div>
             </div>
           </div>
 
-          {/* COLONNE 3 */}
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-yellow-500">
-              Liens rapides
-            </p>
-
-            <div className="mt-6 grid gap-3">
-              <button
-                type="button"
-                onClick={() => allerEnHaut("/")}
-                className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-left text-sm text-white transition hover:border-yellow-500 hover:text-yellow-400"
-              >
-                Accueil
-              </button>
-
-              <button
-                type="button"
-                onClick={() => allerEnHaut("/comment-ca-marche")}
-                className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-left text-sm text-white transition hover:border-yellow-500 hover:text-yellow-400"
-              >
-                Comment ça marche
-              </button>
-
-              <button
-                type="button"
-                onClick={() => allerEnHaut("/conditions")}
-                className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-left text-sm text-white transition hover:border-yellow-500 hover:text-yellow-400"
-              >
-                Conditions
-              </button>
-
-              <button
-                type="button"
-                onClick={() => allerEnHaut("/simulateur")}
-                className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-left text-sm text-white transition hover:border-yellow-500 hover:text-yellow-400"
-              >
-                Simulateur
-              </button>
-
-              <button
-                type="button"
-                onClick={() => allerEnHaut("/demande")}
-                className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-left text-sm text-white transition hover:border-yellow-500 hover:text-yellow-400"
-              >
-                Faire une demande
-              </button>
-
-              <button
-                type="button"
-                onClick={() => allerEnHaut("/contact")}
-                className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-left text-sm text-white transition hover:border-yellow-500 hover:text-yellow-400"
-              >
-                Contact
-              </button>
-            </div>
-          </div>
         </div>
 
-        <div className="mt-12 border-t border-white/10 pt-6">
-          <div className="flex flex-col gap-4 text-sm text-gray-400 md:flex-row md:items-center md:justify-between">
-            <p>© 2026 TAMAL – Service Liquidité Immédiate. Tous droits réservés.</p>
-
-            <div className="flex flex-wrap gap-5">
-              <button
-                type="button"
-                onClick={() => allerEnHaut("/")}
-                className="transition hover:text-yellow-400"
-              >
-                Accueil
-              </button>
-
-              <button
-                type="button"
-                onClick={() => allerEnHaut("/demande")}
-                className="transition hover:text-yellow-400"
-              >
-                Demande
-              </button>
-
-              <button
-                type="button"
-                onClick={() => allerEnHaut("/contact")}
-                className="transition hover:text-yellow-400"
-              >
-                Contact
-              </button>
-            </div>
-          </div>
+        {/* COPYRIGHT */}
+        <div className="mt-8 border-t border-white/10 pt-4 text-center text-sm text-gray-400">
+          © 2026 TAMAL – Service Liquidité Immédiate. Tous droits réservés.
         </div>
+
       </div>
     </footer>
   )

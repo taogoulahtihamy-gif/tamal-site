@@ -1,509 +1,598 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
 
+const searchData = [
+  {
+    title: "Accueil",
+    description: "Présentation générale du service TAMAL",
+    keywords: [
+      "accueil",
+      "home",
+      "tamal",
+      "service liquidité immédiate",
+      "service liquidite immediate",
+      "liquidité",
+      "liquidite",
+      "immédiate",
+      "immediate",
+      "prêt",
+      "pret",
+      "prêt sur gage",
+      "pret sur gage",
+      "gage",
+      "dakar",
+      "sénégal",
+      "senegal",
+      "solution simple",
+      "obtenir rapidement de la liquidité",
+      "obtenir rapidement de la liquidite",
+      "service clair",
+      "service rapide",
+      "service sécurisé",
+      "service securise",
+      "accompagnement sérieux",
+      "accompagnement serieux",
+    ],
+    path: "/",
+    sectionId: null,
+  },
+  {
+    title: "À propos",
+    description: "Service simple, humain et rassurant",
+    keywords: [
+      "à propos",
+      "a propos",
+      "apropos",
+      "service de qualité",
+      "service de qualite",
+      "processus simple",
+      "humain",
+      "rassurant",
+      "trésorerie",
+      "tresorerie",
+      "cadre sérieux",
+      "cadre serieux",
+      "cadre transparent",
+      "cadre sécurisé",
+      "cadre securise",
+      "accompagnement accessible",
+      "rapidité de traitement",
+      "rapidite de traitement",
+      "besoins urgents",
+      "liquidité immédiate",
+      "liquidite immediate",
+    ],
+    path: "/",
+    sectionId: null,
+  },
+  {
+    title: "Réponse rapide",
+    description: "Votre dossier est étudié rapidement avec un retour clair",
+    keywords: [
+      "réponse rapide",
+      "reponse rapide",
+      "en 24h",
+      "24h",
+      "24 heures",
+      "dossier étudié rapidement",
+      "dossier etudie rapidement",
+      "retour clair",
+      "faisabilité",
+      "faisabilite",
+      "faisabilité de votre demande",
+      "faisabilite de votre demande",
+      "rapidité",
+      "rapidite",
+    ],
+    path: "/",
+    sectionId: null,
+  },
+  {
+    title: "Processus simple",
+    description: "Un parcours fluide et compréhensible",
+    keywords: [
+      "processus simple",
+      "simple",
+      "parcours simple",
+      "parcours fluide",
+      "fluide",
+      "compréhensible",
+      "comprehensible",
+      "aller à l’essentiel",
+      "aller a l essentiel",
+      "sans complexité inutile",
+      "sans complexite inutile",
+    ],
+    path: "/",
+    sectionId: null,
+  },
+  {
+    title: "Sécurité",
+    description: "Cadre clair et rassurant",
+    keywords: [
+      "sécurité",
+      "securite",
+      "cadre clair",
+      "cadre rassurant",
+      "rassurant",
+      "conditions transparentes",
+      "accompagnement humain",
+      "traitement sérieux",
+      "traitement serieux",
+      "chaque demande",
+      "protection",
+      "confiance",
+    ],
+    path: "/",
+    sectionId: null,
+  },
+  {
+    title: "Comment ça marche",
+    description: "Un parcours simple en 4 étapes",
+    keywords: [
+      "comment ça marche",
+      "comment ca marche",
+      "fonctionnement",
+      "parcours simple en 4 étapes",
+      "parcours simple en 4 etapes",
+      "4 étapes",
+      "4 etapes",
+      "étapes",
+      "etapes",
+      "déposez votre demande",
+      "deposez votre demande",
+      "étude du dossier",
+      "etude du dossier",
+      "dépôt du gage",
+      "depot du gage",
+      "versement rapide",
+      "demande",
+      "étude",
+      "etude",
+      "dépôt",
+      "depot",
+      "gage",
+      "versement",
+      "réponse rapide",
+      "reponse rapide",
+    ],
+    path: "/comment-ca-marche",
+    sectionId: null,
+  },
+  {
+    title: "Conditions",
+    description: "Conditions du service de prêt sur gage",
+    keywords: [
+      "conditions",
+      "règles",
+      "regles",
+      "service de prêt sur gage",
+      "service de pret sur gage",
+      "remboursement",
+      "retard",
+      "pénalité",
+      "penalite",
+      "frais de transaction",
+      "mobile money",
+      "taux",
+      "taux 30",
+      "taux 35",
+      "30%",
+      "35%",
+      "2 000",
+      "2000",
+      "jour",
+      "remboursement complet",
+      "remboursement intégral",
+      "remboursement integral",
+    ],
+    path: "/conditions",
+    sectionId: null,
+  },
+  {
+    title: "Simulateur",
+    description: "Estimez votre remboursement",
+    keywords: [
+      "simulateur",
+      "simulation",
+      "simuler",
+      "estimez votre remboursement",
+      "montant souhaité",
+      "montant souhaite",
+      "montant demandé",
+      "montant demande",
+      "fcfa",
+      "durée",
+      "duree",
+      "7 jours",
+      "14 jours",
+      "remboursement normal",
+      "après 1 jour de retard",
+      "apres 1 jour de retard",
+      "taux appliqué 30",
+      "taux applique 30",
+      "30%",
+      "35%",
+      "le taux passe de 30 à 35",
+      "le taux passe de 30 a 35",
+      "pénalité supplémentaire",
+      "penalite supplementaire",
+      "2000 fcfa",
+      "2 000 fcfa",
+      "mobile money",
+      "frais de transaction",
+      "estimation",
+      "calcul",
+      "pret",
+      "prêt",
+    ],
+    path: "/",
+    sectionId: "simulateur",
+  },
+  {
+    title: "Demande",
+    description: "Faire une demande de prêt",
+    keywords: [
+      "demande",
+      "faire une demande",
+      "formulaire",
+      "envoyer la demande",
+      "objet",
+      "objet de valeur",
+      "pièce d’identité",
+      "piece d identite",
+      "pièce",
+      "piece",
+      "photo",
+      "document",
+      "nom",
+      "téléphone",
+      "telephone",
+      "email",
+      "client",
+      "dossier",
+      "pret",
+      "prêt",
+      "gage",
+    ],
+    path: "/demande",
+    sectionId: null,
+  },
+  {
+    title: "Contact",
+    description: "Téléphone, WhatsApp, email, adresse et horaires",
+    keywords: [
+      "contact",
+      "téléphone",
+      "telephone",
+      "whatsapp",
+      "email",
+      "mail",
+      "adresse",
+      "horaires",
+      "dakar",
+      "sénégal",
+      "senegal",
+      "lun sam",
+      "08h00",
+      "19h00",
+      "tamaladmin1@gmail.com",
+      "77 849 27 79",
+      "778492779",
+      "appeler",
+      "contacter",
+      "agent",
+      "footer",
+    ],
+    path: "/",
+    sectionId: "contact",
+  },
+]
+
 export default function Navbar() {
-  const [menuOuvert, setMenuOuvert] = useState(false)
-  const [rechercheOuverte, setRechercheOuverte] = useState(false)
-  const [recherche, setRecherche] = useState("")
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [search, setSearch] = useState("")
+  const [searchFocused, setSearchFocused] = useState(false)
 
   const navigate = useNavigate()
   const location = useLocation()
+  const searchRef = useRef(null)
 
-  const liensRecherche = [
-    {
-      label: "Accueil",
-      path: "/",
-      motsCles: [
-        "accueil",
-        "home",
-        "tamal",
-        "pret",
-        "prêt",
-        "gage",
-        "liquidité",
-        "liquidite",
-        "rapide",
-        "sécurisé",
-        "securise",
-      ],
-    },
-    {
-      label: "Comment ça marche",
-      path: "/comment-ca-marche",
-      motsCles: [
-        "comment",
-        "marche",
-        "fonctionnement",
-        "etapes",
-        "étapes",
-        "processus",
-        "demande en ligne",
-        "rendez-vous",
-        "validation",
-        "versement",
-      ],
-    },
-    {
-      label: "Conditions",
-      path: "/conditions",
-      motsCles: [
-        "condition",
-        "conditions",
-        "documents",
-        "document",
-        "cni",
-        "passeport",
-        "certificat",
-        "résidence",
-        "residence",
-        "acceptation",
-        "dépôt",
-        "depot",
-      ],
-    },
-    {
-      label: "Simulateur",
-      path: "/simulateur",
-      motsCles: [
-        "simulateur",
-        "simulation",
-        "montant",
-        "durée",
-        "duree",
-        "remboursement",
-        "retard",
-        "penalite",
-        "pénalité",
-        "calcul",
-        "fcfa",
-      ],
-    },
-    {
-      label: "Demande",
-      path: "/demande",
-      motsCles: [
-        "demande",
-        "formulaire",
-        "soumettre",
-        "nom",
-        "telephone",
-        "téléphone",
-        "photo",
-        "document",
-        "piece",
-        "pièce",
-        "objet",
-        "gager",
-      ],
-    },
-    {
-      label: "Contact",
-      path: "/contact",
-      motsCles: [
-        "contact",
-        "whatsapp",
-        "appel",
-        "telephone",
-        "téléphone",
-        "adresse",
-        "dakar",
-        "horaires",
-        "agent",
-      ],
-    },
-  ]
+  const normaliser = (texte) =>
+    (texte || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^\w\s%]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
 
-  const resultatsRecherche = useMemo(() => {
-    const texte = recherche.trim().toLowerCase()
+  const results = useMemo(() => {
+    const q = normaliser(search)
 
-    if (!texte) return liensRecherche
+    if (!q) return []
 
-    return liensRecherche.filter((item) => {
-      const dansLabel = item.label.toLowerCase().includes(texte)
-      const dansMotsCles = item.motsCles.some((mot) =>
-        mot.toLowerCase().includes(texte)
-      )
-      return dansLabel || dansMotsCles
-    })
-  }, [recherche])
+    const qWords = q.split(" ").filter(Boolean)
 
-  const fermerTout = () => {
-    setMenuOuvert(false)
-    setRechercheOuverte(false)
-    setRecherche("")
+    return searchData
+      .map((item) => {
+        const corpus = normaliser(
+          [item.title, item.description, ...(item.keywords || [])].join(" ")
+        )
+
+        const includesFullQuery = corpus.includes(q)
+
+        const matchedWords = qWords.filter((word) => corpus.includes(word)).length
+
+        let score = 0
+
+        if (includesFullQuery) score += 10
+        score += matchedWords * 3
+
+        if (normaliser(item.title).includes(q)) score += 6
+        if (normaliser(item.description).includes(q)) score += 4
+
+        return { ...item, score }
+      })
+      .filter((item) => item.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 8)
+  }, [search])
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setSearchFocused(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  const allerVers = (path) => {
+    setMenuOpen(false)
+
+    navigate(path)
+
+    setTimeout(() => {
+      window.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: "smooth",
+      })
+    }, 50)
   }
 
-  const toggleMenu = () => {
-    setMenuOuvert((prev) => !prev)
-  }
+  const allerVersSection = (sectionId) => {
+    setMenuOpen(false)
 
-  const toggleRecherche = () => {
-    setRechercheOuverte((prev) => !prev)
-    if (rechercheOuverte) {
-      setRecherche("")
+    if (location.pathname !== "/") {
+      navigate("/")
+      setTimeout(() => {
+        const section = document.getElementById(sectionId)
+        if (section) {
+          section.scrollIntoView({ behavior: "smooth", block: "start" })
+        }
+      }, 350)
+      return
+    }
+
+    const section = document.getElementById(sectionId)
+    if (section) {
+      section.scrollIntoView({ behavior: "smooth", block: "start" })
     }
   }
 
-  const allerVers = (path) => {
-    setMenuOuvert(false)
-    setRechercheOuverte(false)
-    setRecherche("")
+  const handleSearchResultClick = (item) => {
+    setSearch("")
+    setSearchFocused(false)
+    setSearchOpen(false)
+    setMenuOpen(false)
 
-    if (path === "/contact") {
-      if (location.pathname !== "/") {
+    if (item.sectionId) {
+      if (item.path !== "/" && location.pathname !== item.path) {
+        navigate(item.path)
+        setTimeout(() => {
+          const section = document.getElementById(item.sectionId)
+          if (section) {
+            section.scrollIntoView({ behavior: "smooth", block: "start" })
+          }
+        }, 350)
+        return
+      }
+
+      if (item.path === "/" && location.pathname !== "/") {
         navigate("/")
         setTimeout(() => {
-          const section = document.getElementById("contact")
+          const section = document.getElementById(item.sectionId)
           if (section) {
-            section.scrollIntoView({ behavior: "smooth" })
+            section.scrollIntoView({ behavior: "smooth", block: "start" })
           }
-        }, 250)
+        }, 350)
+        return
+      }
+
+      const section = document.getElementById(item.sectionId)
+      if (section) {
+        section.scrollIntoView({ behavior: "smooth", block: "start" })
       } else {
-        const section = document.getElementById("contact")
-        if (section) {
-          section.scrollIntoView({ behavior: "smooth" })
-        }
+        navigate(item.path)
       }
       return
     }
 
-    navigate(path)
+    navigate(item.path)
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: "smooth" })
+    }, 50)
   }
 
-  const estActif = (path) => location.pathname === path
-
-  const lienDesktopClass = (path) =>
-    `relative pb-1 text-sm font-medium transition ${
-      estActif(path) ? "text-yellow-600" : "text-gray-600 hover:text-gray-950"
-    }`
-
-  const lienMobileClass = (path) =>
-    `rounded-2xl px-4 py-4 text-left text-base transition ${
-      estActif(path)
-        ? "bg-yellow-50 text-yellow-700"
-        : "text-gray-800 hover:bg-gray-100"
-    }`
+  const liens = [
+    { label: "Accueil", action: () => allerVers("/") },
+    { label: "Comment ça marche", action: () => allerVers("/comment-ca-marche") },
+    { label: "Conditions", action: () => allerVers("/conditions") },
+    { label: "Simulateur", action: () => allerVers("/simulateur") },
+    { label: "Demande", action: () => allerVers("/demande") },
+    { label: "Contact", action: () => allerVersSection("contact") },
+  ]
 
   return (
-    <>
-      <header className="sticky top-0 z-50 border-b border-black/5 bg-[#f8f8f6]/92 backdrop-blur-xl">
-        <div className="mx-auto max-w-7xl px-4">
-          <div className="flex h-[88px] items-center justify-between">
-            <Link to="/" className="flex items-center gap-3" onClick={fermerTout}>
-              <img
-                src="/logo-tamal.jpeg"
-                alt="TAMAL"
-                className="h-14 w-14 rounded-full border-2 border-yellow-500 bg-white p-1 object-cover shadow-sm"
-              />
+    <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/95 backdrop-blur">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
+        <Link to="/" className="flex items-center gap-4">
+          <img
+            src="/logo-tamal.jpeg"
+            alt="TAMAL"
+            className="h-14 w-14 rounded-full border-2 border-yellow-500 bg-white p-1 object-cover"
+          />
 
-              <div className="leading-tight">
-                <h1 className="text-base font-bold uppercase tracking-wide text-yellow-600">
-                  TAMAL
-                </h1>
-                <p className="text-sm text-gray-500">
-                  Service Liquidité Immédiate
-                </p>
-              </div>
-            </Link>
+          <div className="leading-tight">
+            <h1 className="text-xl font-bold uppercase tracking-wide text-yellow-600">
+              TAMAL
+            </h1>
+            <p className="text-sm text-gray-600">Service Liquidité Immédiate</p>
+          </div>
+        </Link>
 
-            <nav className="hidden items-center gap-9 xl:flex">
+        <nav className="hidden items-center gap-10 md:flex">
+          {liens.map((item) => (
+            <button
+              key={item.label}
+              type="button"
+              onClick={item.action}
+              className="text-sm font-medium text-gray-700 transition hover:text-yellow-600"
+            >
+              {item.label}
+            </button>
+          ))}
+        </nav>
+
+        <div className="flex items-center gap-3">
+          <div ref={searchRef} className="relative hidden md:block">
+            {!searchOpen ? (
               <button
                 type="button"
-                onClick={() => allerVers("/")}
-                className={lienDesktopClass("/")}
+                onClick={() => {
+                  setSearchOpen(true)
+                  setSearchFocused(true)
+                }}
+                className="flex h-12 w-12 items-center justify-center rounded-full border border-gray-200 text-gray-700 transition hover:border-yellow-500 hover:text-yellow-600"
+                aria-label="Ouvrir la recherche"
               >
-                Accueil
-                {estActif("/") && (
-                  <span className="absolute -bottom-1 left-1/2 h-[3px] w-8 -translate-x-1/2 rounded-full bg-yellow-500" />
-                )}
+                <span className="text-xl">⌕</span>
               </button>
+            ) : (
+              <div className="relative">
+                <input
+                  autoFocus
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  onFocus={() => setSearchFocused(true)}
+                  placeholder="Rechercher sur le site..."
+                  className="w-80 rounded-full border border-gray-200 bg-white px-5 py-3 text-sm text-gray-900 outline-none focus:border-yellow-500"
+                />
 
-              <button
-                type="button"
-                onClick={() => allerVers("/comment-ca-marche")}
-                className={lienDesktopClass("/comment-ca-marche")}
-              >
-                Comment ça marche
-                {estActif("/comment-ca-marche") && (
-                  <span className="absolute -bottom-1 left-1/2 h-[3px] w-8 -translate-x-1/2 rounded-full bg-yellow-500" />
-                )}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => allerVers("/conditions")}
-                className={lienDesktopClass("/conditions")}
-              >
-                Conditions
-                {estActif("/conditions") && (
-                  <span className="absolute -bottom-1 left-1/2 h-[3px] w-8 -translate-x-1/2 rounded-full bg-yellow-500" />
-                )}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => allerVers("/simulateur")}
-                className={lienDesktopClass("/simulateur")}
-              >
-                Simulateur
-                {estActif("/simulateur") && (
-                  <span className="absolute -bottom-1 left-1/2 h-[3px] w-8 -translate-x-1/2 rounded-full bg-yellow-500" />
-                )}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => allerVers("/demande")}
-                className={lienDesktopClass("/demande")}
-              >
-                Demande
-                {estActif("/demande") && (
-                  <span className="absolute -bottom-1 left-1/2 h-[3px] w-8 -translate-x-1/2 rounded-full bg-yellow-500" />
-                )}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => allerVers("/contact")}
-                className="relative pb-1 text-sm font-medium text-gray-600 transition hover:text-gray-950"
-              >
-                Contact
-              </button>
-            </nav>
-
-            <div className="relative flex items-center gap-3">
-              <button
-                type="button"
-                onClick={toggleRecherche}
-                className="hidden h-11 w-11 items-center justify-center rounded-full border border-black/10 bg-white text-gray-700 transition hover:bg-gray-50 md:flex"
-                aria-label="Recherche"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-              </button>
-
-              <div className="flex items-center gap-2 xl:hidden">
-                <button
-                  type="button"
-                  onClick={toggleRecherche}
-                  className="flex h-11 w-11 items-center justify-center rounded-full border border-black/10 bg-white text-gray-700 transition hover:bg-gray-50"
-                  aria-label="Ouvrir la recherche"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z"
-                    />
-                  </svg>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={toggleMenu}
-                  className="flex h-11 w-11 items-center justify-center rounded-full border border-black/10 bg-white text-gray-700 transition hover:bg-gray-50"
-                  aria-label="Ouvrir le menu"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-6 w-6"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                  >
-                    {menuOuvert ? (
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    ) : (
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M4 7h16M4 12h16M4 17h16"
-                      />
-                    )}
-                  </svg>
-                </button>
-              </div>
-
-              {rechercheOuverte && (
-                <div className="absolute right-0 top-14 hidden w-80 rounded-[28px] border border-black/10 bg-white p-4 shadow-2xl md:block">
-                  <input
-                    type="text"
-                    value={recherche}
-                    onChange={(e) => setRecherche(e.target.value)}
-                    placeholder="Rechercher sur le site..."
-                    className="w-full rounded-2xl border border-black/10 bg-[#faf9f5] px-4 py-3 text-gray-900 outline-none transition focus:border-yellow-500"
-                  />
-
-                  <div className="mt-3 space-y-2">
-                    {resultatsRecherche.length > 0 ? (
-                      resultatsRecherche.map((item) => (
+                {searchFocused && search.trim() !== "" && (
+                  <div className="absolute right-0 top-full mt-2 max-h-80 w-96 overflow-y-auto rounded-2xl border border-gray-200 bg-white shadow-xl">
+                    {results.length > 0 ? (
+                      results.map((item, index) => (
                         <button
-                          key={item.label}
+                          key={`${item.title}-${index}`}
                           type="button"
-                          onClick={() => allerVers(item.path)}
-                          className="block w-full rounded-2xl px-3 py-3 text-left text-sm text-gray-800 transition hover:bg-gray-100"
+                          onClick={() => handleSearchResultClick(item)}
+                          className="block w-full border-b border-gray-100 px-4 py-3 text-left hover:bg-[#faf9f5]"
                         >
-                          {item.label}
+                          <p className="font-semibold text-gray-900">
+                            {item.title}
+                          </p>
+                          <p className="mt-1 text-sm text-gray-500">
+                            {item.description}
+                          </p>
                         </button>
                       ))
                     ) : (
-                      <p className="px-3 py-2 text-sm text-gray-500">
-                        Aucun résultat.
-                      </p>
+                      <div className="px-4 py-3 text-sm text-gray-500">
+                        Aucun résultat trouvé.
+                      </div>
                     )}
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
           </div>
+
+          <button
+            type="button"
+            onClick={() => setMenuOpen((prev) => !prev)}
+            className="flex h-12 w-12 items-center justify-center rounded-full border border-gray-200 text-gray-700 transition hover:border-yellow-500 hover:text-yellow-600 md:hidden"
+            aria-label="Ouvrir le menu"
+          >
+            <span className="text-2xl">{menuOpen ? "✕" : "☰"}</span>
+          </button>
         </div>
+      </div>
 
-        {rechercheOuverte && (
-          <div className="border-t border-black/5 bg-[#f8f8f6] px-4 pb-4 pt-3 md:hidden">
-            <div className="mx-auto max-w-7xl">
-              <div className="rounded-[28px] border border-black/10 bg-white p-3 shadow-lg">
-                <input
-                  type="text"
-                  value={recherche}
-                  onChange={(e) => setRecherche(e.target.value)}
-                  placeholder="Rechercher sur tout le site..."
-                  className="w-full rounded-2xl border border-black/10 bg-[#faf9f5] px-4 py-3 text-gray-900 outline-none focus:border-yellow-500"
-                />
+      {menuOpen && (
+        <div className="border-t border-gray-200 bg-white md:hidden">
+          <div className="mx-auto max-w-7xl px-4 py-4">
+            <div className="mb-4" ref={searchRef}>
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value)
+                  setSearchFocused(true)
+                }}
+                onFocus={() => setSearchFocused(true)}
+                placeholder="Rechercher sur le site..."
+                className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none focus:border-yellow-500"
+              />
 
-                <div className="mt-3 max-h-72 space-y-2 overflow-y-auto">
-                  {resultatsRecherche.length > 0 ? (
-                    resultatsRecherche.map((item) => (
+              {searchFocused && search.trim() !== "" && (
+                <div className="mt-2 max-h-72 overflow-y-auto rounded-2xl border border-gray-200 bg-white shadow-sm">
+                  {results.length > 0 ? (
+                    results.map((item, index) => (
                       <button
-                        key={item.label}
+                        key={`${item.title}-${index}`}
                         type="button"
-                        onClick={() => allerVers(item.path)}
-                        className="block w-full rounded-2xl px-3 py-3 text-left text-sm text-gray-800 transition hover:bg-gray-100"
+                        onClick={() => handleSearchResultClick(item)}
+                        className="block w-full border-b border-gray-100 px-4 py-3 text-left hover:bg-[#faf9f5]"
                       >
-                        {item.label}
+                        <p className="font-semibold text-gray-900">
+                          {item.title}
+                        </p>
+                        <p className="mt-1 text-sm text-gray-500">
+                          {item.description}
+                        </p>
                       </button>
                     ))
                   ) : (
-                    <p className="px-3 py-2 text-sm text-gray-500">
-                      Aucun résultat.
-                    </p>
+                    <div className="px-4 py-3 text-sm text-gray-500">
+                      Aucun résultat trouvé.
+                    </div>
                   )}
                 </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </header>
-
-      {menuOuvert && (
-        <div className="fixed inset-0 z-40 xl:hidden">
-          <button
-            type="button"
-            onClick={fermerTout}
-            className="absolute inset-0 bg-black/25 backdrop-blur-sm"
-            aria-label="Fermer le menu"
-          />
-
-          <div className="absolute right-0 top-0 h-full w-[88%] max-w-sm overflow-y-auto bg-white shadow-2xl">
-            <div className="flex items-center justify-between border-b border-black/5 px-5 py-5">
-              <div className="flex items-center gap-3">
-                <img
-                  src="/logo-tamal.jpeg"
-                  alt="TAMAL"
-                  className="h-12 w-12 rounded-full border-2 border-yellow-500 bg-white p-1 object-cover"
-                />
-                <div>
-                  <p className="text-sm font-bold text-yellow-600">TAMAL</p>
-                  <p className="text-xs text-gray-500">
-                    Service Liquidité Immédiate
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={fermerTout}
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-black/10 text-gray-700"
-              >
-                ✕
-              </button>
+              )}
             </div>
 
-            <div className="flex flex-col px-4 py-4">
-              <button
-                type="button"
-                onClick={() => allerVers("/")}
-                className={lienMobileClass("/")}
-              >
-                Accueil
-              </button>
-
-              <button
-                type="button"
-                onClick={() => allerVers("/comment-ca-marche")}
-                className={lienMobileClass("/comment-ca-marche")}
-              >
-                Comment ça marche
-              </button>
-
-              <button
-                type="button"
-                onClick={() => allerVers("/conditions")}
-                className={lienMobileClass("/conditions")}
-              >
-                Conditions
-              </button>
-
-              <button
-                type="button"
-                onClick={() => allerVers("/simulateur")}
-                className={lienMobileClass("/simulateur")}
-              >
-                Simulateur
-              </button>
-
-              <button
-                type="button"
-                onClick={() => allerVers("/demande")}
-                className={lienMobileClass("/demande")}
-              >
-                Demande
-              </button>
-
-              <button
-                type="button"
-                onClick={() => allerVers("/contact")}
-                className="rounded-2xl px-4 py-4 text-left text-base text-gray-800 transition hover:bg-gray-100"
-              >
-                Contact
-              </button>
+            <div className="grid gap-2">
+              {liens.map((item) => (
+                <button
+                  key={item.label}
+                  type="button"
+                  onClick={item.action}
+                  className="rounded-2xl border border-gray-200 bg-[#faf9f5] px-4 py-3 text-left text-sm font-medium text-gray-800 transition hover:border-yellow-500 hover:text-yellow-600"
+                >
+                  {item.label}
+                </button>
+              ))}
             </div>
           </div>
         </div>
       )}
-    </>
+    </header>
   )
 }

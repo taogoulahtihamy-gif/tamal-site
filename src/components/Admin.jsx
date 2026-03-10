@@ -10,6 +10,7 @@ export default function Admin() {
   const [message, setMessage] = useState("")
   const [messageType, setMessageType] = useState("success")
   const [edition, setEdition] = useState({})
+  const [loadingActionId, setLoadingActionId] = useState(null)
 
   const estConnecte = localStorage.getItem("adminAuth") === "true"
   const adminUser = JSON.parse(localStorage.getItem("adminUser") || "null")
@@ -21,7 +22,7 @@ export default function Admin() {
 
     setTimeout(() => {
       setMessage("")
-    }, 3000)
+    }, 3500)
   }
 
   const chargerDemandes = async () => {
@@ -29,24 +30,19 @@ export default function Admin() {
       setChargement(true)
       const response = await fetch(`${API_URL}/api/demandes`)
       const data = await response.json()
+
       setDemandes(data)
 
       const initialEdition = {}
       data.forEach((d) => {
         initialEdition[d.id] = {
-          statut: d.statut || "en attente",
-          dateRemboursement: d.dateRemboursement
-            ? new Date(d.dateRemboursement).toISOString().slice(0, 16)
-            : "",
           montantAccorde:
             d.montantAccorde !== null && d.montantAccorde !== undefined
               ? d.montantAccorde
               : "",
-          montantRemboursement:
-            d.montantRemboursement !== null && d.montantRemboursement !== undefined
-              ? d.montantRemboursement
-              : "",
-          statutPaiement: d.statutPaiement || "non payé",
+          dateRemboursement: d.dateRemboursement
+            ? new Date(d.dateRemboursement).toISOString().slice(0, 16)
+            : "",
         }
       })
       setEdition(initialEdition)
@@ -80,13 +76,6 @@ export default function Admin() {
   const formaterMontant = (montant) => {
     if (montant === null || montant === undefined || montant === "") return "-"
     return `${Number(montant).toLocaleString("fr-FR")} FCFA`
-  }
-
-  const couleurStatut = (statut) => {
-    if (statut === "acceptée") return "text-green-600"
-    if (statut === "refusée") return "text-red-600"
-    if (statut === "remboursée") return "text-emerald-700"
-    return "text-yellow-600"
   }
 
   const getStyleEtatCRM = (etatCrm) => {
@@ -137,6 +126,13 @@ export default function Admin() {
     }
   }
 
+  const couleurStatut = (statut) => {
+    if (statut === "acceptée") return "text-green-600"
+    if (statut === "refusée") return "text-red-600"
+    if (statut === "remboursée") return "text-emerald-700"
+    return "text-yellow-600"
+  }
+
   const handleChangeEdition = (id, field, value) => {
     setEdition((prev) => ({
       ...prev,
@@ -147,27 +143,73 @@ export default function Admin() {
     }))
   }
 
-  const enregistrerDemande = async (id) => {
+  const calculLocalRemboursement = (montantAccorde) => {
+    if (
+      montantAccorde === null ||
+      montantAccorde === undefined ||
+      montantAccorde === ""
+    ) {
+      return "-"
+    }
+
+    return formaterMontant(Math.round(Number(montantAccorde) * 1.3))
+  }
+
+  const envoyerAction = async (d, actionType) => {
     try {
-      const data = edition[id]
+      setLoadingActionId(d.id)
 
-      if (!data?.statut) {
-        afficherMessage("Le statut est obligatoire.", "error")
-        return
+      const currentEdit = edition[d.id] || {}
+      let payload = {}
+
+      if (actionType === "accepter") {
+        const montantAccorde =
+          d.montantAccorde ?? currentEdit.montantAccorde ?? ""
+
+        const dateRemboursement =
+          currentEdit.dateRemboursement || d.dateRemboursement || null
+
+        if (montantAccorde === "" || montantAccorde === null || montantAccorde === undefined) {
+          afficherMessage("Veuillez renseigner le montant accordé avant d’accepter.", "error")
+          return
+        }
+
+        if (!dateRemboursement) {
+          afficherMessage("Veuillez renseigner la date de remboursement avant d’accepter.", "error")
+          return
+        }
+payload = {
+  statut: "acceptée",
+  montantAccorde: Number(montantAccorde),
+  statutPaiement: d.statutPaiement || "non payé",
+}
       }
 
-      const payload = {
-        statut: data.statut,
-        dateRemboursement: data.dateRemboursement || null,
-        montantAccorde: data.montantAccorde === "" ? null : Number(data.montantAccorde),
-        montantRemboursement:
-          data.montantRemboursement === ""
-            ? null
-            : Number(data.montantRemboursement),
-        statutPaiement: data.statutPaiement || "non payé",
+      if (actionType === "refuser") {
+       payload = {
+  statut: "refusée",
+  montantAccorde: d.montantAccorde ?? currentEdit.montantAccorde ?? null,
+  statutPaiement: d.statutPaiement || "non payé",
+}
       }
 
-      const response = await fetch(`${API_URL}/api/demandes/${id}/statut`, {
+      if (actionType === "payer") {
+     payload = {
+  statut: "remboursée",
+  montantAccorde: d.montantAccorde ?? currentEdit.montantAccorde ?? null,
+  statutPaiement: "payé",
+}
+      }
+
+      if (actionType === "attente") {
+       payload = {
+  statut: "en attente",
+  montantAccorde: d.montantAccorde ?? currentEdit.montantAccorde ?? null,
+  statutPaiement: d.statutPaiement || "non payé",
+}
+      }
+
+      const response = await fetch(`${API_URL}/api/demandes/${d.id}/statut`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -181,35 +223,39 @@ export default function Admin() {
         throw new Error(result.message || "Erreur lors de la mise à jour")
       }
 
-      setDemandes((prev) =>
-        prev.map((d) => (d.id === id ? result.data : d))
-      )
+      setDemandes((prev) => prev.map((item) => (item.id === d.id ? result.data : item)))
 
       setEdition((prev) => ({
         ...prev,
-        [id]: {
-          statut: result.data.statut || "en attente",
-          dateRemboursement: result.data.dateRemboursement
-            ? new Date(result.data.dateRemboursement).toISOString().slice(0, 16)
-            : "",
+        [d.id]: {
           montantAccorde:
             result.data.montantAccorde !== null &&
             result.data.montantAccorde !== undefined
               ? result.data.montantAccorde
               : "",
-          montantRemboursement:
-            result.data.montantRemboursement !== null &&
-            result.data.montantRemboursement !== undefined
-              ? result.data.montantRemboursement
-              : "",
-          statutPaiement: result.data.statutPaiement || "non payé",
+          dateRemboursement: result.data.dateRemboursement
+            ? new Date(result.data.dateRemboursement).toISOString().slice(0, 16)
+            : "",
         },
       }))
 
-      afficherMessage(`Demande #${id} mise à jour avec succès.`)
+      if (actionType === "accepter") {
+        afficherMessage(`Demande #${d.id} acceptée avec succès.`)
+      }
+      if (actionType === "refuser") {
+        afficherMessage(`Demande #${d.id} refusée avec succès.`)
+      }
+      if (actionType === "payer") {
+        afficherMessage(`Demande #${d.id} marquée comme remboursée.`)
+      }
+      if (actionType === "attente") {
+        afficherMessage(`Demande #${d.id} remise en attente.`)
+      }
     } catch (error) {
-      console.error("Erreur mise à jour demande :", error)
-      afficherMessage(error.message || "Erreur lors de la mise à jour.", "error")
+      console.error("Erreur action dossier :", error)
+      afficherMessage(error.message || "Erreur lors de l’action.", "error")
+    } finally {
+      setLoadingActionId(null)
     }
   }
 
@@ -237,7 +283,7 @@ export default function Admin() {
       enAttente: demandes.filter((d) => d.statut === "en attente").length,
       acceptees: demandes.filter((d) => d.statut === "acceptée").length,
       refusees: demandes.filter((d) => d.statut === "refusée").length,
-      remboursees: demandes.filter((d) => d.statut === "remboursée").length,
+      remboursees: demandes.filter((d) => d.etatCrm === "Remboursée").length,
     }
   }, [demandes])
 
@@ -248,8 +294,8 @@ export default function Admin() {
   }
 
   return (
-    <section className="min-h-screen bg-[#f5f3ed] p-6 text-gray-900 md:p-10">
-      <div className="mb-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+    <section className="min-h-screen bg-[#f5f3ed] p-4 text-gray-900 md:p-8">
+      <div className="mb-8 flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-4">
           <img
             src={logo}
@@ -259,9 +305,7 @@ export default function Admin() {
 
           <div>
             <h1 className="text-2xl font-bold text-yellow-600">TAMAL</h1>
-            <p className="text-sm text-gray-600">
-              Service Liquidité Immédiate
-            </p>
+            <p className="text-sm text-gray-600">Service Liquidité Immédiate</p>
             <p className="mt-1 text-xs text-gray-500">
               Connecté en tant que{" "}
               <span className="font-semibold text-gray-900">
@@ -269,9 +313,7 @@ export default function Admin() {
               </span>{" "}
               —{" "}
               <span className="text-yellow-600">
-                {adminUser?.role === "super_admin"
-                  ? "Super Admin"
-                  : "Gestionnaire"}
+                {adminUser?.role === "super_admin" ? "Super Admin" : "Gestionnaire"}
               </span>
             </p>
           </div>
@@ -322,7 +364,7 @@ export default function Admin() {
         </div>
       )}
 
-      <div className="mb-6 grid gap-4 md:grid-cols-5">
+      <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
           <p className="text-sm text-gray-500">Total</p>
           <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
@@ -350,13 +392,13 @@ export default function Admin() {
       </div>
 
       <div className="mb-6 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-        <div className="mb-4 flex flex-col gap-4 md:flex-row">
+        <div className="grid gap-4 md:grid-cols-[1fr_220px]">
           <input
             type="text"
             value={recherche}
             onChange={(e) => setRecherche(e.target.value)}
             placeholder="Rechercher par nom, téléphone, email, objet ou montant"
-            className="flex-1 rounded-xl border border-gray-200 bg-[#faf9f5] px-4 py-3 text-gray-900 outline-none focus:border-yellow-500"
+            className="rounded-xl border border-gray-200 bg-[#faf9f5] px-4 py-3 text-gray-900 outline-none focus:border-yellow-500"
           />
 
           <select
@@ -382,21 +424,25 @@ export default function Admin() {
           Aucune demande trouvée.
         </div>
       ) : (
-        <div className="grid gap-6">
+        <div className="grid gap-5">
           {demandesFiltrees.map((d) => {
             const etatCRM = getStyleEtatCRM(d.etatCrm)
             const dataEdition = edition[d.id] || {
-              statut: d.statut || "en attente",
-              dateRemboursement: "",
               montantAccorde: "",
-              montantRemboursement: "",
-              statutPaiement: "non payé",
+              dateRemboursement: "",
             }
+
+            const montantAccordeVerrouille =
+              d.montantAccorde !== null && d.montantAccorde !== undefined
+
+            const montantAccordeAffiche = montantAccordeVerrouille
+              ? d.montantAccorde
+              : dataEdition.montantAccorde
 
             return (
               <div
                 key={d.id}
-                className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm"
+                className="rounded-3xl border border-gray-200 bg-white p-4 shadow-sm md:p-6"
               >
                 <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div>
@@ -421,48 +467,55 @@ export default function Admin() {
                     </p>
                   </div>
 
-                  <button
-                    onClick={() => enregistrerDemande(d.id)}
-                    className="rounded-full bg-yellow-500 px-5 py-2 text-sm font-semibold text-black hover:bg-yellow-400"
-                  >
-                    Enregistrer les modifications
-                  </button>
+                  <div className="grid w-full gap-3 sm:grid-cols-2 lg:w-auto lg:min-w-[360px]">
+                    <button
+                      onClick={() => envoyerAction(d, "accepter")}
+                      disabled={loadingActionId === d.id}
+                      className="rounded-full bg-green-600 px-4 py-3 text-sm font-semibold text-white hover:bg-green-500 disabled:opacity-60"
+                    >
+                      Accepter
+                    </button>
+
+                    <button
+                      onClick={() => envoyerAction(d, "refuser")}
+                      disabled={loadingActionId === d.id}
+                      className="rounded-full bg-red-600 px-4 py-3 text-sm font-semibold text-white hover:bg-red-500 disabled:opacity-60"
+                    >
+                      Refuser
+                    </button>
+
+                    <button
+                      onClick={() => envoyerAction(d, "payer")}
+                      disabled={loadingActionId === d.id}
+                      className="rounded-full bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-60"
+                    >
+                      Marquer payé
+                    </button>
+
+                    <button
+                      onClick={() => envoyerAction(d, "attente")}
+                      disabled={loadingActionId === d.id}
+                      className="rounded-full border border-gray-300 bg-white px-4 py-3 text-sm font-semibold text-gray-800 hover:border-yellow-500 hover:text-yellow-600 disabled:opacity-60"
+                    >
+                      Remettre en attente
+                    </button>
+                  </div>
                 </div>
 
-                <div className="grid gap-6 xl:grid-cols-2">
-                  <div className="rounded-2xl bg-[#faf9f5] p-4">
+                <div className="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
+                  <div className="rounded-3xl bg-[#faf9f5] p-5">
                     <h3 className="mb-4 text-lg font-bold text-gray-900">
                       Informations client
                     </h3>
 
-                    <div className="grid gap-3 text-sm">
-                      <p>
-                        <span className="font-semibold">Nom :</span> {d.nom || "-"}
-                      </p>
-                      <p>
-                        <span className="font-semibold">Téléphone :</span>{" "}
-                        {d.telephone || "-"}
-                      </p>
-                      <p>
-                        <span className="font-semibold">Email :</span>{" "}
-                        {d.email || "-"}
-                      </p>
-                      <p>
-                        <span className="font-semibold">Objet :</span>{" "}
-                        {d.typeObjet || "-"}
-                      </p>
-                      <p>
-                        <span className="font-semibold">Type de pièce :</span>{" "}
-                        {d.typePiece || "-"}
-                      </p>
-                      <p>
-                        <span className="font-semibold">Montant demandé :</span>{" "}
-                        {formaterMontant(d.montant)}
-                      </p>
-                      <p>
-                        <span className="font-semibold">Description :</span>{" "}
-                        {d.description || "-"}
-                      </p>
+                    <div className="grid gap-3 text-sm leading-6">
+                      <p><span className="font-semibold">Nom :</span> {d.nom || "-"}</p>
+                      <p><span className="font-semibold">Téléphone :</span> {d.telephone || "-"}</p>
+                      <p><span className="font-semibold">Email :</span> {d.email || "-"}</p>
+                      <p><span className="font-semibold">Objet :</span> {d.typeObjet || "-"}</p>
+                      <p><span className="font-semibold">Type de pièce :</span> {d.typePiece || "-"}</p>
+                      <p><span className="font-semibold">Montant demandé :</span> {formaterMontant(d.montant)}</p>
+                      <p><span className="font-semibold">Description :</span> {d.description || "-"}</p>
 
                       {d.document && (
                         <p>
@@ -484,35 +537,37 @@ export default function Admin() {
                           <img
                             src={`${API_URL}/uploads/${d.photo}`}
                             alt={d.typeObjet || "Objet"}
-                            className="max-h-56 rounded-2xl border border-gray-200 object-cover"
+                            className="max-h-64 w-full rounded-2xl border border-gray-200 object-cover"
                           />
                         </div>
                       )}
                     </div>
                   </div>
 
-                  <div className="rounded-2xl bg-[#faf9f5] p-4">
+                  <div className="rounded-3xl bg-[#faf9f5] p-5">
                     <h3 className="mb-4 text-lg font-bold text-gray-900">
-                      Traitement du dossier
+                      Décision et suivi
                     </h3>
 
                     <div className="grid gap-4">
-                      <div>
-                        <label className="mb-1 block text-sm font-semibold text-gray-700">
-                          Statut
-                        </label>
-                        <select
-                          value={dataEdition.statut}
-                          onChange={(e) =>
-                            handleChangeEdition(d.id, "statut", e.target.value)
-                          }
-                          className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-yellow-500"
-                        >
-                          <option value="en attente">En attente</option>
-                          <option value="acceptée">Acceptée</option>
-                          <option value="refusée">Refusée</option>
-                          <option value="remboursée">Remboursée</option>
-                        </select>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="rounded-2xl border border-gray-200 bg-white p-4">
+                          <p className="text-xs uppercase tracking-wide text-gray-500">
+                            Statut actuel
+                          </p>
+                          <p className={`mt-2 text-lg font-bold ${couleurStatut(d.statut)}`}>
+                            {d.statut || "-"}
+                          </p>
+                        </div>
+
+                        <div className="rounded-2xl border border-gray-200 bg-white p-4">
+                          <p className="text-xs uppercase tracking-wide text-gray-500">
+                            État CRM
+                          </p>
+                          <p className="mt-2 text-lg font-bold text-gray-900">
+                            {d.etatCrm || "-"}
+                          </p>
+                        </div>
                       </div>
 
                       <div>
@@ -521,87 +576,78 @@ export default function Admin() {
                         </label>
                         <input
                           type="number"
-                          value={dataEdition.montantAccorde}
+                          value={montantAccordeAffiche}
                           onChange={(e) =>
                             handleChangeEdition(d.id, "montantAccorde", e.target.value)
                           }
-                          className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-yellow-500"
+                          disabled={montantAccordeVerrouille}
+                          className={`w-full rounded-xl border px-4 py-3 outline-none ${
+                            montantAccordeVerrouille
+                              ? "border-gray-200 bg-gray-100 text-gray-500"
+                              : "border-gray-200 bg-white focus:border-yellow-500"
+                          }`}
                           placeholder="Ex : 50000"
                         />
+                        {montantAccordeVerrouille && (
+                          <p className="mt-1 text-xs text-gray-500">
+                            Montant verrouillé après validation.
+                          </p>
+                        )}
                       </div>
 
                       <div>
                         <label className="mb-1 block text-sm font-semibold text-gray-700">
-                          Montant remboursement
+                          Montant à rembourser
                         </label>
-                        <input
-                          type="number"
-                          value={dataEdition.montantRemboursement}
-                          onChange={(e) =>
-                            handleChangeEdition(
-                              d.id,
-                              "montantRemboursement",
-                              e.target.value
-                            )
-                          }
-                          className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-yellow-500"
-                          placeholder="Ex : 60000"
-                        />
+                        <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 font-semibold text-gray-900">
+                          {d.montantRemboursement
+                            ? formaterMontant(d.montantRemboursement)
+                            : calculLocalRemboursement(montantAccordeAffiche)}
+                        </div>
+                        <p className="mt-1 text-xs text-gray-500">
+                          Calcul automatique sur la base du montant accordé.
+                        </p>
                       </div>
 
-                      <div>
-                        <label className="mb-1 block text-sm font-semibold text-gray-700">
-                          Date de remboursement
-                        </label>
-                        <input
-                          type="datetime-local"
-                          value={dataEdition.dateRemboursement}
-                          onChange={(e) =>
-                            handleChangeEdition(
-                              d.id,
-                              "dateRemboursement",
-                              e.target.value
-                            )
-                          }
-                          className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-yellow-500"
-                        />
+                     <label className="mb-1 block text-sm font-semibold text-gray-700">
+                     Date de remboursement
+                     </label>
+                     <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 font-semibold text-gray-900">
+                     {formaterDate(d.dateRemboursement)}
+                     </div>
+                     <p className="mt-1 text-xs text-gray-500">
+                     Date calculée automatiquement selon le montant accordé.
+                    </p>
+                    </div>
+
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="rounded-2xl border border-gray-200 bg-white p-4">
+                          <p className="text-xs uppercase tracking-wide text-gray-500">
+                            Statut paiement
+                          </p>
+                          <p className="mt-2 text-base font-semibold text-gray-900">
+                            {d.statutPaiement || "non payé"}
+                          </p>
+                        </div>
+
+                        <div className="rounded-2xl border border-gray-200 bg-white p-4">
+                          <p className="text-xs uppercase tracking-wide text-gray-500">
+                            Dernier rappel
+                          </p>
+                          <p className="mt-2 text-base font-semibold text-gray-900">
+                            {formaterDate(d.dateDernierRappel)}
+                          </p>
+                        </div>
                       </div>
 
-                      <div>
-                        <label className="mb-1 block text-sm font-semibold text-gray-700">
-                          Statut paiement
-                        </label>
-                        <select
-                          value={dataEdition.statutPaiement}
-                          onChange={(e) =>
-                            handleChangeEdition(d.id, "statutPaiement", e.target.value)
-                          }
-                          className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none focus:border-yellow-500"
-                        >
-                          <option value="non payé">Non payé</option>
-                          <option value="payé">Payé</option>
-                          <option value="en retard">En retard</option>
-                        </select>
-                      </div>
-
-                      <div className="rounded-2xl border border-gray-200 bg-white p-4 text-sm">
-                        <p className="mb-2">
-                          <span className="font-semibold">État CRM actuel :</span>{" "}
-                          {d.etatCrm || "-"}
-                        </p>
-                        <p className="mb-2">
-                          <span className="font-semibold">Dernier rappel :</span>{" "}
-                          {formaterDate(d.dateDernierRappel)}
-                        </p>
-                        <p>
-                          <span className="font-semibold">Montant demandé :</span>{" "}
-                          {formaterMontant(d.montant)}
-                        </p>
+                      <div className="rounded-2xl border border-yellow-200 bg-yellow-50 p-4 text-sm leading-6 text-gray-700">
+                        Une notification email est envoyée automatiquement au client
+                        lors d’une acceptation ou d’un refus, si une adresse email
+                        est renseignée.
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
             )
           })}
         </div>
