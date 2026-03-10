@@ -33,68 +33,55 @@ export default function ListeDemandes() {
     return <Navigate to="/login-admin" replace />
   }
 
-  const calculerDateRemboursement = (demande) => {
-    if (!demande?.dateCreation) return null
-
-    const montant = Number(demande.montant || 0)
-    const duree = montant >= 30000 ? 14 : 7
-
-    const date = new Date(demande.dateCreation)
-    date.setDate(date.getDate() + duree)
-
-    return date
-  }
-
   const formaterDate = (date) => {
     if (!date) return "-"
-    return new Date(date).toLocaleString("fr-FR")
+    return new Intl.DateTimeFormat("fr-FR", {
+      dateStyle: "short",
+      timeStyle: "short",
+      timeZone: "Africa/Dakar",
+    }).format(new Date(date))
   }
 
-  const getEtatCRM = (demande) => {
-    if (demande.statut === "remboursée") {
+  const formaterMontant = (montant) => {
+    if (montant === null || montant === undefined || montant === "") return "-"
+    return `${Number(montant).toLocaleString("fr-FR")} FCFA`
+  }
+
+  const getStyleEtatCRM = (etatCrm) => {
+    if (etatCrm === "Remboursée") {
       return {
-        label: "Remboursée",
-        color: "text-green-600",
+        color: "text-green-700",
         bg: "bg-green-50",
         border: "border-green-200",
       }
     }
 
-    if (demande.statut === "refusée") {
+    if (etatCrm === "Refusée") {
       return {
-        label: "Refusée",
         color: "text-gray-600",
         bg: "bg-gray-50",
         border: "border-gray-200",
       }
     }
 
-    const dateRemboursement = calculerDateRemboursement(demande)
-    if (!dateRemboursement) {
+    if (etatCrm === "En retard") {
       return {
-        label: "En attente",
-        color: "text-yellow-600",
-        bg: "bg-yellow-50",
-        border: "border-yellow-200",
-      }
-    }
-
-    const maintenant = new Date()
-    const diffMs = dateRemboursement - maintenant
-    const diffJours = diffMs / (1000 * 60 * 60 * 24)
-
-    if (diffJours < 0 && demande.statut !== "remboursée") {
-      return {
-        label: "En retard",
-        color: "text-red-600",
+        color: "text-red-700",
         bg: "bg-red-50",
         border: "border-red-200",
       }
     }
 
-    if (diffJours <= 2 && demande.statut !== "remboursée") {
+    if (etatCrm === "Proche remboursement") {
       return {
-        label: "Proche remboursement",
+        color: "text-orange-700",
+        bg: "bg-orange-50",
+        border: "border-orange-200",
+      }
+    }
+
+    if (etatCrm === "En attente") {
+      return {
         color: "text-yellow-700",
         bg: "bg-yellow-50",
         border: "border-yellow-200",
@@ -102,8 +89,7 @@ export default function ListeDemandes() {
     }
 
     return {
-      label: "En cours",
-      color: "text-blue-600",
+      color: "text-blue-700",
       bg: "bg-blue-50",
       border: "border-blue-200",
     }
@@ -112,8 +98,14 @@ export default function ListeDemandes() {
   const couleurStatut = (statut) => {
     if (statut === "acceptée") return "text-green-600"
     if (statut === "refusée") return "text-red-600"
-    if (statut === "remboursée") return "text-emerald-600"
+    if (statut === "remboursée") return "text-emerald-700"
     return "text-yellow-600"
+  }
+
+  const couleurPaiement = (statutPaiement) => {
+    if (statutPaiement === "payé") return "text-green-700"
+    if (statutPaiement === "en retard") return "text-red-700"
+    return "text-gray-600"
   }
 
   const demandesFiltrees = useMemo(() => {
@@ -123,6 +115,7 @@ export default function ListeDemandes() {
       const matchRecherche =
         d.nom?.toLowerCase().includes(texteRecherche) ||
         d.telephone?.toLowerCase().includes(texteRecherche) ||
+        d.email?.toLowerCase().includes(texteRecherche) ||
         d.typeObjet?.toLowerCase().includes(texteRecherche) ||
         String(d.montant || "").includes(texteRecherche)
 
@@ -133,17 +126,33 @@ export default function ListeDemandes() {
     })
   }, [demandes, recherche, filtreStatut])
 
+  const stats = useMemo(() => {
+    return {
+      total: demandes.length,
+      enAttente: demandes.filter((d) => d.statut === "en attente").length,
+      acceptees: demandes.filter((d) => d.statut === "acceptée").length,
+      refusees: demandes.filter((d) => d.statut === "refusée").length,
+      remboursees: demandes.filter((d) => d.statut === "remboursée").length,
+      enRetard: demandes.filter((d) => d.etatCrm === "En retard").length,
+    }
+  }, [demandes])
+
   const exporterExcel = () => {
     const dataExport = demandesFiltrees.map((d) => ({
       ID: d.id,
       Nom: d.nom || "",
       Téléphone: d.telephone || "",
+      Email: d.email || "",
       Objet: d.typeObjet || "",
-      Montant: d.montant || "",
+      "Montant demandé": d.montant || "",
       Statut: d.statut || "",
-      "État CRM": getEtatCRM(d).label,
+      "État CRM": d.etatCrm || "",
+      "Montant accordé": d.montantAccorde || "",
+      "Montant remboursement": d.montantRemboursement || "",
+      "Statut paiement": d.statutPaiement || "",
       "Date demande": formaterDate(d.dateCreation),
-      "Date remboursement": formaterDate(calculerDateRemboursement(d)),
+      "Date remboursement": formaterDate(d.dateRemboursement),
+      "Dernier rappel": formaterDate(d.dateDernierRappel),
     }))
 
     const worksheet = XLSX.utils.json_to_sheet(dataExport)
@@ -225,6 +234,38 @@ export default function ListeDemandes() {
         </div>
       </div>
 
+      <div className="mb-6 grid gap-4 md:grid-cols-6">
+        <div className="rounded-2xl bg-white p-4 shadow-sm border border-gray-200">
+          <p className="text-sm text-gray-500">Total</p>
+          <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+        </div>
+
+        <div className="rounded-2xl bg-white p-4 shadow-sm border border-gray-200">
+          <p className="text-sm text-gray-500">En attente</p>
+          <p className="text-2xl font-bold text-yellow-600">{stats.enAttente}</p>
+        </div>
+
+        <div className="rounded-2xl bg-white p-4 shadow-sm border border-gray-200">
+          <p className="text-sm text-gray-500">Acceptées</p>
+          <p className="text-2xl font-bold text-green-600">{stats.acceptees}</p>
+        </div>
+
+        <div className="rounded-2xl bg-white p-4 shadow-sm border border-gray-200">
+          <p className="text-sm text-gray-500">Refusées</p>
+          <p className="text-2xl font-bold text-red-600">{stats.refusees}</p>
+        </div>
+
+        <div className="rounded-2xl bg-white p-4 shadow-sm border border-gray-200">
+          <p className="text-sm text-gray-500">Remboursées</p>
+          <p className="text-2xl font-bold text-emerald-700">{stats.remboursees}</p>
+        </div>
+
+        <div className="rounded-2xl bg-white p-4 shadow-sm border border-gray-200">
+          <p className="text-sm text-gray-500">En retard</p>
+          <p className="text-2xl font-bold text-red-700">{stats.enRetard}</p>
+        </div>
+      </div>
+
       <div className="mb-6 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
         <div className="mb-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <h2 className="text-xl font-bold text-yellow-600">
@@ -253,7 +294,7 @@ export default function ListeDemandes() {
             type="text"
             value={recherche}
             onChange={(e) => setRecherche(e.target.value)}
-            placeholder="Rechercher par nom, téléphone, objet ou montant"
+            placeholder="Rechercher par nom, téléphone, email, objet ou montant"
             className="rounded-xl border border-gray-200 bg-[#faf9f5] px-4 py-3 text-gray-900 outline-none focus:border-yellow-500"
           />
 
@@ -272,44 +313,60 @@ export default function ListeDemandes() {
       </div>
 
       <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white shadow-sm">
-        <table className="w-full">
+        <table className="min-w-[1450px] w-full">
           <thead className="bg-[#faf9f5]">
             <tr>
               <th className="p-3 text-gray-700">ID</th>
               <th className="p-3 text-gray-700">Nom</th>
               <th className="p-3 text-gray-700">Téléphone</th>
+              <th className="p-3 text-gray-700">Email</th>
               <th className="p-3 text-gray-700">Objet</th>
-              <th className="p-3 text-gray-700">Montant</th>
+              <th className="p-3 text-gray-700">Montant demandé</th>
+              <th className="p-3 text-gray-700">Montant accordé</th>
+              <th className="p-3 text-gray-700">Montant remboursement</th>
               <th className="p-3 text-gray-700">Statut</th>
               <th className="p-3 text-gray-700">État CRM</th>
+              <th className="p-3 text-gray-700">Paiement</th>
               <th className="p-3 text-gray-700">Date demande</th>
               <th className="p-3 text-gray-700">Date remboursement</th>
+              <th className="p-3 text-gray-700">Dernier rappel</th>
             </tr>
           </thead>
 
           <tbody>
             {demandesFiltrees.length > 0 ? (
               demandesFiltrees.map((d) => {
-                const etatCRM = getEtatCRM(d)
+                const etatCRM = getStyleEtatCRM(d.etatCrm)
 
                 return (
                   <tr key={d.id} className="border-t border-gray-200 text-center">
                     <td className="p-3 text-gray-800">{d.id}</td>
-                    <td className="p-3 text-gray-800">{d.nom}</td>
-                    <td className="p-3 text-gray-800">{d.telephone}</td>
-                    <td className="p-3 text-gray-800">{d.typeObjet}</td>
-                    <td className="p-3 text-gray-800">{d.montant} FCFA</td>
+                    <td className="p-3 text-gray-800">{d.nom || "-"}</td>
+                    <td className="p-3 text-gray-800">{d.telephone || "-"}</td>
+                    <td className="p-3 text-gray-800">{d.email || "-"}</td>
+                    <td className="p-3 text-gray-800">{d.typeObjet || "-"}</td>
+                    <td className="p-3 text-gray-800">{formaterMontant(d.montant)}</td>
+                    <td className="p-3 text-gray-800">
+                      {formaterMontant(d.montantAccorde)}
+                    </td>
+                    <td className="p-3 text-gray-800">
+                      {formaterMontant(d.montantRemboursement)}
+                    </td>
 
                     <td className={`p-3 font-semibold ${couleurStatut(d.statut)}`}>
-                      {d.statut}
+                      {d.statut || "-"}
                     </td>
 
                     <td className="p-3">
                       <span
                         className={`inline-block rounded-full border px-3 py-1 text-xs font-semibold ${etatCRM.color} ${etatCRM.bg} ${etatCRM.border}`}
                       >
-                        {etatCRM.label}
+                        {d.etatCrm || "-"}
                       </span>
+                    </td>
+
+                    <td className={`p-3 font-semibold ${couleurPaiement(d.statutPaiement)}`}>
+                      {d.statutPaiement || "non payé"}
                     </td>
 
                     <td className="p-3 text-sm text-gray-600">
@@ -317,14 +374,18 @@ export default function ListeDemandes() {
                     </td>
 
                     <td className="p-3 text-sm text-gray-600">
-                      {formaterDate(calculerDateRemboursement(d))}
+                      {formaterDate(d.dateRemboursement)}
+                    </td>
+
+                    <td className="p-3 text-sm text-gray-600">
+                      {formaterDate(d.dateDernierRappel)}
                     </td>
                   </tr>
                 )
               })
             ) : (
               <tr>
-                <td colSpan="9" className="p-6 text-center text-gray-500">
+                <td colSpan="14" className="p-6 text-center text-gray-500">
                   Aucune demande trouvée.
                 </td>
               </tr>

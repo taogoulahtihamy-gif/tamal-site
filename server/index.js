@@ -38,7 +38,7 @@ const storage = multer.diskStorage({
     cb(null, uploadsDir)
   },
   filename: (req, file, cb) => {
-    const uniqueName = Date.now() + "-" + file.originalname
+    const uniqueName = `${Date.now()}-${file.originalname}`
     cb(null, uniqueName)
   },
 })
@@ -62,6 +62,43 @@ const verifierSuperAdmin = (req, res, next) => {
 }
 
 // =========================
+// HELPERS
+// =========================
+
+const normaliserStatut = (statut) => {
+  const statutsAutorises = ["en attente", "acceptée", "refusée", "remboursée"]
+  return statutsAutorises.includes(statut) ? statut : "en attente"
+}
+
+const calculerEtatCrm = ({
+  statut,
+  dateRemboursement,
+  statutPaiement,
+}) => {
+  if (statut === "refusée") return "Refusée"
+  if (statut === "remboursée" || statutPaiement === "payé") return "Remboursée"
+  if (statut === "en attente") return "En attente"
+
+  if (statut === "acceptée") {
+    if (!dateRemboursement) return "En cours"
+
+    const now = new Date()
+    const echeance = new Date(dateRemboursement)
+
+    if (Number.isNaN(echeance.getTime())) return "En cours"
+
+    const diffMs = echeance.getTime() - now.getTime()
+    const diffJours = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+
+    if (diffJours < 0) return "En retard"
+    if (diffJours <= 2) return "Proche remboursement"
+    return "En cours"
+  }
+
+  return "En attente"
+}
+
+// =========================
 // WHATSAPP NOTIFICATION
 // =========================
 
@@ -80,6 +117,7 @@ const envoyerNotificationWhatsApp = async (demande) => {
       `Montant : ${demande.montant || "-"} FCFA`,
       `Objet : ${demande.typeObjet || "-"}`,
       `Statut : ${demande.statut || "-"}`,
+      `État CRM : ${demande.etatCrm || "-"}`,
       "➡️ Consultez l’espace admin pour la traiter.",
     ].join("\n")
 
@@ -116,7 +154,6 @@ const envoyerNotificationWhatsApp = async (demande) => {
 // =========================
 // EMAILS BREVO
 // =========================
-
 
 const envoyerEmailBrevo = async ({ to, subject, htmlContent }) => {
   try {
@@ -155,6 +192,7 @@ const envoyerEmailBrevo = async ({ to, subject, htmlContent }) => {
     console.error("Erreur lors de l'envoi via Brevo :", error)
   }
 }
+
 const envoyerEmailInterne = async (demande) => {
   try {
     if (!MAIL_TO) {
@@ -200,6 +238,10 @@ const envoyerEmailInterne = async (demande) => {
             <td style="padding: 8px; border: 1px solid #ddd;"><strong>Statut</strong></td>
             <td style="padding: 8px; border: 1px solid #ddd;">${demande.statut || "-"}</td>
           </tr>
+          <tr>
+            <td style="padding: 8px; border: 1px solid #ddd;"><strong>État CRM</strong></td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${demande.etatCrm || "-"}</td>
+          </tr>
         </table>
 
         <p style="margin-top: 20px;">Connectez-vous à l’espace admin pour traiter cette demande.</p>
@@ -241,7 +283,8 @@ const envoyerEmailClient = async (demande) => {
         <div style="margin: 20px 0; padding: 16px; background: #f8f8f6; border: 1px solid #e5e5e5; border-radius: 12px;">
           <p style="margin: 0 0 8px;"><strong>Montant demandé :</strong> ${demande.montant || "-"} FCFA</p>
           <p style="margin: 0 0 8px;"><strong>Type d'objet :</strong> ${demande.typeObjet || "-"}</p>
-          <p style="margin: 0;"><strong>Statut initial :</strong> ${demande.statut || "en attente"}</p>
+          <p style="margin: 0 0 8px;"><strong>Statut initial :</strong> ${demande.statut || "en attente"}</p>
+          <p style="margin: 0;"><strong>État de suivi :</strong> ${demande.etatCrm || "En attente"}</p>
         </div>
 
         <p>Merci pour votre confiance.</p>
@@ -297,11 +340,27 @@ app.post(
       const documentFile = req.files?.document ? req.files.document[0] : null
       const photoFile = req.files?.photo ? req.files.photo[0] : null
 
+      const statut = "en attente"
+      const etatCrm = "En attente"
+
       const result = await pool.query(
         `
         INSERT INTO demandes
-        (nom, telephone, email, montant, typeobjet, typepiece, description, document, photo, statut, datecreation)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'en attente', CURRENT_TIMESTAMP)
+        (
+          nom,
+          telephone,
+          email,
+          montant,
+          typeobjet,
+          typepiece,
+          description,
+          document,
+          photo,
+          statut,
+          etat_crm,
+          datecreation
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, CURRENT_TIMESTAMP)
         RETURNING
           id,
           nom,
@@ -314,6 +373,7 @@ app.post(
           document,
           photo,
           statut,
+          etat_crm AS "etatCrm",
           datecreation AS "dateCreation"
         `,
         [
@@ -326,6 +386,8 @@ app.post(
           formData.description || null,
           documentFile ? documentFile.filename : null,
           photoFile ? photoFile.filename : null,
+          statut,
+          etatCrm,
         ]
       )
 
@@ -352,6 +414,7 @@ app.post(
     }
   }
 )
+
 app.get("/api/demandes", async (req, res) => {
   try {
     const result = await pool.query(`
@@ -390,17 +453,41 @@ app.get("/api/demandes", async (req, res) => {
 app.patch("/api/demandes/:id/statut", async (req, res) => {
   try {
     const id = Number(req.params.id)
-    const statut = req.body?.statut
+    const statutRecu = req.body?.statut
+    const dateRemboursement = req.body?.dateRemboursement || null
+    const montantAccorde =
+      req.body?.montantAccorde !== undefined && req.body?.montantAccorde !== ""
+        ? Number(req.body.montantAccorde)
+        : null
+    const montantRemboursement =
+      req.body?.montantRemboursement !== undefined &&
+      req.body?.montantRemboursement !== ""
+        ? Number(req.body.montantRemboursement)
+        : null
+    const statutPaiement = req.body?.statutPaiement || null
 
-    if (!statut) {
+    if (!statutRecu) {
       return res.status(400).json({ message: "Le statut est obligatoire" })
     }
+
+    const statut = normaliserStatut(statutRecu)
+    const etatCrm = calculerEtatCrm({
+      statut,
+      dateRemboursement,
+      statutPaiement,
+    })
 
     const result = await pool.query(
       `
       UPDATE demandes
-      SET statut = $1
-      WHERE id = $2
+      SET
+        statut = $1,
+        date_remboursement = $2,
+        montant_accorde = COALESCE($3, montant_accorde),
+        montant_remboursement = COALESCE($4, montant_remboursement),
+        statut_paiement = COALESCE($5, statut_paiement),
+        etat_crm = $6
+      WHERE id = $7
       RETURNING
         id,
         nom,
@@ -413,9 +500,15 @@ app.patch("/api/demandes/:id/statut", async (req, res) => {
         document,
         photo,
         statut,
-        datecreation AS "dateCreation"
+        datecreation AS "dateCreation",
+        date_remboursement AS "dateRemboursement",
+        etat_crm AS "etatCrm",
+        montant_accorde AS "montantAccorde",
+        montant_remboursement AS "montantRemboursement",
+        statut_paiement AS "statutPaiement",
+        date_dernier_rappel AS "dateDernierRappel"
       `,
-      [statut, id]
+      [statut, dateRemboursement, montantAccorde, montantRemboursement, statutPaiement, etatCrm, id]
     )
 
     if (result.rowCount === 0) {

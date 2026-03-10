@@ -6,9 +6,33 @@ const BREVO_API_KEY = process.env.BREVO_API_KEY
 const MAIL_FROM = process.env.MAIL_FROM
 const MAIL_FROM_NAME = process.env.MAIL_FROM_NAME || "TAMAL"
 
-const parseDateFr = (date) => {
+const formatDateFr = (date) => {
   if (!date) return "-"
-  return new Date(date).toLocaleString("fr-FR")
+  return new Intl.DateTimeFormat("fr-FR", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "Africa/Dakar",
+  }).format(new Date(date))
+}
+
+const differenceEnJours = (dateCible) => {
+  const maintenant = new Date()
+  const cible = new Date(dateCible)
+
+  const debutAujourdhui = new Date(
+    maintenant.getFullYear(),
+    maintenant.getMonth(),
+    maintenant.getDate()
+  )
+
+  const debutCible = new Date(
+    cible.getFullYear(),
+    cible.getMonth(),
+    cible.getDate()
+  )
+
+  const diffMs = debutCible.getTime() - debutAujourdhui.getTime()
+  return Math.round(diffMs / (1000 * 60 * 60 * 24))
 }
 
 const envoyerEmailBrevo = async ({ to, subject, htmlContent }) => {
@@ -56,21 +80,20 @@ const mettreAJourEtatCRM = async () => {
     UPDATE demandes
     SET etat_crm =
       CASE
-        WHEN statut = 'remboursée' THEN 'Remboursée'
+        WHEN statut = 'remboursée' OR COALESCE(statut_paiement, '') = 'payé' THEN 'Remboursée'
         WHEN statut = 'refusée' THEN 'Refusée'
-        WHEN date_remboursement IS NULL THEN 'En attente'
-        WHEN date_remboursement < NOW() AND statut <> 'remboursée' THEN 'En retard'
-        WHEN date_remboursement <= NOW() + INTERVAL '2 days' AND statut <> 'remboursée' THEN 'Proche remboursement'
-        ELSE 'En cours'
+        WHEN statut = 'en attente' THEN 'En attente'
+        WHEN statut = 'acceptée' AND date_remboursement IS NULL THEN 'En cours'
+        WHEN statut = 'acceptée' AND date_remboursement < NOW() THEN 'En retard'
+        WHEN statut = 'acceptée' AND date_remboursement <= NOW() + INTERVAL '2 days' THEN 'Proche remboursement'
+        WHEN statut = 'acceptée' THEN 'En cours'
+        ELSE 'En attente'
       END
   `)
 }
 
 const getSujetEtMessage = (demande) => {
-  const dateRemboursement = new Date(demande.dateRemboursement)
-  const maintenant = new Date()
-  const diffMs = dateRemboursement - maintenant
-  const diffJours = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+  const diffJours = differenceEnJours(demande.dateRemboursement)
 
   if (diffJours < 0) {
     return {
@@ -87,6 +110,15 @@ const getSujetEtMessage = (demande) => {
       titre: "Votre échéance est aujourd’hui",
       intro:
         "Nous vous rappelons que votre paiement arrive à échéance aujourd’hui.",
+    }
+  }
+
+  if (diffJours === 1) {
+    return {
+      sujet: "TAMAL - Échéance de paiement demain",
+      titre: "Votre échéance est demain",
+      intro:
+        "Nous vous rappelons que votre paiement arrive à échéance demain.",
     }
   }
 
@@ -153,7 +185,7 @@ const envoyerRappels = async () => {
           <div style="margin: 20px 0; padding: 16px; background: #f8f8f6; border: 1px solid #e5e5e5; border-radius: 12px;">
             <p style="margin: 0 0 8px;"><strong>Montant initial :</strong> ${demande.montant || "-"} FCFA</p>
             <p style="margin: 0 0 8px;"><strong>Montant à rembourser :</strong> ${demande.montantRemboursement || "-"} FCFA</p>
-            <p style="margin: 0 0 8px;"><strong>Date d’échéance :</strong> ${parseDateFr(demande.dateRemboursement)}</p>
+            <p style="margin: 0 0 8px;"><strong>Date d’échéance :</strong> ${formatDateFr(demande.dateRemboursement)}</p>
             <p style="margin: 0;"><strong>État :</strong> ${demande.etatCrm || "-"}</p>
           </div>
 
