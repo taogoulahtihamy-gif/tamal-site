@@ -40,9 +40,6 @@ export default function Admin() {
             d.montantAccorde !== null && d.montantAccorde !== undefined
               ? d.montantAccorde
               : "",
-          dateRemboursement: d.dateRemboursement
-            ? new Date(d.dateRemboursement).toISOString().slice(0, 16)
-            : "",
         }
       })
       setEdition(initialEdition)
@@ -166,47 +163,47 @@ export default function Admin() {
         const montantAccorde =
           d.montantAccorde ?? currentEdit.montantAccorde ?? ""
 
-        const dateRemboursement =
-          currentEdit.dateRemboursement || d.dateRemboursement || null
-
-        if (montantAccorde === "" || montantAccorde === null || montantAccorde === undefined) {
-          afficherMessage("Veuillez renseigner le montant accordé avant d’accepter.", "error")
+        if (
+          montantAccorde === "" ||
+          montantAccorde === null ||
+          montantAccorde === undefined
+        ) {
+          afficherMessage(
+            "Veuillez renseigner le montant accordé avant d’accepter.",
+            "error"
+          )
           return
         }
 
-        if (!dateRemboursement) {
-          afficherMessage("Veuillez renseigner la date de remboursement avant d’accepter.", "error")
-          return
+        payload = {
+          statut: "acceptée",
+          montantAccorde: Number(montantAccorde),
+          statutPaiement: d.statutPaiement || "non payé",
         }
-payload = {
-  statut: "acceptée",
-  montantAccorde: Number(montantAccorde),
-  statutPaiement: d.statutPaiement || "non payé",
-}
       }
 
       if (actionType === "refuser") {
-       payload = {
-  statut: "refusée",
-  montantAccorde: d.montantAccorde ?? currentEdit.montantAccorde ?? null,
-  statutPaiement: d.statutPaiement || "non payé",
-}
+        payload = {
+          statut: "refusée",
+          montantAccorde: d.montantAccorde ?? currentEdit.montantAccorde ?? null,
+          statutPaiement: d.statutPaiement || "non payé",
+        }
       }
 
       if (actionType === "payer") {
-     payload = {
-  statut: "remboursée",
-  montantAccorde: d.montantAccorde ?? currentEdit.montantAccorde ?? null,
-  statutPaiement: "payé",
-}
+        payload = {
+          statut: "remboursée",
+          montantAccorde: d.montantAccorde ?? currentEdit.montantAccorde ?? null,
+          statutPaiement: "payé",
+        }
       }
 
       if (actionType === "attente") {
-       payload = {
-  statut: "en attente",
-  montantAccorde: d.montantAccorde ?? currentEdit.montantAccorde ?? null,
-  statutPaiement: d.statutPaiement || "non payé",
-}
+        payload = {
+          statut: "en attente",
+          montantAccorde: d.montantAccorde ?? currentEdit.montantAccorde ?? null,
+          statutPaiement: d.statutPaiement || "non payé",
+        }
       }
 
       const response = await fetch(`${API_URL}/api/demandes/${d.id}/statut`, {
@@ -223,7 +220,9 @@ payload = {
         throw new Error(result.message || "Erreur lors de la mise à jour")
       }
 
-      setDemandes((prev) => prev.map((item) => (item.id === d.id ? result.data : item)))
+      setDemandes((prev) =>
+        prev.map((item) => (item.id === d.id ? result.data : item))
+      )
 
       setEdition((prev) => ({
         ...prev,
@@ -233,9 +232,6 @@ payload = {
             result.data.montantAccorde !== undefined
               ? result.data.montantAccorde
               : "",
-          dateRemboursement: result.data.dateRemboursement
-            ? new Date(result.data.dateRemboursement).toISOString().slice(0, 16)
-            : "",
         },
       }))
 
@@ -313,7 +309,9 @@ payload = {
               </span>{" "}
               —{" "}
               <span className="text-yellow-600">
-                {adminUser?.role === "super_admin" ? "Super Admin" : "Gestionnaire"}
+                {adminUser?.role === "super_admin"
+                  ? "Super Admin"
+                  : "Gestionnaire"}
               </span>
             </p>
           </div>
@@ -372,12 +370,16 @@ payload = {
 
         <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
           <p className="text-sm text-gray-500">En attente</p>
-          <p className="text-2xl font-bold text-yellow-600">{stats.enAttente}</p>
+          <p className="text-2xl font-bold text-yellow-600">
+            {stats.enAttente}
+          </p>
         </div>
 
         <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
           <p className="text-sm text-gray-500">Acceptées</p>
-          <p className="text-2xl font-bold text-green-600">{stats.acceptees}</p>
+          <p className="text-2xl font-bold text-green-600">
+            {stats.acceptees}
+          </p>
         </div>
 
         <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
@@ -387,7 +389,9 @@ payload = {
 
         <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
           <p className="text-sm text-gray-500">Remboursées</p>
-          <p className="text-2xl font-bold text-emerald-700">{stats.remboursees}</p>
+          <p className="text-2xl font-bold text-emerald-700">
+            {stats.remboursees}
+          </p>
         </div>
       </div>
 
@@ -429,7 +433,6 @@ payload = {
             const etatCRM = getStyleEtatCRM(d.etatCrm)
             const dataEdition = edition[d.id] || {
               montantAccorde: "",
-              dateRemboursement: "",
             }
 
             const montantAccordeVerrouille =
@@ -451,7 +454,9 @@ payload = {
                         Demande #{d.id}
                       </h2>
 
-                      <span className={`font-semibold ${couleurStatut(d.statut)}`}>
+                      <span
+                        className={`font-semibold ${couleurStatut(d.statut)}`}
+                      >
                         {d.statut || "-"}
                       </span>
 
@@ -509,13 +514,34 @@ payload = {
                     </h3>
 
                     <div className="grid gap-3 text-sm leading-6">
-                      <p><span className="font-semibold">Nom :</span> {d.nom || "-"}</p>
-                      <p><span className="font-semibold">Téléphone :</span> {d.telephone || "-"}</p>
-                      <p><span className="font-semibold">Email :</span> {d.email || "-"}</p>
-                      <p><span className="font-semibold">Objet :</span> {d.typeObjet || "-"}</p>
-                      <p><span className="font-semibold">Type de pièce :</span> {d.typePiece || "-"}</p>
-                      <p><span className="font-semibold">Montant demandé :</span> {formaterMontant(d.montant)}</p>
-                      <p><span className="font-semibold">Description :</span> {d.description || "-"}</p>
+                      <p>
+                        <span className="font-semibold">Nom :</span>{" "}
+                        {d.nom || "-"}
+                      </p>
+                      <p>
+                        <span className="font-semibold">Téléphone :</span>{" "}
+                        {d.telephone || "-"}
+                      </p>
+                      <p>
+                        <span className="font-semibold">Email :</span>{" "}
+                        {d.email || "-"}
+                      </p>
+                      <p>
+                        <span className="font-semibold">Objet :</span>{" "}
+                        {d.typeObjet || "-"}
+                      </p>
+                      <p>
+                        <span className="font-semibold">Type de pièce :</span>{" "}
+                        {d.typePiece || "-"}
+                      </p>
+                      <p>
+                        <span className="font-semibold">Montant demandé :</span>{" "}
+                        {formaterMontant(d.montant)}
+                      </p>
+                      <p>
+                        <span className="font-semibold">Description :</span>{" "}
+                        {d.description || "-"}
+                      </p>
 
                       {d.document && (
                         <p>
@@ -555,7 +581,11 @@ payload = {
                           <p className="text-xs uppercase tracking-wide text-gray-500">
                             Statut actuel
                           </p>
-                          <p className={`mt-2 text-lg font-bold ${couleurStatut(d.statut)}`}>
+                          <p
+                            className={`mt-2 text-lg font-bold ${couleurStatut(
+                              d.statut
+                            )}`}
+                          >
                             {d.statut || "-"}
                           </p>
                         </div>
@@ -578,7 +608,11 @@ payload = {
                           type="number"
                           value={montantAccordeAffiche}
                           onChange={(e) =>
-                            handleChangeEdition(d.id, "montantAccorde", e.target.value)
+                            handleChangeEdition(
+                              d.id,
+                              "montantAccorde",
+                              e.target.value
+                            )
                           }
                           disabled={montantAccordeVerrouille}
                           className={`w-full rounded-xl border px-4 py-3 outline-none ${
@@ -609,16 +643,17 @@ payload = {
                         </p>
                       </div>
 
-                     <label className="mb-1 block text-sm font-semibold text-gray-700">
-                     Date de remboursement
-                     </label>
-                     <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 font-semibold text-gray-900">
-                     {formaterDate(d.dateRemboursement)}
-                     </div>
-                     <p className="mt-1 text-xs text-gray-500">
-                     Date calculée automatiquement selon le montant accordé.
-                    </p>
-                    </div>
+                      <div>
+                        <label className="mb-1 block text-sm font-semibold text-gray-700">
+                          Date de remboursement
+                        </label>
+                        <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 font-semibold text-gray-900">
+                          {formaterDate(d.dateRemboursement)}
+                        </div>
+                        <p className="mt-1 text-xs text-gray-500">
+                          Date calculée automatiquement après acceptation.
+                        </p>
+                      </div>
 
                       <div className="grid gap-4 sm:grid-cols-2">
                         <div className="rounded-2xl border border-gray-200 bg-white p-4">
@@ -641,13 +676,14 @@ payload = {
                       </div>
 
                       <div className="rounded-2xl border border-yellow-200 bg-yellow-50 p-4 text-sm leading-6 text-gray-700">
-                        Une notification email est envoyée automatiquement au client
-                        lors d’une acceptation ou d’un refus, si une adresse email
-                        est renseignée.
+                        Une notification email est envoyée automatiquement au
+                        client lors d’une acceptation ou d’un refus, si une
+                        adresse email est renseignée.
                       </div>
                     </div>
                   </div>
                 </div>
+              </div>
             )
           })}
         </div>
