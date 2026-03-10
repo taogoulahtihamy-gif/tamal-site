@@ -5,6 +5,7 @@ const cors = require("cors")
 const multer = require("multer")
 const path = require("path")
 const fs = require("fs")
+const nodemailer = require("nodemailer")
 const pool = require("./db")
 
 const app = express()
@@ -20,8 +21,44 @@ const ULTRAMSG_INSTANCE_ID = process.env.ULTRAMSG_INSTANCE_ID
 const ULTRAMSG_TOKEN = process.env.ULTRAMSG_TOKEN
 const WHATSAPP_ADMIN_NUMBER = process.env.WHATSAPP_ADMIN_NUMBER
 
+const MAIL_HOST = process.env.MAIL_HOST
+const MAIL_PORT = Number(process.env.MAIL_PORT || 587)
+const MAIL_SECURE = process.env.MAIL_SECURE === "true"
+const MAIL_USER = process.env.MAIL_USER
+const MAIL_PASS = process.env.MAIL_PASS
+const MAIL_FROM = process.env.MAIL_FROM || MAIL_USER
+const MAIL_TO = process.env.MAIL_TO || MAIL_USER
+
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true })
+}
+
+// =========================
+// CONFIGURATION EMAIL
+// =========================
+
+let transporter = null
+
+if (MAIL_HOST && MAIL_USER && MAIL_PASS) {
+  transporter = nodemailer.createTransport({
+    host: MAIL_HOST,
+    port: MAIL_PORT,
+    secure: MAIL_SECURE,
+    auth: {
+      user: MAIL_USER,
+      pass: MAIL_PASS,
+    },
+  })
+
+  transporter.verify((error) => {
+    if (error) {
+      console.error("Erreur configuration SMTP :", error)
+    } else {
+      console.log("SMTP prêt à envoyer des emails.")
+    }
+  })
+} else {
+  console.warn("Variables email manquantes : transporter non initialisé.")
 }
 
 // =========================
@@ -71,6 +108,7 @@ const envoyerNotificationWhatsApp = async (demande) => {
       "📩 Nouvelle demande TAMAL",
       `Nom : ${demande.nom || "-"}`,
       `Téléphone : ${demande.telephone || "-"}`,
+      `Email : ${demande.email || "-"}`,
       `Montant : ${demande.montant || "-"} FCFA`,
       `Objet : ${demande.typeObjet || "-"}`,
       `Statut : ${demande.statut || "-"}`,
@@ -102,9 +140,131 @@ const envoyerNotificationWhatsApp = async (demande) => {
     }
 
     console.log("Notification WhatsApp envoyée avec succès.")
-    console.log(data)
   } catch (error) {
     console.error("Erreur lors de l'envoi de la notification WhatsApp :", error)
+  }
+}
+
+// =========================
+// EMAILS
+// =========================
+
+const envoyerEmailInterne = async (demande) => {
+  try {
+    if (!transporter) {
+      console.warn("Transport email non initialisé : email interne ignoré.")
+      return
+    }
+
+    const html = `
+      <div style="font-family: Arial, sans-serif; color: #111; line-height: 1.6;">
+        <h2>Nouvelle demande TAMAL</h2>
+        <p>Une nouvelle demande a été envoyée depuis le site.</p>
+
+        <table style="border-collapse: collapse; width: 100%; max-width: 700px;">
+          <tr>
+            <td style="padding: 8px; border: 1px solid #ddd;"><strong>Nom</strong></td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${demande.nom || "-"}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; border: 1px solid #ddd;"><strong>Téléphone</strong></td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${demande.telephone || "-"}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; border: 1px solid #ddd;"><strong>Email</strong></td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${demande.email || "-"}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; border: 1px solid #ddd;"><strong>Montant</strong></td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${demande.montant || "-"} FCFA</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; border: 1px solid #ddd;"><strong>Type d'objet</strong></td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${demande.typeObjet || "-"}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; border: 1px solid #ddd;"><strong>Type de pièce</strong></td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${demande.typePiece || "-"}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; border: 1px solid #ddd;"><strong>Description</strong></td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${demande.description || "-"}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; border: 1px solid #ddd;"><strong>Statut</strong></td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${demande.statut || "-"}</td>
+          </tr>
+        </table>
+
+        <p style="margin-top: 20px;">Connectez-vous à l’espace admin pour traiter cette demande.</p>
+      </div>
+    `
+
+    await transporter.sendMail({
+      from: MAIL_FROM,
+      to: MAIL_TO,
+      subject: `Nouvelle demande TAMAL - ${demande.nom || "Client"}`,
+      html,
+    })
+
+    console.log("Email interne envoyé avec succès.")
+  } catch (error) {
+    console.error("Erreur lors de l'envoi de l'email interne :", error)
+  }
+}
+
+const envoyerEmailClient = async (demande) => {
+  try {
+    if (!transporter) {
+      console.warn("Transport email non initialisé : email client ignoré.")
+      return
+    }
+
+    if (!demande.email) {
+      console.warn("Adresse email client absente : email client ignoré.")
+      return
+    }
+
+    const html = `
+      <div style="font-family: Arial, sans-serif; color: #111; line-height: 1.6;">
+        <h2>Votre demande a bien été reçue</h2>
+
+        <p>Bonjour ${demande.nom || ""},</p>
+
+        <p>
+          Nous confirmons la bonne réception de votre demande de prêt sur gage
+          sur le site TAMAL.
+        </p>
+
+        <p>
+          Notre équipe va étudier votre dossier et vous contacter rapidement.
+        </p>
+
+        <div style="margin: 20px 0; padding: 16px; background: #f8f8f6; border: 1px solid #e5e5e5; border-radius: 12px;">
+          <p style="margin: 0 0 8px;"><strong>Montant demandé :</strong> ${demande.montant || "-"} FCFA</p>
+          <p style="margin: 0 0 8px;"><strong>Type d'objet :</strong> ${demande.typeObjet || "-"}</p>
+          <p style="margin: 0;"><strong>Statut initial :</strong> ${demande.statut || "en attente"}</p>
+        </div>
+
+        <p>Merci pour votre confiance.</p>
+
+        <p>
+          <strong>TAMAL</strong><br />
+          Service Liquidité Immédiate
+        </p>
+      </div>
+    `
+
+    await transporter.sendMail({
+      from: MAIL_FROM,
+      to: demande.email,
+      subject: "Confirmation de votre demande TAMAL",
+      html,
+    })
+
+    console.log("Email client envoyé avec succès.")
+  } catch (error) {
+    console.error("Erreur lors de l'envoi de l'email client :", error)
   }
 }
 
@@ -145,12 +305,13 @@ app.post(
       const result = await pool.query(
         `
         INSERT INTO demandes
-        (nom, telephone, montant, typeobjet, typepiece, description, document, photo, statut, datecreation)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'en attente', CURRENT_TIMESTAMP)
+        (nom, telephone, email, montant, typeobjet, typepiece, description, document, photo, statut, datecreation)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'en attente', CURRENT_TIMESTAMP)
         RETURNING
           id,
           nom,
           telephone,
+          email,
           montant,
           typeobjet AS "typeObjet",
           typepiece AS "typePiece",
@@ -163,6 +324,7 @@ app.post(
         [
           formData.nom || null,
           formData.telephone || null,
+          formData.email || null,
           formData.montant ? Number(formData.montant) : null,
           formData.typeObjet || null,
           formData.typePiece || null,
@@ -177,7 +339,11 @@ app.post(
       console.log("Nouvelle demande reçue :")
       console.log(demande)
 
-      await envoyerNotificationWhatsApp(demande)
+      await Promise.all([
+        envoyerNotificationWhatsApp(demande),
+        envoyerEmailInterne(demande),
+        envoyerEmailClient(demande),
+      ])
 
       res.status(201).json({
         message: "Demande reçue avec succès",
@@ -199,6 +365,7 @@ app.get("/api/demandes", async (req, res) => {
         id,
         nom,
         telephone,
+        email,
         montant,
         typeobjet AS "typeObjet",
         typepiece AS "typePiece",
@@ -238,6 +405,7 @@ app.patch("/api/demandes/:id/statut", async (req, res) => {
         id,
         nom,
         telephone,
+        email,
         montant,
         typeobjet AS "typeObjet",
         typepiece AS "typePiece",

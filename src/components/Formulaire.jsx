@@ -5,6 +5,7 @@ export default function Formulaire() {
   const [formData, setFormData] = useState({
     nom: "",
     telephone: "",
+    email: "",
     montant: "",
     typeObjet: "Téléphone",
     typePiece: "Carte nationale d'identité",
@@ -46,6 +47,10 @@ export default function Formulaire() {
     }
   }
 
+  const validerEmail = (email) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+  }
+
   const validerFormulaire = () => {
     const nouvellesErreurs = {}
 
@@ -57,12 +62,26 @@ export default function Formulaire() {
       nouvellesErreurs.telephone = "Le téléphone est obligatoire"
     }
 
+    if (!formData.email.trim()) {
+      nouvellesErreurs.email = "L’email est obligatoire"
+    } else if (!validerEmail(formData.email)) {
+      nouvellesErreurs.email = "Veuillez entrer une adresse email valide"
+    }
+
     if (!formData.montant || Number(formData.montant) < 5000) {
       nouvellesErreurs.montant = "Le montant doit être au moins de 5 000 FCFA"
     }
 
+    if (!photoFile) {
+      nouvellesErreurs.photo = "La photo de l'objet est obligatoire"
+    }
+
     if (!formData.description.trim()) {
       nouvellesErreurs.description = "La description de l'objet est obligatoire"
+    }
+
+    if (!documentFile) {
+      nouvellesErreurs.document = "La copie de la pièce est obligatoire"
     }
 
     return nouvellesErreurs
@@ -87,6 +106,7 @@ export default function Formulaire() {
 
       dataToSend.append("nom", formData.nom)
       dataToSend.append("telephone", formData.telephone)
+      dataToSend.append("email", formData.email)
       dataToSend.append("montant", formData.montant)
       dataToSend.append("typeObjet", formData.typeObjet)
       dataToSend.append("typePiece", formData.typePiece)
@@ -120,6 +140,7 @@ export default function Formulaire() {
       setFormData({
         nom: "",
         telephone: "",
+        email: "",
         montant: "",
         typeObjet: "Téléphone",
         typePiece: "Carte nationale d'identité",
@@ -205,6 +226,25 @@ export default function Formulaire() {
 
             <div>
               <label className="mb-2 block text-sm text-gray-700">
+                Adresse email
+              </label>
+
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="Ex: client@email.com"
+                className="w-full rounded-xl border border-gray-200 bg-[#faf9f5] px-4 py-3 text-gray-900 outline-none transition focus:border-yellow-500"
+              />
+
+              {erreurs.email && (
+                <p className="mt-2 text-sm text-red-500">{erreurs.email}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm text-gray-700">
                 Montant souhaité
               </label>
 
@@ -242,19 +282,50 @@ export default function Formulaire() {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm text-gray-700">
-                Type de pièce d'identité
+              <label className="mb-3 block text-sm text-gray-700">
+                Photo de l'objet
               </label>
 
-              <select
-                name="typePiece"
-                value={formData.typePiece}
-                onChange={handleChange}
-                className="w-full rounded-xl border border-gray-200 bg-[#faf9f5] px-4 py-3 text-gray-900 outline-none transition focus:border-yellow-500"
-              >
-                <option>Carte nationale d'identité</option>
-                <option>Passeport</option>
-              </select>
+              <div className="rounded-2xl border border-gray-200 bg-[#faf9f5] p-6 transition hover:border-yellow-300 hover:bg-white">
+                <label className="cursor-pointer">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handlePhotoChange}
+                  />
+
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-yellow-500 text-2xl font-bold text-black transition hover:scale-105">
+                      +
+                    </div>
+
+                    <p className="text-sm text-gray-700">Importer une photo</p>
+
+                    {photoFile && (
+                      <p className="text-xs text-green-600">
+                        Photo sélectionnée : {photoFile.name}
+                      </p>
+                    )}
+
+                    {photoPreview && (
+                      <div className="mt-4 flex justify-center">
+                        <img
+                          src={photoPreview}
+                          alt="preview"
+                          className="h-40 w-40 rounded-xl border border-gray-200 object-cover shadow-sm"
+                        />
+                      </div>
+                    )}
+
+                    <p className="text-xs text-gray-500">JPG ou PNG</p>
+                  </div>
+                </label>
+              </div>
+
+              {erreurs.photo && (
+                <p className="mt-2 text-sm text-red-500">{erreurs.photo}</p>
+              )}
             </div>
 
             <div>
@@ -277,8 +348,24 @@ export default function Formulaire() {
             </div>
 
             <div>
+              <label className="mb-2 block text-sm text-gray-700">
+                Type de pièce d'identité
+              </label>
+
+              <select
+                name="typePiece"
+                value={formData.typePiece}
+                onChange={handleChange}
+                className="w-full rounded-xl border border-gray-200 bg-[#faf9f5] px-4 py-3 text-gray-900 outline-none transition focus:border-yellow-500"
+              >
+                <option>Carte nationale d'identité</option>
+                <option>Passeport</option>
+              </select>
+            </div>
+
+            <div>
               <label className="mb-3 block text-sm text-gray-700">
-                Copie du document (PDF ou image)
+                Image ou PDF de la pièce
               </label>
 
               <div className="rounded-2xl border border-gray-200 bg-[#faf9f5] p-6 transition hover:border-yellow-300 hover:bg-white">
@@ -296,7 +383,7 @@ export default function Formulaire() {
                     </div>
 
                     <p className="text-sm text-gray-700">
-                      Télécharger la copie du document
+                      Télécharger la copie de la pièce
                     </p>
 
                     {documentFile && (
@@ -309,51 +396,10 @@ export default function Formulaire() {
                   </div>
                 </label>
               </div>
-            </div>
 
-            <div>
-              <label className="mb-3 block text-sm text-gray-700">
-                Photo de l'objet
-              </label>
-
-              <div className="rounded-2xl border border-gray-200 bg-[#faf9f5] p-6 transition hover:border-yellow-300 hover:bg-white">
-                <label className="cursor-pointer">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handlePhotoChange}
-                  />
-
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-yellow-500 text-2xl font-bold text-black transition hover:scale-105">
-                      +
-                    </div>
-
-                    <p className="text-sm text-gray-700">
-                      Importer une photo
-                    </p>
-
-                    {photoFile && (
-                      <p className="text-xs text-green-600">
-                        Photo sélectionnée : {photoFile.name}
-                      </p>
-                    )}
-
-                    {photoPreview && (
-                      <div className="mt-4 flex justify-center">
-                        <img
-                          src={photoPreview}
-                          alt="preview"
-                          className="h-40 w-40 rounded-xl border border-gray-200 object-cover shadow-sm"
-                        />
-                      </div>
-                    )}
-
-                    <p className="text-xs text-gray-500">JPG ou PNG</p>
-                  </div>
-                </label>
-              </div>
+              {erreurs.document && (
+                <p className="mt-2 text-sm text-red-500">{erreurs.document}</p>
+              )}
             </div>
 
             {messageSucces && (
