@@ -1,9 +1,11 @@
+require("dotenv").config()
+
 const express = require("express")
 const cors = require("cors")
 const multer = require("multer")
 const path = require("path")
 const fs = require("fs")
-const { Pool } = require("pg")
+const pool = require("./db")
 
 const app = express()
 const PORT = process.env.PORT || 5000
@@ -17,13 +19,6 @@ app.use("/uploads", express.static(uploadsDir))
 const ULTRAMSG_INSTANCE_ID = process.env.ULTRAMSG_INSTANCE_ID
 const ULTRAMSG_TOKEN = process.env.ULTRAMSG_TOKEN
 const WHATSAPP_ADMIN_NUMBER = process.env.WHATSAPP_ADMIN_NUMBER
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL
-    ? { rejectUnauthorized: false }
-    : false,
-})
 
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true })
@@ -459,24 +454,19 @@ app.delete("/api/admins/:id", verifierSuperAdmin, async (req, res) => {
     })
   }
 })
+
 app.get("/api/debug-admins", async (req, res) => {
   try {
-    const result = await pool.query("SELECT id, username, role FROM admins ORDER BY id ASC")
+    const result = await pool.query(
+      "SELECT id, username, role FROM admins ORDER BY id ASC"
+    )
     res.json(result.rows)
   } catch (error) {
     console.error("Erreur debug admins :", error)
     res.status(500).json({ message: error.message })
   }
 })
-app.get("/api/debug-admins", async (req, res) => {
-  try {
-    const result = await pool.query("SELECT * FROM admins")
-    res.json(result.rows)
-  } catch (error) {
-    console.error(error)
-    res.status(500).json({ error: error.message })
-  }
-})
+
 app.listen(PORT, () => {
   console.log("Serveur backend lancé sur le port " + PORT)
 })
