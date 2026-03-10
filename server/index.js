@@ -5,7 +5,6 @@ const cors = require("cors")
 const multer = require("multer")
 const path = require("path")
 const fs = require("fs")
-const nodemailer = require("nodemailer")
 const pool = require("./db")
 
 const app = express()
@@ -21,44 +20,12 @@ const ULTRAMSG_INSTANCE_ID = process.env.ULTRAMSG_INSTANCE_ID
 const ULTRAMSG_TOKEN = process.env.ULTRAMSG_TOKEN
 const WHATSAPP_ADMIN_NUMBER = process.env.WHATSAPP_ADMIN_NUMBER
 
-const MAIL_HOST = process.env.MAIL_HOST
-const MAIL_PORT = Number(process.env.MAIL_PORT || 587)
-const MAIL_SECURE = process.env.MAIL_SECURE === "true"
-const MAIL_USER = process.env.MAIL_USER
-const MAIL_PASS = process.env.MAIL_PASS
-const MAIL_FROM = process.env.MAIL_FROM || MAIL_USER
-const MAIL_TO = process.env.MAIL_TO || MAIL_USER
+const BREVO_API_KEY = process.env.BREVO_API_KEY
+const MAIL_FROM = process.env.MAIL_FROM
+const MAIL_TO = process.env.MAIL_TO
 
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true })
-}
-
-// =========================
-// CONFIGURATION EMAIL
-// =========================
-
-let transporter = null
-
-if (MAIL_HOST && MAIL_USER && MAIL_PASS) {
-  transporter = nodemailer.createTransport({
-    host: MAIL_HOST,
-    port: MAIL_PORT,
-    secure: MAIL_SECURE,
-    auth: {
-      user: MAIL_USER,
-      pass: MAIL_PASS,
-    },
-  })
-
-  transporter.verify((error) => {
-    if (error) {
-      console.error("Erreur configuration SMTP :", error)
-    } else {
-      console.log("SMTP prêt à envoyer des emails.")
-    }
-  })
-} else {
-  console.warn("Variables email manquantes : transporter non initialisé.")
 }
 
 // =========================
@@ -146,13 +113,68 @@ const envoyerNotificationWhatsApp = async (demande) => {
 }
 
 // =========================
-// EMAILS
+// EMAILS BREVO
 // =========================
+
+const parseEmailIdentity = (value) => {
+  if (!value) return { email: "", name: "TAMAL" }
+
+  const match = value.match(/^(.*)<(.+)>$/)
+
+  if (match) {
+    return {
+      name: match[1].trim().replace(/^"|"$/g, "") || "TAMAL",
+      email: match[2].trim(),
+    }
+  }
+
+  return {
+    name: "TAMAL",
+    email: value.trim(),
+  }
+}
+
+const envoyerEmailBrevo = async ({ to, subject, htmlContent }) => {
+  try {
+    if (!BREVO_API_KEY || !MAIL_FROM) {
+      console.warn("Configuration Brevo absente : email ignoré.")
+      return
+    }
+
+    const sender = parseEmailIdentity(MAIL_FROM)
+
+    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "api-key": BREVO_API_KEY,
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        sender,
+        to: [{ email: to }],
+        subject,
+        htmlContent,
+      }),
+    })
+
+    const data = await response.text()
+
+    if (!response.ok) {
+      console.error("Erreur API Brevo :", data)
+      return
+    }
+
+    console.log(`Email Brevo envoyé avec succès à ${to}.`)
+  } catch (error) {
+    console.error("Erreur lors de l'envoi via Brevo :", error)
+  }
+}
 
 const envoyerEmailInterne = async (demande) => {
   try {
-    if (!transporter) {
-      console.warn("Transport email non initialisé : email interne ignoré.")
+    if (!MAIL_TO) {
+      console.warn("MAIL_TO absent : email interne ignoré.")
       return
     }
 
@@ -200,14 +222,11 @@ const envoyerEmailInterne = async (demande) => {
       </div>
     `
 
-    await transporter.sendMail({
-      from: MAIL_FROM,
+    await envoyerEmailBrevo({
       to: MAIL_TO,
       subject: `Nouvelle demande TAMAL - ${demande.nom || "Client"}`,
-      html,
+      htmlContent: html,
     })
-
-    console.log("Email interne envoyé avec succès.")
   } catch (error) {
     console.error("Erreur lors de l'envoi de l'email interne :", error)
   }
@@ -215,11 +234,6 @@ const envoyerEmailInterne = async (demande) => {
 
 const envoyerEmailClient = async (demande) => {
   try {
-    if (!transporter) {
-      console.warn("Transport email non initialisé : email client ignoré.")
-      return
-    }
-
     if (!demande.email) {
       console.warn("Adresse email client absente : email client ignoré.")
       return
@@ -255,14 +269,11 @@ const envoyerEmailClient = async (demande) => {
       </div>
     `
 
-    await transporter.sendMail({
-      from: MAIL_FROM,
+    await envoyerEmailBrevo({
       to: demande.email,
       subject: "Confirmation de votre demande TAMAL",
-      html,
+      htmlContent: html,
     })
-
-    console.log("Email client envoyé avec succès.")
   } catch (error) {
     console.error("Erreur lors de l'envoi de l'email client :", error)
   }
