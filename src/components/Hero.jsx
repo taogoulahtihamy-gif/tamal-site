@@ -18,9 +18,9 @@ export default function Hero() {
                 <div className="max-w-4xl">
 
                   <h1 className="text-3xl font-bold leading-tight text-white md:text-5xl md:leading-[1.1]">
-                  une solution simple pour obtenir rapidement de la liquidité.
+                  Une solution simple pour obtenir rapidement de la liquidité
                   </h1>
-
+                  //test
                   <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-white/75 md:text-lg">
                     Un service clair, rapide et sécurisé pour répondre à vos
                     besoins de trésorerie avec un accompagnement sérieux.
