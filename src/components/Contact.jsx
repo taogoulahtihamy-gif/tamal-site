@@ -35,7 +35,7 @@ export default function Contact() {
                       Téléphone
                     </p>
                     <p className="mt-1 text-lg font-semibold text-white">
-                      +221 77 849 27 79
+                      +221 77 261 67 53
                     </p>
                   </div>
 
@@ -44,7 +44,7 @@ export default function Contact() {
                       WhatsApp
                     </p>
                     <p className="mt-1 text-lg font-semibold text-white">
-                      +221 77 849 27 79
+                      +221 77 261 67 53
                     </p>
                   </div>
 
@@ -106,7 +106,7 @@ export default function Contact() {
                 <div className="mt-8 flex flex-col gap-4 sm:flex-row md:flex-col lg:flex-row">
 
                   <a
-                    href="https://wa.me/221778492779"
+                    href="https://wa.me/221772616753"
                     target="_blank"
                     rel="noreferrer"
                     className="inline-flex justify-center rounded-full bg-yellow-500 px-6 py-3 font-semibold text-black transition hover:bg-yellow-400"
@@ -115,7 +115,7 @@ export default function Contact() {
                   </a>
 
                   <a
-                    href="tel:+221778492779"
+                    href="tel:+221772616753"
                     className="inline-flex justify-center rounded-full border border-white/20 px-6 py-3 font-semibold text-white transition hover:border-yellow-500 hover:text-yellow-400"
                   >
                     Appeler
