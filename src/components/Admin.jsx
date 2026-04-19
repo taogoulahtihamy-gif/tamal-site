@@ -539,63 +539,68 @@ export default function Admin() {
                       Informations client
                     </h3>
 
-                    <div className="grid gap-3 text-sm leading-6">
-                      <p>
-                        <span className="font-semibold">Nom :</span>{" "}
-                        {d.nom || "-"}
-                      </p>
-                      <p>
-                        <span className="font-semibold">Téléphone :</span>{" "}
-                        {d.telephone || "-"}
-                      </p>
-                      <p>
-                        <span className="font-semibold">Email :</span>{" "}
-                        {d.email || "-"}
-                      </p>
-                      <p>
-                        <span className="font-semibold">Objet :</span>{" "}
-                        {d.typeObjet || "-"}
-                      </p>
-                      <p>
-                        <span className="font-semibold">Type de pièce :</span>{" "}
-                        {d.typePiece || "-"}
-                      </p>
-                      <p>
-                        <span className="font-semibold">Montant demandé :</span>{" "}
-                        {formaterMontant(d.montant)}
-                      </p>
-                      <p>
-                        <span className="font-semibold">Description :</span>{" "}
-                        {d.description || "-"}
-                      </p>
+<div className="grid gap-3 text-sm leading-6">
+  <p>
+    <span className="font-semibold">Nom :</span>{" "}
+    {d.nom || "-"}
+  </p>
 
-                      {d.document && (
-                        <p>
-                          <span className="font-semibold">Document :</span>{" "}
-                          <a
-                            href={`${API_URL}/uploads/${d.document}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-blue-600 underline"
-                          >
-                            Voir le document
-                          </a>
-                        </p>
-                      )}
+  <p>
+    <span className="font-semibold">Téléphone :</span>{" "}
+    {d.telephone || "-"}
+  </p>
 
-                      {d.photo && (
-                        <div className="pt-2">
-                          <p className="mb-2 font-semibold">Photo de l’objet :</p>
-                          <img
-                            src={`${API_URL}/uploads/${d.photo}`}
-                            alt={d.typeObjet || "Objet"}
-                            className="max-h-64 w-full rounded-2xl border border-gray-200 object-cover"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </div>
+  <p>
+    <span className="font-semibold">Email :</span>{" "}
+    {d.email || "-"}
+  </p>
 
+  <p>
+    <span className="font-semibold">Montant demandé :</span>{" "}
+    {formaterMontant(d.montant)}
+  </p>
+
+  <p>
+    <span className="font-semibold">Type d'objet :</span>{" "}
+    {d.typeObjet || "-"}
+  </p>
+
+  {d.photo && (
+    <div className="pt-2">
+      <p className="mb-2 font-semibold">Photo de l'objet :</p>
+      <img
+        src={`${API_URL}/uploads/${d.photo}`}
+        alt={d.typeObjet || "Objet"}
+        className="max-h-64 w-full rounded-2xl border border-gray-200 object-cover"
+      />
+    </div>
+  )}
+
+  <p>
+    <span className="font-semibold">Description de l'objet :</span>{" "}
+    {d.description || "-"}
+  </p>
+
+  <p>
+    <span className="font-semibold">Type de pièce d'identité :</span>{" "}
+    {d.typePiece || "-"}
+  </p>
+
+  {d.document && (
+    <p>
+      <span className="font-semibold">Copie de la pièce :</span>{" "}
+      <a
+        href={`${API_URL}/uploads/${d.document}`}
+        target="_blank"
+        rel="noreferrer"
+        className="text-blue-600 underline"
+      >
+        Voir le document
+      </a>
+    </p>
+  )}
+</div>
+</div>
                   <div className="rounded-3xl bg-[#faf9f5] p-5">
                     <h3 className="mb-4 text-lg font-bold text-gray-900">
                       Décision et suivi
