@@ -14,7 +14,7 @@ export default function Admin() {
 
   const estConnecte = localStorage.getItem("adminAuth") === "true"
   const adminUser = JSON.parse(localStorage.getItem("adminUser") || "null")
-  const API_URL = import.meta.env.VITE_API_URL
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000"
 
   const afficherMessage = (texte, type = "success") => {
     setMessage(texte)
@@ -28,13 +28,26 @@ export default function Admin() {
   const chargerDemandes = async () => {
     try {
       setChargement(true)
+
       const response = await fetch(`${API_URL}/api/demandes`)
       const data = await response.json()
 
-      setDemandes(data)
+      if (!response.ok) {
+        throw new Error(data?.message || "Erreur lors du chargement")
+      }
+
+      const liste = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.data)
+        ? data.data
+        : Array.isArray(data?.demandes)
+        ? data.demandes
+        : []
+
+      setDemandes(liste)
 
       const initialEdition = {}
-      data.forEach((d) => {
+      liste.forEach((d) => {
         initialEdition[d.id] = {
           montantAccorde:
             d.montantAccorde !== null && d.montantAccorde !== undefined
@@ -45,7 +58,12 @@ export default function Admin() {
       setEdition(initialEdition)
     } catch (error) {
       console.error("Erreur chargement demandes :", error)
-      afficherMessage("Erreur lors du chargement des demandes.", "error")
+      setDemandes([])
+      setEdition({})
+      afficherMessage(
+        error.message || "Erreur lors du chargement des demandes.",
+        "error"
+      )
     } finally {
       setChargement(false)
     }
@@ -217,20 +235,24 @@ export default function Admin() {
       const result = await response.json()
 
       if (!response.ok) {
-        throw new Error(result.message || "Erreur lors de la mise à jour")
+        throw new Error(result?.message || "Erreur lors de la mise à jour")
       }
 
+      const updatedItem = result?.data ?? result
+
       setDemandes((prev) =>
-        prev.map((item) => (item.id === d.id ? result.data : item))
+        Array.isArray(prev)
+          ? prev.map((item) => (item.id === d.id ? updatedItem : item))
+          : [updatedItem]
       )
 
       setEdition((prev) => ({
         ...prev,
         [d.id]: {
           montantAccorde:
-            result.data.montantAccorde !== null &&
-            result.data.montantAccorde !== undefined
-              ? result.data.montantAccorde
+            updatedItem?.montantAccorde !== null &&
+            updatedItem?.montantAccorde !== undefined
+              ? updatedItem.montantAccorde
               : "",
         },
       }))
@@ -256,7 +278,9 @@ export default function Admin() {
   }
 
   const demandesFiltrees = useMemo(() => {
-    return demandes.filter((d) => {
+    const liste = Array.isArray(demandes) ? demandes : []
+
+    return liste.filter((d) => {
       const texte = recherche.toLowerCase().trim()
 
       const matchRecherche =
@@ -274,12 +298,14 @@ export default function Admin() {
   }, [demandes, recherche, filtreStatut])
 
   const stats = useMemo(() => {
+    const liste = Array.isArray(demandes) ? demandes : []
+
     return {
-      total: demandes.length,
-      enAttente: demandes.filter((d) => d.statut === "en attente").length,
-      acceptees: demandes.filter((d) => d.statut === "acceptée").length,
-      refusees: demandes.filter((d) => d.statut === "refusée").length,
-      remboursees: demandes.filter((d) => d.etatCrm === "Remboursée").length,
+      total: liste.length,
+      enAttente: liste.filter((d) => d.statut === "en attente").length,
+      acceptees: liste.filter((d) => d.statut === "acceptée").length,
+      refusees: liste.filter((d) => d.statut === "refusée").length,
+      remboursees: liste.filter((d) => d.etatCrm === "Remboursée").length,
     }
   }, [demandes])
 
@@ -497,7 +523,7 @@ export default function Admin() {
                       Marquer payé
                     </button>
 
-                    <button
+                  <button
                       onClick={() => envoyerAction(d, "attente")}
                       disabled={loadingActionId === d.id}
                       className="rounded-full border border-gray-300 bg-white px-4 py-3 text-sm font-semibold text-gray-800 hover:border-yellow-500 hover:text-yellow-600 disabled:opacity-60"
