@@ -707,6 +707,10 @@ app.patch("/api/demandes/:id/statut", async (req, res) => {
     const statutRecu = req.body?.statut
     const statutPaiement = req.body?.statutPaiement || "non payé"
 
+    if (!id || Number.isNaN(id)) {
+      return res.status(400).json({ message: "ID invalide" })
+    }
+
     if (!statutRecu) {
       return res.status(400).json({ message: "Le statut est obligatoire" })
     }
@@ -718,8 +722,8 @@ app.patch("/api/demandes/:id/statut", async (req, res) => {
         nom,
         email,
         telephone,
-        montant_accorde AS "montantAccorde",
-        statut
+        statut,
+        montant_accorde AS "montantAccorde"
       FROM demandes
       WHERE id = $1
       LIMIT 1
@@ -736,35 +740,6 @@ app.patch("/api/demandes/:id/statut", async (req, res) => {
 
     let montantAccorde = actuel.montantAccorde
 
-    if (
-      statut === "acceptée" &&
-      (montantAccorde === null || montantAccorde === undefined)
-    ) {
-      const montantAccordeRecu =
-        req.body?.montantAccorde !== undefined && req.body?.montantAccorde !== ""
-          ? Number(req.body.montantAccorde)
-          : null
-
-      if (!montantAccordeRecu) {
-        return res.status(400).json({
-          message:
-            "Le montant accordé est obligatoire pour accepter une demande.",
-        })
-      }
-
-      montantAccorde = montantAccordeRecu
-    }
-
-    let dateRemboursement = req.body?.dateRemboursement || null
-
-    if (statut === "acceptée" && montantAccorde) {
-      const baseDate = new Date()
-      const nbJours = Number(montantAccorde) >= 30000 ? 14 : 7
-      baseDate.setDate(baseDate.getDate() + nbJours)
-      dateRemboursement = baseDate.toISOString()
-    }
-
-    const montantRemboursement = calculerMontantRemb
     if (
       statut === "acceptée" &&
       (montantAccorde === null || montantAccorde === undefined)
@@ -913,11 +888,17 @@ app.post("/api/admin/login", async (req, res) => {
         role: admin.role,
       },
     })
-  } catch (error) {
+    } catch (error) {
     console.error("Erreur login admin :", error)
-    return res.status(500).json({ message: "Erreur serveur." })
+    return res.status(500).json({
+      message: "Erreur serveur.",
+    })
   }
 })
+
+// =========================
+// GESTION ADMINS
+// =========================
 
 app.get("/api/admins", verifierSuperAdmin, async (req, res) => {
   try {
@@ -952,12 +933,12 @@ app.post("/api/admins", verifierSuperAdmin, async (req, res) => {
       })
     }
 
-    const adminExiste = await pool.query(
+    const existe = await pool.query(
       "SELECT id FROM admins WHERE username = $1 LIMIT 1",
       [username]
     )
 
-    if (adminExiste.rowCount > 0) {
+    if (existe.rowCount > 0) {
       return res.status(400).json({
         message: "Ce nom d'utilisateur existe déjà.",
       })
@@ -1031,21 +1012,24 @@ app.delete("/api/admins/:id", verifierSuperAdmin, async (req, res) => {
       [id]
     )
 
-    const adminASupprimer = adminResult.rows[0]
+    const admin = adminResult.rows[0]
 
-    if (!adminASupprimer) {
+    if (!admin) {
       return res.status(404).json({
         message: "Admin introuvable.",
       })
     }
 
-    if (adminASupprimer.role === "super_admin") {
+    if (admin.role === "super_admin") {
       return res.status(400).json({
         message: "Impossible de supprimer un super admin.",
       })
     }
 
-    await pool.query("DELETE FROM admins WHERE id = $1", [id])
+    await pool.query(
+      "DELETE FROM admins WHERE id = $1",
+      [id]
+    )
 
     res.json({
       message: "Admin supprimé avec succès.",
@@ -1058,17 +1042,30 @@ app.delete("/api/admins/:id", verifierSuperAdmin, async (req, res) => {
   }
 })
 
+// =========================
+// DEBUG
+// =========================
+
 app.get("/api/debug-admins", async (req, res) => {
   try {
-    const result = await pool.query(
-      "SELECT id, username, role FROM admins ORDER BY id ASC"
-    )
+    const result = await pool.query(`
+      SELECT id, username, role
+      FROM admins
+      ORDER BY id ASC
+    `)
+
     res.json(result.rows)
   } catch (error) {
     console.error("Erreur debug admins :", error)
-    res.status(500).json({ message: error.message })
+    res.status(500).json({
+      message: error.message,
+    })
   }
 })
+
+// =========================
+// START SERVER
+// =========================
 
 app.listen(PORT, () => {
   console.log("Serveur backend lancé sur le port " + PORT)
