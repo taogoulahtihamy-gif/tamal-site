@@ -23,7 +23,6 @@ app.use("/uploads", express.static(uploadsDir))
 const WHATSAPP_PROVIDER = process.env.WHATSAPP_PROVIDER || "disabled"
 const WHATSAPP_ADMIN_NUMBER = process.env.WHATSAPP_ADMIN_NUMBER
 
-// Meta WhatsApp Cloud API
 const META_ACCESS_TOKEN = process.env.META_ACCESS_TOKEN
 const META_PHONE_NUMBER_ID = process.env.META_PHONE_NUMBER_ID
 
@@ -117,50 +116,6 @@ const calculerEtatCrm = ({ statut, dateRemboursement, statutPaiement }) => {
   return "En attente"
 }
 
-/**
- * Convertit différents formats vers un format exploitable par WhatsApp.
- * Exemples acceptés :
- * +221772616753
- * 221772616753
- * 00221772616753
- * 77 261 67 53
- * (221) 77-261-67-53
- */
-const formaterNumeroWhatsApp = (telephone, defaultCountryCode = "221") => {
-  if (!telephone) return null
-
-  let brut = String(telephone).trim()
-
-  brut = brut.replace(/[^\d+]/g, "")
-
-  if (brut.startsWith("+")) {
-    brut = brut.slice(1)
-  }
-
-  if (brut.startsWith("00")) {
-    brut = brut.slice(2)
-  }
-
-  if (/^\d{10,15}$/.test(brut)) {
-    return brut
-  }
-
-  const digits = brut.replace(/\D/g, "")
-  if (/^\d{6,9}$/.test(digits)) {
-    return `${defaultCountryCode}${digits}`
-  }
-
-  return null
-}
-
-// =========================
-// WHATSAPP NOTIFICATION
-// =========================
-
-// =========================
-// WHATSAPP NOTIFICATION
-// =========================
-
 const formaterNumeroWhatsApp = (telephone, defaultCountryCode = "221") => {
   if (!telephone) return null
 
@@ -186,6 +141,10 @@ const formaterNumeroWhatsApp = (telephone, defaultCountryCode = "221") => {
 
   return null
 }
+
+// =========================
+// WHATSAPP NOTIFICATION
+// =========================
 
 const envoyerMessageWhatsAppMeta = async ({ to, body }) => {
   try {
@@ -359,139 +318,6 @@ const envoyerWhatsAppDecisionClient = async (demande) => {
 
     if (ok) {
       console.log(`WhatsApp client décision envoyé avec succès à ${numeroClient}.`)
-    }
-  } catch (error) {
-    console.error("Erreur lors de l'envoi du WhatsApp client décision :", error)
-  }
-}
-const envoyerNotificationWhatsApp = async (demande) => {
-  try {
-    if (!WHATSAPP_ADMIN_NUMBER) {
-      console.warn("WHATSAPP_ADMIN_NUMBER absent : notification admin ignorée.")
-      return
-    }
-
-    const numeroAdmin = formaterNumeroWhatsApp(WHATSAPP_ADMIN_NUMBER)
-
-    if (!numeroAdmin) {
-      console.warn("Numéro admin invalide : notification admin ignorée.")
-      return
-    }
-
-    const message = [
-      "📩 Nouvelle demande TAMAL",
-      `Nom : ${demande.nom || "-"}`,
-      `Téléphone : ${demande.telephone || "-"}`,
-      `Email : ${demande.email || "-"}`,
-      `Montant : ${demande.montant || "-"} FCFA`,
-      `Objet : ${demande.typeObjet || "-"}`,
-      `Statut : ${demande.statut || "-"}`,
-      `État CRM : ${demande.etatCrm || "-"}`,
-      "➡️ Consultez l’espace admin pour la traiter.",
-    ].join("\n")
-
-    const ok = await envoyerMessageWhatsApp({
-      to: numeroAdmin,
-      body: message,
-    })
-
-    if (ok) {
-      console.log("Notification WhatsApp admin envoyée avec succès.")
-    }
-  } catch (error) {
-    console.error(
-      "Erreur lors de l'envoi de la notification WhatsApp admin :",
-      error
-    )
-  }
-}
-
-const envoyerWhatsAppClientCreation = async (demande) => {
-  try {
-    const numeroClient = formaterNumeroWhatsApp(demande.telephone)
-
-    if (!numeroClient) {
-      console.warn("Numéro client invalide : WhatsApp création ignoré.")
-      return
-    }
-
-    const message = [
-      `Bonjour ${demande.nom || ""},`,
-      "",
-      "Votre demande de prêt a bien été reçue par TAMAL.",
-      "Notre équipe analyse votre dossier.",
-      "Vous recevrez une réponse dans un délai maximum de 24h.",
-      "",
-      "Merci pour votre confiance.",
-      "TAMAL – Service Liquidité Immédiate",
-    ].join("\n")
-
-    const ok = await envoyerMessageWhatsApp({
-      to: numeroClient,
-      body: message,
-    })
-
-    if (ok) {
-      console.log(
-        `WhatsApp client création envoyé avec succès à ${numeroClient}.`
-      )
-    }
-  } catch (error) {
-    console.error("Erreur lors de l'envoi du WhatsApp client création :", error)
-  }
-}
-
-const envoyerWhatsAppDecisionClient = async (demande) => {
-  try {
-    const numeroClient = formaterNumeroWhatsApp(demande.telephone)
-
-    if (!numeroClient) {
-      console.warn("Numéro client invalide : WhatsApp décision ignoré.")
-      return
-    }
-
-    let message = null
-
-    if (demande.statut === "acceptée") {
-      message = [
-        `Bonjour ${demande.nom || ""},`,
-        "",
-        "Votre demande TAMAL a été acceptée ✅",
-        `Montant accordé : ${demande.montantAccorde || "-"} FCFA`,
-        `Montant à rembourser : ${demande.montantRemboursement || "-"} FCFA`,
-        `Date de remboursement : ${
-          demande.dateRemboursement
-            ? new Date(demande.dateRemboursement).toLocaleString("fr-FR")
-            : "-"
-        }`,
-        "",
-        "Notre équipe reste disponible pour la suite du traitement.",
-        "TAMAL – Service Liquidité Immédiate",
-      ].join("\n")
-    }
-
-    if (demande.statut === "refusée") {
-      message = [
-        `Bonjour ${demande.nom || ""},`,
-        "",
-        "Après étude, votre demande TAMAL n’a pas été retenue pour le moment ❌",
-        "Vous pouvez reprendre contact avec notre équipe pour toute précision.",
-        "",
-        "TAMAL – Service Liquidité Immédiate",
-      ].join("\n")
-    }
-
-    if (!message) return
-
-    const ok = await envoyerMessageWhatsApp({
-      to: numeroClient,
-      body: message,
-    })
-
-    if (ok) {
-      console.log(
-        `WhatsApp client décision envoyé avec succès à ${numeroClient}.`
-      )
     }
   } catch (error) {
     console.error("Erreur lors de l'envoi du WhatsApp client décision :", error)
@@ -910,6 +736,35 @@ app.patch("/api/demandes/:id/statut", async (req, res) => {
 
     let montantAccorde = actuel.montantAccorde
 
+    if (
+      statut === "acceptée" &&
+      (montantAccorde === null || montantAccorde === undefined)
+    ) {
+      const montantAccordeRecu =
+        req.body?.montantAccorde !== undefined && req.body?.montantAccorde !== ""
+          ? Number(req.body.montantAccorde)
+          : null
+
+      if (!montantAccordeRecu) {
+        return res.status(400).json({
+          message:
+            "Le montant accordé est obligatoire pour accepter une demande.",
+        })
+      }
+
+      montantAccorde = montantAccordeRecu
+    }
+
+    let dateRemboursement = req.body?.dateRemboursement || null
+
+    if (statut === "acceptée" && montantAccorde) {
+      const baseDate = new Date()
+      const nbJours = Number(montantAccorde) >= 30000 ? 14 : 7
+      baseDate.setDate(baseDate.getDate() + nbJours)
+      dateRemboursement = baseDate.toISOString()
+    }
+
+    const montantRemboursement = calculerMontantRemb
     if (
       statut === "acceptée" &&
       (montantAccorde === null || montantAccorde === undefined)
