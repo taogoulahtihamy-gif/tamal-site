@@ -100,7 +100,7 @@ export default function Simulateur() {
 
               {!montantValide && (
                 <p className="mt-3 text-sm text-red-500">
-                  Veuillez entrer un montant valide d’au moins 5 000 FCFA.
+                  Veuillez entrer un montant valide d’au moins 5 000 FCFA..
                 </p>
               )}
             </div>
