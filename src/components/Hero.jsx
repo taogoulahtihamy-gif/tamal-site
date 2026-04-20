@@ -23,7 +23,7 @@ export default function Hero() {
                   //test
                   <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-white/75 md:text-lg">
                     Un service clair, rapide et sécurisé pour répondre à vos
-                    besoins de trésorerie avec un accompagnement sérieux.
+                    besoins de trésorerie avec un accompagnement sérieux..
                   </p>
 
                   <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
