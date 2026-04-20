@@ -157,61 +157,213 @@ const formaterNumeroWhatsApp = (telephone, defaultCountryCode = "221") => {
 // WHATSAPP NOTIFICATION
 // =========================
 
-const envoyerMessageWhatsApp = async ({ to, body }) => {
+// =========================
+// WHATSAPP NOTIFICATION
+// =========================
+
+const formaterNumeroWhatsApp = (telephone, defaultCountryCode = "221") => {
+  if (!telephone) return null
+
+  let brut = String(telephone).trim()
+  brut = brut.replace(/[^\d+]/g, "")
+
+  if (brut.startsWith("+")) {
+    brut = brut.slice(1)
+  }
+
+  if (brut.startsWith("00")) {
+    brut = brut.slice(2)
+  }
+
+  if (/^\d{10,15}$/.test(brut)) {
+    return brut
+  }
+
+  const digits = brut.replace(/\D/g, "")
+  if (/^\d{6,9}$/.test(digits)) {
+    return `${defaultCountryCode}${digits}`
+  }
+
+  return null
+}
+
+const envoyerMessageWhatsAppMeta = async ({ to, body }) => {
   try {
+    if (WHATSAPP_PROVIDER !== "meta") {
+      console.warn("WhatsApp Meta désactivé.")
+      return false
+    }
+
+    if (!META_ACCESS_TOKEN || !META_PHONE_NUMBER_ID) {
+      console.warn("META_ACCESS_TOKEN ou META_PHONE_NUMBER_ID manquant.")
+      return false
+    }
+
     if (!to || !body) {
-      console.warn("Paramètres WhatsApp incomplets.")
+      console.warn("Paramètres WhatsApp Meta incomplets.")
       return false
     }
 
-    if (WHATSAPP_PROVIDER === "disabled") {
-      console.log("WhatsApp désactivé : message ignoré.")
-      return false
-    }
-
-    if (WHATSAPP_PROVIDER === "meta") {
-      if (!META_ACCESS_TOKEN || !META_PHONE_NUMBER_ID) {
-        console.warn("Configuration Meta absente : WhatsApp ignoré.")
-        return false
-      }
-
-      const response = await fetch(
-        `https://graph.facebook.com/v23.0/${META_PHONE_NUMBER_ID}/messages`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${META_ACCESS_TOKEN}`,
+    const response = await fetch(
+      `https://graph.facebook.com/v25.0/${META_PHONE_NUMBER_ID}/messages`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${META_ACCESS_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          messaging_product: "whatsapp",
+          to,
+          type: "text",
+          text: {
+            body,
           },
-          body: JSON.stringify({
-            messaging_product: "whatsapp",
-            to,
-            type: "text",
-            text: {
-              body,
-            },
-          }),
-        }
-      )
-
-      const data = await response.text()
-
-      if (!response.ok) {
-        console.error("Erreur WhatsApp Meta :", data)
-        return false
+        }),
       }
+    )
 
-      return true
+    const data = await response.text()
+
+    if (!response.ok) {
+      console.error("Erreur WhatsApp Meta :", data)
+      return false
     }
 
-    console.warn("Provider WhatsApp inconnu.")
-    return false
+    console.log("Message WhatsApp Meta envoyé :", data)
+    return true
   } catch (error) {
-    console.error("Erreur envoi WhatsApp :", error)
+    console.error("Erreur envoi WhatsApp Meta :", error)
     return false
   }
 }
 
+const envoyerNotificationWhatsApp = async (demande) => {
+  try {
+    if (!WHATSAPP_ADMIN_NUMBER) {
+      console.warn("WHATSAPP_ADMIN_NUMBER absent : notification admin ignorée.")
+      return
+    }
+
+    const numeroAdmin = formaterNumeroWhatsApp(WHATSAPP_ADMIN_NUMBER)
+
+    if (!numeroAdmin) {
+      console.warn("Numéro admin invalide : notification admin ignorée.")
+      return
+    }
+
+    const message = [
+      "📩 Nouvelle demande TAMAL",
+      `Nom : ${demande.nom || "-"}`,
+      `Téléphone : ${demande.telephone || "-"}`,
+      `Email : ${demande.email || "-"}`,
+      `Montant : ${demande.montant || "-"} FCFA`,
+      `Objet : ${demande.typeObjet || "-"}`,
+      `Statut : ${demande.statut || "-"}`,
+      `État CRM : ${demande.etatCrm || "-"}`,
+      "➡️ Consultez l’espace admin pour la traiter.",
+    ].join("\n")
+
+    const ok = await envoyerMessageWhatsAppMeta({
+      to: numeroAdmin,
+      body: message,
+    })
+
+    if (ok) {
+      console.log("Notification WhatsApp admin envoyée avec succès.")
+    }
+  } catch (error) {
+    console.error("Erreur lors de l'envoi de la notification WhatsApp admin :", error)
+  }
+}
+
+const envoyerWhatsAppClientCreation = async (demande) => {
+  try {
+    const numeroClient = formaterNumeroWhatsApp(demande.telephone)
+
+    if (!numeroClient) {
+      console.warn("Numéro client invalide : WhatsApp création ignoré.")
+      return
+    }
+
+    const message = [
+      `Bonjour ${demande.nom || ""},`,
+      "",
+      "Votre demande de prêt a bien été reçue par TAMAL.",
+      "Notre équipe analyse votre dossier.",
+      "Vous recevrez une réponse dans un délai maximum de 24h.",
+      "",
+      "Merci pour votre confiance.",
+      "TAMAL – Service Liquidité Immédiate",
+    ].join("\n")
+
+    const ok = await envoyerMessageWhatsAppMeta({
+      to: numeroClient,
+      body: message,
+    })
+
+    if (ok) {
+      console.log(`WhatsApp client création envoyé avec succès à ${numeroClient}.`)
+    }
+  } catch (error) {
+    console.error("Erreur lors de l'envoi du WhatsApp client création :", error)
+  }
+}
+
+const envoyerWhatsAppDecisionClient = async (demande) => {
+  try {
+    const numeroClient = formaterNumeroWhatsApp(demande.telephone)
+
+    if (!numeroClient) {
+      console.warn("Numéro client invalide : WhatsApp décision ignoré.")
+      return
+    }
+
+    let message = null
+
+    if (demande.statut === "acceptée") {
+      message = [
+        `Bonjour ${demande.nom || ""},`,
+        "",
+        "Votre demande TAMAL a été acceptée ✅",
+        `Montant accordé : ${demande.montantAccorde || "-"} FCFA`,
+        `Montant à rembourser : ${demande.montantRemboursement || "-"} FCFA`,
+        `Date de remboursement : ${
+          demande.dateRemboursement
+            ? new Date(demande.dateRemboursement).toLocaleString("fr-FR")
+            : "-"
+        }`,
+        "",
+        "Notre équipe reste disponible pour la suite du traitement.",
+        "TAMAL – Service Liquidité Immédiate",
+      ].join("\n")
+    }
+
+    if (demande.statut === "refusée") {
+      message = [
+        `Bonjour ${demande.nom || ""},`,
+        "",
+        "Après étude, votre demande TAMAL n’a pas été retenue pour le moment ❌",
+        "Vous pouvez reprendre contact avec notre équipe pour toute précision.",
+        "",
+        "TAMAL – Service Liquidité Immédiate",
+      ].join("\n")
+    }
+
+    if (!message) return
+
+    const ok = await envoyerMessageWhatsAppMeta({
+      to: numeroClient,
+      body: message,
+    })
+
+    if (ok) {
+      console.log(`WhatsApp client décision envoyé avec succès à ${numeroClient}.`)
+    }
+  } catch (error) {
+    console.error("Erreur lors de l'envoi du WhatsApp client décision :", error)
+  }
+}
 const envoyerNotificationWhatsApp = async (demande) => {
   try {
     if (!WHATSAPP_ADMIN_NUMBER) {
