@@ -54,7 +54,7 @@ export default function Footer() {
             {/* BOUTONS */}
             <div className="mt-5 flex flex-wrap gap-3">
               <a
-                href="https://wa.me/221778492779"
+                href="https://wa.me/221772616753"
                 target="_blank"
                 rel="noreferrer"
                 className="rounded-full bg-yellow-500 px-5 py-2 text-sm font-semibold text-black transition hover:bg-yellow-400"
@@ -63,7 +63,7 @@ export default function Footer() {
               </a>
 
               <a
-                href="tel:+221778492779"
+                href="tel:+221772616753"
                 className="rounded-full border border-white/20 px-5 py-2 text-sm font-semibold text-white transition hover:border-yellow-500 hover:text-yellow-400"
               >
                 Appeler

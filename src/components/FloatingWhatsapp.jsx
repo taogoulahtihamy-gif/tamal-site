@@ -1,7 +1,7 @@
 export default function FloatingWhatsapp() {
   return (
     <a
-      href="https://wa.me/221778492779"
+      href="https://wa.me/221772616753"
       target="_blank"
       rel="noreferrer"
       className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-full bg-[#25D366] px-5 py-3 text-white shadow-xl transition hover:scale-105"

@@ -16,9 +16,16 @@ app.use(express.json())
 const uploadsDir = path.join(__dirname, "uploads")
 app.use("/uploads", express.static(uploadsDir))
 
-const ULTRAMSG_INSTANCE_ID = process.env.ULTRAMSG_INSTANCE_ID
-const ULTRAMSG_TOKEN = process.env.ULTRAMSG_TOKEN
+// =========================
+// ENV
+// =========================
+
+const WHATSAPP_PROVIDER = process.env.WHATSAPP_PROVIDER || "disabled"
 const WHATSAPP_ADMIN_NUMBER = process.env.WHATSAPP_ADMIN_NUMBER
+
+// Meta WhatsApp Cloud API
+const META_ACCESS_TOKEN = process.env.META_ACCESS_TOKEN
+const META_PHONE_NUMBER_ID = process.env.META_PHONE_NUMBER_ID
 
 const BREVO_API_KEY = process.env.BREVO_API_KEY
 const MAIL_FROM = process.env.MAIL_FROM
@@ -110,92 +117,99 @@ const calculerEtatCrm = ({ statut, dateRemboursement, statutPaiement }) => {
   return "En attente"
 }
 
-// =========================
-// WHATSAPP NOTIFICATION
-// =========================
-
-const envoyerMessageUltraMsg = async ({ to, body }) => {
-  try {
-    if (!ULTRAMSG_INSTANCE_ID || !ULTRAMSG_TOKEN) {
-      console.warn("Configuration UltraMsg absente : WhatsApp ignoré.")
-      return false
-    }
-
-    if (!to || !body) {
-      console.warn("Paramètres WhatsApp incomplets.")
-      return false
-    }
-
-    const payload = new URLSearchParams({
-      token: ULTRAMSG_TOKEN,
-      to,
-      body,
-    })
-
-    const response = await fetch(
-      `https://api.ultramsg.com/${ULTRAMSG_INSTANCE_ID}/messages/chat`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: payload.toString(),
-      }
-    )
-
-    const data = await response.text()
-
-    if (!response.ok) {
-      console.error("Erreur UltraMsg :", data)
-      return false
-    }
-
-    return true
-  } catch (error) {
-    console.error("Erreur envoi WhatsApp UltraMsg :", error)
-    return false
-  }
-}
-
 /**
- * Convertit différents formats vers un format exploitable par UltraMsg.
+ * Convertit différents formats vers un format exploitable par WhatsApp.
  * Exemples acceptés :
- * +221778492779
- * 221778492779
- * 00221778492779
- * 77 849 27 79   -> fallback Sénégal (221) si 9 chiffres
- * (221) 77-849-27-79
+ * +221772616753
+ * 221772616753
+ * 00221772616753
+ * 77 261 67 53
+ * (221) 77-261-67-53
  */
 const formaterNumeroWhatsApp = (telephone, defaultCountryCode = "221") => {
   if (!telephone) return null
 
   let brut = String(telephone).trim()
 
-  // Garde uniquement chiffres et +
   brut = brut.replace(/[^\d+]/g, "")
 
-  // +221...  -> 221...
   if (brut.startsWith("+")) {
     brut = brut.slice(1)
   }
 
-  // 00... -> ...
   if (brut.startsWith("00")) {
     brut = brut.slice(2)
   }
 
-  // Si déjà au format international raisonnable
   if (/^\d{10,15}$/.test(brut)) {
     return brut
   }
 
-  // Si numéro local (ex: Sénégal 9 chiffres), on ajoute l'indicatif par défaut
   const digits = brut.replace(/\D/g, "")
   if (/^\d{6,9}$/.test(digits)) {
     return `${defaultCountryCode}${digits}`
   }
 
   return null
+}
+
+// =========================
+// WHATSAPP NOTIFICATION
+// =========================
+
+const envoyerMessageWhatsApp = async ({ to, body }) => {
+  try {
+    if (!to || !body) {
+      console.warn("Paramètres WhatsApp incomplets.")
+      return false
+    }
+
+    if (WHATSAPP_PROVIDER === "disabled") {
+      console.log("WhatsApp désactivé : message ignoré.")
+      return false
+    }
+
+    if (WHATSAPP_PROVIDER === "meta") {
+      if (!META_ACCESS_TOKEN || !META_PHONE_NUMBER_ID) {
+        console.warn("Configuration Meta absente : WhatsApp ignoré.")
+        return false
+      }
+
+      const response = await fetch(
+        `https://graph.facebook.com/v23.0/${META_PHONE_NUMBER_ID}/messages`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${META_ACCESS_TOKEN}`,
+          },
+          body: JSON.stringify({
+            messaging_product: "whatsapp",
+            to,
+            type: "text",
+            text: {
+              body,
+            },
+          }),
+        }
+      )
+
+      const data = await response.text()
+
+      if (!response.ok) {
+        console.error("Erreur WhatsApp Meta :", data)
+        return false
+      }
+
+      return true
+    }
+
+    console.warn("Provider WhatsApp inconnu.")
+    return false
+  } catch (error) {
+    console.error("Erreur envoi WhatsApp :", error)
+    return false
+  }
 }
 
 const envoyerNotificationWhatsApp = async (demande) => {
@@ -224,7 +238,7 @@ const envoyerNotificationWhatsApp = async (demande) => {
       "➡️ Consultez l’espace admin pour la traiter.",
     ].join("\n")
 
-    const ok = await envoyerMessageUltraMsg({
+    const ok = await envoyerMessageWhatsApp({
       to: numeroAdmin,
       body: message,
     })
@@ -233,7 +247,10 @@ const envoyerNotificationWhatsApp = async (demande) => {
       console.log("Notification WhatsApp admin envoyée avec succès.")
     }
   } catch (error) {
-    console.error("Erreur lors de l'envoi de la notification WhatsApp admin :", error)
+    console.error(
+      "Erreur lors de l'envoi de la notification WhatsApp admin :",
+      error
+    )
   }
 }
 
@@ -257,13 +274,15 @@ const envoyerWhatsAppClientCreation = async (demande) => {
       "TAMAL – Service Liquidité Immédiate",
     ].join("\n")
 
-    const ok = await envoyerMessageUltraMsg({
+    const ok = await envoyerMessageWhatsApp({
       to: numeroClient,
       body: message,
     })
 
     if (ok) {
-      console.log(`WhatsApp client création envoyé avec succès à ${numeroClient}.`)
+      console.log(
+        `WhatsApp client création envoyé avec succès à ${numeroClient}.`
+      )
     }
   } catch (error) {
     console.error("Erreur lors de l'envoi du WhatsApp client création :", error)
@@ -312,18 +331,21 @@ const envoyerWhatsAppDecisionClient = async (demande) => {
 
     if (!message) return
 
-    const ok = await envoyerMessageUltraMsg({
+    const ok = await envoyerMessageWhatsApp({
       to: numeroClient,
       body: message,
     })
 
     if (ok) {
-      console.log(`WhatsApp client décision envoyé avec succès à ${numeroClient}.`)
+      console.log(
+        `WhatsApp client décision envoyé avec succès à ${numeroClient}.`
+      )
     }
   } catch (error) {
     console.error("Erreur lors de l'envoi du WhatsApp client décision :", error)
   }
 }
+
 // =========================
 // EMAILS BREVO
 // =========================
@@ -646,12 +668,13 @@ app.post(
 
       const demande = result.rows[0]
 
-     await Promise.all([
-  envoyerNotificationWhatsApp(demande),
-  envoyerWhatsAppClientCreation(demande),
-  envoyerEmailInterne(demande),
-  envoyerEmailClientCreation(demande),
-])
+      await Promise.all([
+        envoyerNotificationWhatsApp(demande),
+        envoyerWhatsAppClientCreation(demande),
+        envoyerEmailInterne(demande),
+        envoyerEmailClientCreation(demande),
+      ])
+
       res.status(201).json({
         message: "Demande reçue avec succès",
         data: demande,
@@ -716,6 +739,7 @@ app.patch("/api/demandes/:id/statut", async (req, res) => {
         id,
         nom,
         email,
+        telephone,
         montant_accorde AS "montantAccorde",
         statut
       FROM demandes
@@ -734,7 +758,10 @@ app.patch("/api/demandes/:id/statut", async (req, res) => {
 
     let montantAccorde = actuel.montantAccorde
 
-    if (statut === "acceptée" && (montantAccorde === null || montantAccorde === undefined)) {
+    if (
+      statut === "acceptée" &&
+      (montantAccorde === null || montantAccorde === undefined)
+    ) {
       const montantAccordeRecu =
         req.body?.montantAccorde !== undefined && req.body?.montantAccorde !== ""
           ? Number(req.body.montantAccorde)
@@ -742,7 +769,8 @@ app.patch("/api/demandes/:id/statut", async (req, res) => {
 
       if (!montantAccordeRecu) {
         return res.status(400).json({
-          message: "Le montant accordé est obligatoire pour accepter une demande.",
+          message:
+            "Le montant accordé est obligatoire pour accepter une demande.",
         })
       }
 
@@ -751,7 +779,6 @@ app.patch("/api/demandes/:id/statut", async (req, res) => {
 
     let dateRemboursement = req.body?.dateRemboursement || null
 
-    // DATE AUTOMATIQUE
     if (statut === "acceptée" && montantAccorde) {
       const baseDate = new Date()
       const nbJours = Number(montantAccorde) >= 30000 ? 14 : 7
@@ -817,15 +844,15 @@ app.patch("/api/demandes/:id/statut", async (req, res) => {
     const demandeMAJ = result.rows[0]
 
     const changementDecision =
-  (actuel.statut !== "acceptée" && demandeMAJ.statut === "acceptée") ||
-  (actuel.statut !== "refusée" && demandeMAJ.statut === "refusée")
+      (actuel.statut !== "acceptée" && demandeMAJ.statut === "acceptée") ||
+      (actuel.statut !== "refusée" && demandeMAJ.statut === "refusée")
 
-if (changementDecision) {
-  await Promise.all([
-    envoyerEmailDecisionClient(demandeMAJ),
-    envoyerWhatsAppDecisionClient(demandeMAJ),
-  ])
-}
+    if (changementDecision) {
+      await Promise.all([
+        envoyerEmailDecisionClient(demandeMAJ),
+        envoyerWhatsAppDecisionClient(demandeMAJ),
+      ])
+    }
 
     res.json({
       message: "Statut mis à jour avec succès",
