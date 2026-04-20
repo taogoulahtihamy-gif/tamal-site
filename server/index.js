@@ -23,8 +23,8 @@ app.use("/uploads", express.static(uploadsDir))
 const WHATSAPP_PROVIDER = process.env.WHATSAPP_PROVIDER || "disabled"
 const WHATSAPP_ADMIN_NUMBER = process.env.WHATSAPP_ADMIN_NUMBER
 
-const META_ACCESS_TOKEN = process.env.META_ACCESS_TOKEN
-const META_PHONE_NUMBER_ID = process.env.META_PHONE_NUMBER_ID
+const ULTRAMSG_INSTANCE_ID = process.env.ULTRAMSG_INSTANCE_ID
+const ULTRAMSG_TOKEN = process.env.ULTRAMSG_TOKEN
 
 const BREVO_API_KEY = process.env.BREVO_API_KEY
 const MAIL_FROM = process.env.MAIL_FROM
@@ -143,56 +143,54 @@ const formaterNumeroWhatsApp = (telephone, defaultCountryCode = "221") => {
 }
 
 // =========================
-// WHATSAPP NOTIFICATION
+// WHATSAPP - ULTRAMSG
 // =========================
 
-const envoyerMessageWhatsAppMeta = async ({ to, body }) => {
+const envoyerMessageWhatsApp = async ({ to, body }) => {
   try {
-    if (WHATSAPP_PROVIDER !== "meta") {
-      console.warn("WhatsApp Meta désactivé.")
+    if (WHATSAPP_PROVIDER !== "ultramsg") {
+      console.warn("WhatsApp UltraMsg désactivé.")
       return false
     }
 
-    if (!META_ACCESS_TOKEN || !META_PHONE_NUMBER_ID) {
-      console.warn("META_ACCESS_TOKEN ou META_PHONE_NUMBER_ID manquant.")
+    if (!ULTRAMSG_INSTANCE_ID || !ULTRAMSG_TOKEN) {
+      console.warn("ULTRAMSG_INSTANCE_ID ou ULTRAMSG_TOKEN manquant.")
       return false
     }
 
     if (!to || !body) {
-      console.warn("Paramètres WhatsApp Meta incomplets.")
+      console.warn("Paramètres WhatsApp incomplets.")
       return false
     }
 
+    const payload = new URLSearchParams({
+      token: ULTRAMSG_TOKEN,
+      to,
+      body,
+    })
+
     const response = await fetch(
-      `https://graph.facebook.com/v25.0/${META_PHONE_NUMBER_ID}/messages`,
+      `https://api.ultramsg.com/${ULTRAMSG_INSTANCE_ID}/messages/chat`,
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${META_ACCESS_TOKEN}`,
-          "Content-Type": "application/json",
+          "Content-Type": "application/x-www-form-urlencoded",
         },
-        body: JSON.stringify({
-          messaging_product: "whatsapp",
-          to,
-          type: "text",
-          text: {
-            body,
-          },
-        }),
+        body: payload.toString(),
       }
     )
 
     const data = await response.text()
 
     if (!response.ok) {
-      console.error("Erreur WhatsApp Meta :", data)
+      console.error("Erreur UltraMsg :", data)
       return false
     }
 
-    console.log("Message WhatsApp Meta envoyé :", data)
+    console.log("Message WhatsApp UltraMsg envoyé :", data)
     return true
   } catch (error) {
-    console.error("Erreur envoi WhatsApp Meta :", error)
+    console.error("Erreur envoi WhatsApp UltraMsg :", error)
     return false
   }
 }
@@ -223,7 +221,7 @@ const envoyerNotificationWhatsApp = async (demande) => {
       "➡️ Consultez l’espace admin pour la traiter.",
     ].join("\n")
 
-    const ok = await envoyerMessageWhatsAppMeta({
+    const ok = await envoyerMessageWhatsApp({
       to: numeroAdmin,
       body: message,
     })
@@ -232,7 +230,7 @@ const envoyerNotificationWhatsApp = async (demande) => {
       console.log("Notification WhatsApp admin envoyée avec succès.")
     }
   } catch (error) {
-    console.error("Erreur lors de l'envoi de la notification WhatsApp admin :", error)
+    console.error("Erreur notification WhatsApp admin :", error)
   }
 }
 
@@ -256,7 +254,7 @@ const envoyerWhatsAppClientCreation = async (demande) => {
       "TAMAL – Service Liquidité Immédiate",
     ].join("\n")
 
-    const ok = await envoyerMessageWhatsAppMeta({
+    const ok = await envoyerMessageWhatsApp({
       to: numeroClient,
       body: message,
     })
@@ -265,7 +263,7 @@ const envoyerWhatsAppClientCreation = async (demande) => {
       console.log(`WhatsApp client création envoyé avec succès à ${numeroClient}.`)
     }
   } catch (error) {
-    console.error("Erreur lors de l'envoi du WhatsApp client création :", error)
+    console.error("Erreur WhatsApp client création :", error)
   }
 }
 
@@ -311,7 +309,7 @@ const envoyerWhatsAppDecisionClient = async (demande) => {
 
     if (!message) return
 
-    const ok = await envoyerMessageWhatsAppMeta({
+    const ok = await envoyerMessageWhatsApp({
       to: numeroClient,
       body: message,
     })
@@ -320,7 +318,7 @@ const envoyerWhatsAppDecisionClient = async (demande) => {
       console.log(`WhatsApp client décision envoyé avec succès à ${numeroClient}.`)
     }
   } catch (error) {
-    console.error("Erreur lors de l'envoi du WhatsApp client décision :", error)
+    console.error("Erreur WhatsApp décision client :", error)
   }
 }
 
@@ -363,7 +361,7 @@ const envoyerEmailBrevo = async ({ to, subject, htmlContent }) => {
     console.log(`Email Brevo envoyé avec succès à ${to}.`)
     return true
   } catch (error) {
-    console.error("Erreur lors de l'envoi via Brevo :", error)
+    console.error("Erreur envoi Brevo :", error)
     return false
   }
 }
@@ -429,7 +427,7 @@ const envoyerEmailInterne = async (demande) => {
       htmlContent: html,
     })
   } catch (error) {
-    console.error("Erreur lors de l'envoi de l'email interne :", error)
+    console.error("Erreur email interne :", error)
   }
 }
 
@@ -443,17 +441,9 @@ const envoyerEmailClientCreation = async (demande) => {
     const html = `
       <div style="font-family: Arial, sans-serif; color: #111; line-height: 1.6;">
         <h2>Votre demande a bien été reçue</h2>
-
         <p>Bonjour ${demande.nom || ""},</p>
-
-        <p>
-          Nous confirmons la bonne réception de votre demande de prêt sur gage
-          sur le site TAMAL.
-        </p>
-
-        <p>
-          Notre équipe va étudier votre dossier et vous contacter rapidement.
-        </p>
+        <p>Nous confirmons la bonne réception de votre demande de prêt sur gage sur le site TAMAL.</p>
+        <p>Notre équipe va étudier votre dossier et vous contacter rapidement.</p>
 
         <div style="margin: 20px 0; padding: 16px; background: #f8f8f6; border: 1px solid #e5e5e5; border-radius: 12px;">
           <p style="margin: 0 0 8px;"><strong>Montant demandé :</strong> ${demande.montant || "-"} FCFA</p>
@@ -462,11 +452,7 @@ const envoyerEmailClientCreation = async (demande) => {
         </div>
 
         <p>Merci pour votre confiance.</p>
-
-        <p>
-          <strong>TAMAL</strong><br />
-          Service Liquidité Immédiate
-        </p>
+        <p><strong>TAMAL</strong><br />Service Liquidité Immédiate</p>
       </div>
     `
 
@@ -476,7 +462,7 @@ const envoyerEmailClientCreation = async (demande) => {
       htmlContent: html,
     })
   } catch (error) {
-    console.error("Erreur lors de l'envoi de l'email client :", error)
+    console.error("Erreur email client création :", error)
   }
 }
 
@@ -491,13 +477,8 @@ const envoyerEmailDecisionClient = async (demande) => {
       const html = `
         <div style="font-family: Arial, sans-serif; color: #111; line-height: 1.6;">
           <h2>Votre demande a été acceptée</h2>
-
           <p>Bonjour ${demande.nom || ""},</p>
-
-          <p>
-            Nous vous informons que votre demande de prêt sur gage a été
-            <strong> acceptée</strong>.
-          </p>
+          <p>Nous vous informons que votre demande de prêt sur gage a été <strong>acceptée</strong>.</p>
 
           <div style="margin: 20px 0; padding: 16px; background: #f8f8f6; border: 1px solid #e5e5e5; border-radius: 12px;">
             <p style="margin: 0 0 8px;"><strong>Montant accordé :</strong> ${demande.montantAccorde || "-"} FCFA</p>
@@ -510,11 +491,7 @@ const envoyerEmailDecisionClient = async (demande) => {
           </div>
 
           <p>Notre équipe reste disponible pour la suite du traitement.</p>
-
-          <p>
-            <strong>TAMAL</strong><br />
-            Service Liquidité Immédiate
-          </p>
+          <p><strong>TAMAL</strong><br />Service Liquidité Immédiate</p>
         </div>
       `
 
@@ -529,22 +506,10 @@ const envoyerEmailDecisionClient = async (demande) => {
       const html = `
         <div style="font-family: Arial, sans-serif; color: #111; line-height: 1.6;">
           <h2>Votre demande n’a pas été retenue</h2>
-
           <p>Bonjour ${demande.nom || ""},</p>
-
-          <p>
-            Après étude, votre demande de prêt sur gage n’a pas pu être retenue
-            pour le moment.
-          </p>
-
-          <p>
-            Vous pouvez reprendre contact avec notre équipe pour toute précision.
-          </p>
-
-          <p>
-            <strong>TAMAL</strong><br />
-            Service Liquidité Immédiate
-          </p>
+          <p>Après étude, votre demande de prêt sur gage n’a pas pu être retenue pour le moment.</p>
+          <p>Vous pouvez reprendre contact avec notre équipe pour toute précision.</p>
+          <p><strong>TAMAL</strong><br />Service Liquidité Immédiate</p>
         </div>
       `
 
@@ -555,10 +520,9 @@ const envoyerEmailDecisionClient = async (demande) => {
       })
     }
   } catch (error) {
-    console.error("Erreur envoi email décision client :", error)
+    console.error("Erreur email décision client :", error)
   }
 }
-
 // =========================
 // ROUTES TEST
 // =========================
@@ -888,7 +852,7 @@ app.post("/api/admin/login", async (req, res) => {
         role: admin.role,
       },
     })
-    } catch (error) {
+  } catch (error) {
     console.error("Erreur login admin :", error)
     return res.status(500).json({
       message: "Erreur serveur.",
@@ -1026,10 +990,7 @@ app.delete("/api/admins/:id", verifierSuperAdmin, async (req, res) => {
       })
     }
 
-    await pool.query(
-      "DELETE FROM admins WHERE id = $1",
-      [id]
-    )
+    await pool.query("DELETE FROM admins WHERE id = $1", [id])
 
     res.json({
       message: "Admin supprimé avec succès.",
