@@ -116,7 +116,7 @@ const calculerEtatCrm = ({ statut, dateRemboursement, statutPaiement }) => {
   return "En attente"
 }
 
-const formaterNumeroWhatsApp = (telephone, defaultCountryCode = "221") => {
+const formaterNumeroWhatsApp = (telephone) => {
   if (!telephone) return null
 
   let brut = String(telephone).trim()
