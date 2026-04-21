@@ -5,6 +5,8 @@ export default function Formulaire() {
   const [formData, setFormData] = useState({
     nom: "",
     telephone: "",
+    countryCode: "221",
+    customCode: "",
     email: "",
     montant: "",
     typeObjet: "Téléphone",
@@ -62,6 +64,10 @@ export default function Formulaire() {
       nouvellesErreurs.telephone = "Le téléphone est obligatoire"
     }
 
+    if (formData.countryCode === "custom" && !formData.customCode.trim()) {
+      nouvellesErreurs.telephone = "Veuillez entrer l’indicatif pays"
+    }
+
     if (!formData.email.trim()) {
       nouvellesErreurs.email = "L’email est obligatoire"
     } else if (!validerEmail(formData.email)) {
@@ -91,6 +97,7 @@ export default function Formulaire() {
     e.preventDefault()
 
     const nouvellesErreurs = validerFormulaire()
+
     setErreurs(nouvellesErreurs)
     setMessageSucces("")
     setMessageErreur("")
@@ -104,7 +111,13 @@ export default function Formulaire() {
     try {
       const dataToSend = new FormData()
 
+      const indicatifFinal =
+        formData.countryCode === "custom"
+          ? formData.customCode
+          : formData.countryCode
+
       dataToSend.append("nom", formData.nom)
+      dataToSend.append("countryCode", indicatifFinal)
       dataToSend.append("telephone", formData.telephone)
       dataToSend.append("email", formData.email)
       dataToSend.append("montant", formData.montant)
@@ -140,6 +153,8 @@ export default function Formulaire() {
       setFormData({
         nom: "",
         telephone: "",
+        countryCode: "221",
+        customCode: "",
         email: "",
         montant: "",
         typeObjet: "Téléphone",
@@ -204,20 +219,72 @@ export default function Formulaire() {
                 <p className="mt-2 text-sm text-red-500">{erreurs.nom}</p>
               )}
             </div>
-
             <div>
               <label className="mb-2 block text-sm text-gray-700">
                 Téléphone / WhatsApp
               </label>
 
-              <input
-                type="tel"
-                name="telephone"
-                value={formData.telephone}
-                onChange={handleChange}
-                placeholder="Ex: 77 000 00 00"
-                className="w-full rounded-xl border border-gray-200 bg-[#faf9f5] px-4 py-3 text-gray-900 outline-none transition focus:border-yellow-500"
-              />
+              <div className="grid gap-3 md:grid-cols-[220px_1fr]">
+                <select
+                  name="countryCode"
+                  value={formData.countryCode}
+                  onChange={handleChange}
+                  className="w-full rounded-xl border border-gray-200 bg-[#faf9f5] px-4 py-3 text-gray-900 outline-none transition focus:border-yellow-500"
+                  required
+                >
+                  <option value="221">🇸🇳 Sénégal (+221)</option>
+                  <option value="254">🇰🇪 Kenya (+254)</option>
+                  <option value="225">🇨🇮 Côte d’Ivoire (+225)</option>
+                  <option value="226">🇧🇫 Burkina Faso (+226)</option>
+                  <option value="223">🇲🇱 Mali (+223)</option>
+                  <option value="227">🇳🇪 Niger (+227)</option>
+                  <option value="228">🇹🇬 Togo (+228)</option>
+                  <option value="229">🇧🇯 Bénin (+229)</option>
+                  <option value="224">🇬🇳 Guinée (+224)</option>
+                  <option value="237">🇨🇲 Cameroun (+237)</option>
+                  <option value="243">🇨🇩 RDC (+243)</option>
+                  <option value="241">🇬🇦 Gabon (+241)</option>
+                  <option value="233">🇬🇭 Ghana (+233)</option>
+                  <option value="234">🇳🇬 Nigeria (+234)</option>
+                  <option value="250">🇷🇼 Rwanda (+250)</option>
+                  <option value="255">🇹🇿 Tanzanie (+255)</option>
+                  <option value="256">🇺🇬 Ouganda (+256)</option>
+                  <option value="251">🇪🇹 Éthiopie (+251)</option>
+                  <option value="212">🇲🇦 Maroc (+212)</option>
+                  <option value="213">🇩🇿 Algérie (+213)</option>
+                  <option value="216">🇹🇳 Tunisie (+216)</option>
+                  <option value="33">🇫🇷 France (+33)</option>
+                  <option value="32">🇧🇪 Belgique (+32)</option>
+                  <option value="1">🇺🇸 USA / Canada (+1)</option>
+                  <option value="custom">🌍 Autre pays</option>
+                </select>
+
+                <input
+                  type="tel"
+                  name="telephone"
+                  value={formData.telephone}
+                  onChange={handleChange}
+                  placeholder="Ex : 77 000 00 00"
+                  className="w-full rounded-xl border border-gray-200 bg-[#faf9f5] px-4 py-3 text-gray-900 outline-none transition focus:border-yellow-500"
+                />
+              </div>
+
+              {formData.countryCode === "custom" && (
+                <input
+                  type="text"
+                  name="customCode"
+                  value={formData.customCode}
+                  onChange={handleChange}
+                  placeholder="Entrez l’indicatif pays, ex : 49"
+                  className="mt-3 w-full rounded-xl border border-gray-200 bg-[#faf9f5] px-4 py-3 text-gray-900 outline-none transition focus:border-yellow-500"
+                />
+              )}
+
+              <p className="mt-2 text-xs text-gray-500">
+                Si votre indicatif n’apparaît pas, choisissez{" "}
+                <span className="font-medium">Autre pays</span> puis saisissez
+                votre code. Exemple : 33, 49, 1.
+              </p>
 
               {erreurs.telephone && (
                 <p className="mt-2 text-sm text-red-500">{erreurs.telephone}</p>
@@ -343,10 +410,11 @@ export default function Formulaire() {
               />
 
               {erreurs.description && (
-                <p className="mt-2 text-sm text-red-500">{erreurs.description}</p>
+                <p className="mt-2 text-sm text-red-500">
+                  {erreurs.description}
+                </p>
               )}
             </div>
-
             <div>
               <label className="mb-2 block text-sm text-gray-700">
                 Type de pièce d'identité

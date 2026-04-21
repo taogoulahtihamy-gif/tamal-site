@@ -116,30 +116,23 @@ const calculerEtatCrm = ({ statut, dateRemboursement, statutPaiement }) => {
   return "En attente"
 }
 
-const formaterNumeroWhatsApp = (telephone) => {
+const formaterNumeroWhatsApp = (telephone, countryCode = "221") => {
   if (!telephone) return null
 
-  let brut = String(telephone).trim()
-  brut = brut.replace(/[^\d+]/g, "")
+  let numero = String(telephone).trim().replace(/\D/g, "")
+  let indicatif = String(countryCode || "").trim().replace(/\D/g, "")
 
-  if (brut.startsWith("+")) {
-    brut = brut.slice(1)
+  if (!numero || !indicatif) return null
+
+  if (numero.startsWith(indicatif)) {
+    return numero
   }
 
-  if (brut.startsWith("00")) {
-    brut = brut.slice(2)
+  if (numero.startsWith(`00${indicatif}`)) {
+    return numero.slice(2)
   }
 
-  if (/^\d{10,15}$/.test(brut)) {
-    return brut
-  }
-
-  const digits = brut.replace(/\D/g, "")
-  if (/^\d{6,9}$/.test(digits)) {
-    return `${defaultCountryCode}${digits}`
-  }
-
-  return null
+  return `${indicatif}${numero}`
 }
 
 // =========================
@@ -202,7 +195,7 @@ const envoyerNotificationWhatsApp = async (demande) => {
       return
     }
 
-    const numeroAdmin = formaterNumeroWhatsApp(WHATSAPP_ADMIN_NUMBER)
+    const numeroAdmin = String(WHATSAPP_ADMIN_NUMBER).replace(/\D/g, "")
 
     if (!numeroAdmin) {
       console.warn("Numéro admin invalide : notification admin ignorée.")
@@ -236,7 +229,7 @@ const envoyerNotificationWhatsApp = async (demande) => {
 
 const envoyerWhatsAppClientCreation = async (demande) => {
   try {
-    const numeroClient = formaterNumeroWhatsApp(demande.telephone)
+    const numeroClient = String(demande.telephone || "").replace(/\D/g, "")
 
     if (!numeroClient) {
       console.warn("Numéro client invalide : WhatsApp création ignoré.")
@@ -269,7 +262,7 @@ const envoyerWhatsAppClientCreation = async (demande) => {
 
 const envoyerWhatsAppDecisionClient = async (demande) => {
   try {
-    const numeroClient = formaterNumeroWhatsApp(demande.telephone)
+    const numeroClient = String(demande.telephone || "").replace(/\D/g, "")
 
     if (!numeroClient) {
       console.warn("Numéro client invalide : WhatsApp décision ignoré.")
@@ -554,6 +547,10 @@ app.post(
   async (req, res) => {
     try {
       const formData = req.body
+      const telephoneFormate = formaterNumeroWhatsApp(
+        formData.telephone,
+        formData.countryCode
+      )
       const documentFile = req.files?.document ? req.files.document[0] : null
       const photoFile = req.files?.photo ? req.files.photo[0] : null
 
@@ -595,7 +592,7 @@ app.post(
         `,
         [
           formData.nom || null,
-          formData.telephone || null,
+          telephoneFormate || null,
           formData.email || null,
           formData.montant ? Number(formData.montant) : null,
           formData.typeObjet || null,
