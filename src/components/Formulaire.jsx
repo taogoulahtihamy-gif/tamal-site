@@ -24,6 +24,8 @@ export default function Formulaire() {
   const [chargement, setChargement] = useState(false)
 
   const API_URL = import.meta.env.VITE_API_URL
+  const WHATSAPP_ADMIN_NUMBER =
+    import.meta.env.VITE_WHATSAPP_ADMIN_NUMBER || "221778492779"
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -51,6 +53,30 @@ export default function Formulaire() {
 
   const validerEmail = (email) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+  }
+
+  const nettoyerNumero = (numero) => {
+    if (!numero) return ""
+    return String(numero).replace(/\D/g, "")
+  }
+
+  const construireNumeroWhatsApp = (telephone, indicatif) => {
+    const numeroNettoye = nettoyerNumero(telephone)
+    const indicatifNettoye = nettoyerNumero(indicatif)
+
+    if (!numeroNettoye) return ""
+    if (!indicatifNettoye) return numeroNettoye
+
+    if (numeroNettoye.startsWith(indicatifNettoye)) {
+      return numeroNettoye
+    }
+
+    return `${indicatifNettoye}${numeroNettoye}`
+  }
+
+  const construireLienWhatsApp = (numero, message) => {
+    const numeroNettoye = nettoyerNumero(numero)
+    return `https://wa.me/${numeroNettoye}?text=${encodeURIComponent(message)}`
   }
 
   const validerFormulaire = () => {
@@ -144,8 +170,34 @@ export default function Formulaire() {
         throw new Error(data.message || "Erreur lors de l'envoi")
       }
 
+      const numeroClientWhatsapp = construireNumeroWhatsApp(
+        formData.telephone,
+        indicatifFinal
+      )
+
+      const messageWhatsApp = [
+        "Bonjour TAMAL,",
+        "",
+        "Je viens d'envoyer une demande de prêt sur gage.",
+        "",
+        `Nom : ${formData.nom}`,
+        `Téléphone / WhatsApp : ${numeroClientWhatsapp || "-"}`,
+        `Email : ${formData.email}`,
+        `Montant souhaité : ${Number(formData.montant).toLocaleString("fr-FR")} FCFA`,
+        `Type d'objet : ${formData.typeObjet}`,
+        `Type de pièce : ${formData.typePiece}`,
+        `Description : ${formData.description}`,
+        "",
+        "Merci.",
+      ].join("\n")
+
+      const lienWhatsApp = construireLienWhatsApp(
+        WHATSAPP_ADMIN_NUMBER,
+        messageWhatsApp
+      )
+
       setMessageSucces(
-        "Votre demande a bien été envoyée. Un agent vous contactera bientôt."
+        "Votre demande a bien été envoyée. Vous allez être redirigé vers WhatsApp."
       )
 
       setErreurs({})
@@ -165,6 +217,10 @@ export default function Formulaire() {
       setDocumentFile(null)
       setPhotoFile(null)
       setPhotoPreview(null)
+
+      setTimeout(() => {
+        window.open(lienWhatsApp, "_blank")
+      }, 700)
     } catch (error) {
       console.error(error)
       setMessageErreur("Une erreur est survenue lors de l'envoi du formulaire.")
@@ -219,6 +275,7 @@ export default function Formulaire() {
                 <p className="mt-2 text-sm text-red-500">{erreurs.nom}</p>
               )}
             </div>
+
             <div>
               <label className="mb-2 block text-sm text-gray-700">
                 Téléphone / WhatsApp
@@ -415,6 +472,7 @@ export default function Formulaire() {
                 </p>
               )}
             </div>
+
             <div>
               <label className="mb-2 block text-sm text-gray-700">
                 Type de pièce d'identité

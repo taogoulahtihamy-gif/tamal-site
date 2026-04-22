@@ -25,6 +25,89 @@ export default function Admin() {
     }, 3500)
   }
 
+  const nettoyerNumero = (numero) => {
+    if (!numero) return ""
+    return String(numero).replace(/\D/g, "")
+  }
+
+  const construireLienWhatsApp = (numero, texte) => {
+    const numeroNettoye = nettoyerNumero(numero)
+    if (!numeroNettoye) return null
+    return `https://wa.me/${numeroNettoye}?text=${encodeURIComponent(texte)}`
+  }
+
+  const ouvrirWhatsAppClient = (numero, texte) => {
+    const lien = construireLienWhatsApp(numero, texte)
+
+    if (!lien) {
+      afficherMessage("Numéro WhatsApp client introuvable.", "error")
+      return
+    }
+
+    window.open(lien, "_blank")
+  }
+
+  const construireMessageAction = (demande, actionType, updatedItem) => {
+    const data = updatedItem || demande
+
+    if (actionType === "accepter") {
+      return [
+        `Bonjour ${data.nom || ""},`,
+        "",
+        "Votre demande TAMAL a été acceptée ✅",
+        `Montant accordé : ${
+          data.montantAccorde !== null && data.montantAccorde !== undefined
+            ? Number(data.montantAccorde).toLocaleString("fr-FR")
+            : "-"
+        } FCFA`,
+        `Montant à rembourser : ${
+          data.montantRemboursement !== null && data.montantRemboursement !== undefined
+            ? Number(data.montantRemboursement).toLocaleString("fr-FR")
+            : "-"
+        } FCFA`,
+        `Date de remboursement : ${formaterDate(data.dateRemboursement)}`,
+        "",
+        "Merci de nous contacter pour la suite du traitement.",
+        "TAMAL – Service Liquidité Immédiate",
+      ].join("\n")
+    }
+
+    if (actionType === "refuser") {
+      return [
+        `Bonjour ${data.nom || ""},`,
+        "",
+        "Après étude, votre demande TAMAL n’a pas été retenue pour le moment ❌",
+        "Vous pouvez nous recontacter pour plus d’informations.",
+        "",
+        "TAMAL – Service Liquidité Immédiate",
+      ].join("\n")
+    }
+
+    if (actionType === "payer") {
+      return [
+        `Bonjour ${data.nom || ""},`,
+        "",
+        "Votre dossier TAMAL a été marqué comme remboursé ✅",
+        "",
+        "Merci pour votre confiance.",
+        "TAMAL – Service Liquidité Immédiate",
+      ].join("\n")
+    }
+
+    if (actionType === "attente") {
+      return [
+        `Bonjour ${data.nom || ""},`,
+        "",
+        "Votre dossier TAMAL a été remis en attente ⏳",
+        "Notre équipe reviendra vers vous rapidement.",
+        "",
+        "TAMAL – Service Liquidité Immédiate",
+      ].join("\n")
+    }
+
+    return ""
+  }
+
   const chargerDemandes = async () => {
     try {
       setChargement(true)
@@ -268,6 +351,14 @@ export default function Admin() {
       }
       if (actionType === "attente") {
         afficherMessage(`Demande #${d.id} remise en attente.`)
+      }
+
+      const messageWhatsapp = construireMessageAction(d, actionType, updatedItem)
+
+      if (messageWhatsapp && updatedItem?.telephone) {
+        setTimeout(() => {
+          ouvrirWhatsAppClient(updatedItem.telephone, messageWhatsapp)
+        }, 300)
       }
     } catch (error) {
       console.error("Erreur action dossier :", error)
@@ -523,7 +614,7 @@ export default function Admin() {
                       Marquer payé
                     </button>
 
-                  <button
+                    <button
                       onClick={() => envoyerAction(d, "attente")}
                       disabled={loadingActionId === d.id}
                       className="rounded-full border border-gray-300 bg-white px-4 py-3 text-sm font-semibold text-gray-800 hover:border-yellow-500 hover:text-yellow-600 disabled:opacity-60"
@@ -539,68 +630,70 @@ export default function Admin() {
                       Informations client
                     </h3>
 
-<div className="grid gap-3 text-sm leading-6">
-  <p>
-    <span className="font-semibold">Nom :</span>{" "}
-    {d.nom || "-"}
-  </p>
+                    <div className="grid gap-3 text-sm leading-6">
+                      <p>
+                        <span className="font-semibold">Nom :</span> {d.nom || "-"}
+                      </p>
 
-  <p>
-    <span className="font-semibold">Téléphone :</span>{" "}
-    {d.telephone || "-"}
-  </p>
+                      <p>
+                        <span className="font-semibold">Téléphone :</span>{" "}
+                        {d.telephone || "-"}
+                      </p>
 
-  <p>
-    <span className="font-semibold">Email :</span>{" "}
-    {d.email || "-"}
-  </p>
+                      <p>
+                        <span className="font-semibold">Email :</span>{" "}
+                        {d.email || "-"}
+                      </p>
 
-  <p>
-    <span className="font-semibold">Montant demandé :</span>{" "}
-    {formaterMontant(d.montant)}
-  </p>
+                      <p>
+                        <span className="font-semibold">Montant demandé :</span>{" "}
+                        {formaterMontant(d.montant)}
+                      </p>
 
-  <p>
-    <span className="font-semibold">Type d'objet :</span>{" "}
-    {d.typeObjet || "-"}
-  </p>
+                      <p>
+                        <span className="font-semibold">Type d'objet :</span>{" "}
+                        {d.typeObjet || "-"}
+                      </p>
 
-  {d.photo && (
-    <div className="pt-2">
-      <p className="mb-2 font-semibold">Photo de l'objet :</p>
-      <img
-        src={`${API_URL}/uploads/${d.photo}`}
-        alt={d.typeObjet || "Objet"}
-        className="max-h-64 w-full rounded-2xl border border-gray-200 object-cover"
-      />
-    </div>
-  )}
+                      {d.photo && (
+                        <div className="pt-2">
+                          <p className="mb-2 font-semibold">Photo de l'objet :</p>
+                          <img
+                            src={`${API_URL}/uploads/${d.photo}`}
+                            alt={d.typeObjet || "Objet"}
+                            className="max-h-64 w-full rounded-2xl border border-gray-200 object-cover"
+                          />
+                        </div>
+                      )}
 
-  <p>
-    <span className="font-semibold">Description de l'objet :</span>{" "}
-    {d.description || "-"}
-  </p>
+                      <p>
+                        <span className="font-semibold">Description de l'objet :</span>{" "}
+                        {d.description || "-"}
+                      </p>
 
-  <p>
-    <span className="font-semibold">Type de pièce d'identité :</span>{" "}
-    {d.typePiece || "-"}
-  </p>
+                      <p>
+                        <span className="font-semibold">
+                          Type de pièce d'identité :
+                        </span>{" "}
+                        {d.typePiece || "-"}
+                      </p>
 
-  {d.document && (
-    <p>
-      <span className="font-semibold">Copie de la pièce :</span>{" "}
-      <a
-        href={`${API_URL}/uploads/${d.document}`}
-        target="_blank"
-        rel="noreferrer"
-        className="text-blue-600 underline"
-      >
-        Voir le document
-      </a>
-    </p>
-  )}
-</div>
-</div>
+                      {d.document && (
+                        <p>
+                          <span className="font-semibold">Copie de la pièce :</span>{" "}
+                          <a
+                            href={`${API_URL}/uploads/${d.document}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-blue-600 underline"
+                          >
+                            Voir le document
+                          </a>
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
                   <div className="rounded-3xl bg-[#faf9f5] p-5">
                     <h3 className="mb-4 text-lg font-bold text-gray-900">
                       Décision et suivi
@@ -709,7 +802,8 @@ export default function Admin() {
                       <div className="rounded-2xl border border-yellow-200 bg-yellow-50 p-4 text-sm leading-6 text-gray-700">
                         Une notification email est envoyée automatiquement au
                         client lors d’une acceptation ou d’un refus, si une
-                        adresse email est renseignée.
+                        adresse email est renseignée. En plus, un message WhatsApp
+                        prérempli s’ouvre pour faciliter le contact.
                       </div>
                     </div>
                   </div>

@@ -20,12 +20,6 @@ app.use("/uploads", express.static(uploadsDir))
 // ENV
 // =========================
 
-const WHATSAPP_PROVIDER = process.env.WHATSAPP_PROVIDER || "disabled"
-const WHATSAPP_ADMIN_NUMBER = process.env.WHATSAPP_ADMIN_NUMBER
-
-const ULTRAMSG_INSTANCE_ID = process.env.ULTRAMSG_INSTANCE_ID
-const ULTRAMSG_TOKEN = process.env.ULTRAMSG_TOKEN
-
 const BREVO_API_KEY = process.env.BREVO_API_KEY
 const MAIL_FROM = process.env.MAIL_FROM
 const MAIL_FROM_NAME = process.env.MAIL_FROM_NAME || "TAMAL"
@@ -36,7 +30,7 @@ if (!fs.existsSync(uploadsDir)) {
 }
 
 // =========================
-// CONFIGURATION UPLOAD
+// CONFIG UPLOAD
 // =========================
 
 const storage = multer.diskStorage({
@@ -44,8 +38,7 @@ const storage = multer.diskStorage({
     cb(null, uploadsDir)
   },
   filename: (req, file, cb) => {
-    const uniqueName = `${Date.now()}-${file.originalname}`
-    cb(null, uniqueName)
+    cb(null, `${Date.now()}-${file.originalname}`)
   },
 })
 
@@ -72,11 +65,22 @@ const verifierSuperAdmin = (req, res, next) => {
 // =========================
 
 const normaliserStatut = (statut) => {
-  const statutsAutorises = ["en attente", "acceptée", "refusée", "remboursée"]
-  return statutsAutorises.includes(statut) ? statut : "en attente"
+  const autorises = [
+    "en attente",
+    "acceptée",
+    "refusée",
+    "remboursée",
+  ]
+
+  return autorises.includes(statut)
+    ? statut
+    : "en attente"
 }
 
-const calculerMontantRemboursement = (montantAccorde, statutPaiement) => {
+const calculerMontantRemboursement = (
+  montantAccorde,
+  statutPaiement
+) => {
   if (
     montantAccorde === null ||
     montantAccorde === undefined ||
@@ -92,473 +96,257 @@ const calculerMontantRemboursement = (montantAccorde, statutPaiement) => {
   return Math.round(Number(montantAccorde) * 1.3)
 }
 
-const calculerEtatCrm = ({ statut, dateRemboursement, statutPaiement }) => {
+const calculerEtatCrm = ({
+  statut,
+  dateRemboursement,
+  statutPaiement,
+}) => {
   if (statut === "refusée") return "Refusée"
-  if (statut === "remboursée" || statutPaiement === "payé") return "Remboursée"
-  if (statut === "en attente") return "En attente"
+  if (
+    statut === "remboursée" ||
+    statutPaiement === "payé"
+  ) {
+    return "Remboursée"
+  }
+
+  if (statut === "en attente") {
+    return "En attente"
+  }
 
   if (statut === "acceptée") {
-    if (!dateRemboursement) return "En cours"
+    if (!dateRemboursement) {
+      return "En cours"
+    }
 
     const now = new Date()
     const echeance = new Date(dateRemboursement)
 
-    if (Number.isNaN(echeance.getTime())) return "En cours"
+    const diffMs =
+      echeance.getTime() - now.getTime()
 
-    const diffMs = echeance.getTime() - now.getTime()
-    const diffJours = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+    const diffJours = Math.ceil(
+      diffMs / (1000 * 60 * 60 * 24)
+    )
 
     if (diffJours < 0) return "En retard"
-    if (diffJours <= 2) return "Proche remboursement"
+    if (diffJours <= 2)
+      return "Proche remboursement"
+
     return "En cours"
   }
 
   return "En attente"
 }
 
-const formaterNumeroWhatsApp = (telephone, countryCode = "221") => {
+const formaterNumero = (
+  telephone,
+  countryCode = "221"
+) => {
   if (!telephone) return null
 
-  let numero = String(telephone).trim().replace(/\D/g, "")
-  let indicatif = String(countryCode || "").trim().replace(/\D/g, "")
+  const tel = String(telephone)
+    .replace(/\D/g, "")
+    .trim()
 
-  if (!numero || !indicatif) return null
+  const code = String(countryCode)
+    .replace(/\D/g, "")
+    .trim()
 
-  if (numero.startsWith(indicatif)) {
-    return numero
+  if (!tel) return null
+
+  if (tel.startsWith(code)) {
+    return tel
   }
 
-  if (numero.startsWith(`00${indicatif}`)) {
-    return numero.slice(2)
-  }
-
-  return `${indicatif}${numero}`
+  return `${code}${tel}`
 }
 
 // =========================
-// WHATSAPP - ULTRAMSG
+// EMAIL BREVO
 // =========================
 
-const envoyerMessageWhatsApp = async ({ to, body }) => {
+const envoyerEmailBrevo = async ({
+  to,
+  subject,
+  htmlContent,
+}) => {
   try {
-    if (WHATSAPP_PROVIDER !== "ultramsg") {
-      console.warn("WhatsApp UltraMsg désactivé.")
+    if (!BREVO_API_KEY || !MAIL_FROM) {
+      console.warn(
+        "Config email absente."
+      )
       return false
     }
-
-    if (!ULTRAMSG_INSTANCE_ID || !ULTRAMSG_TOKEN) {
-      console.warn("ULTRAMSG_INSTANCE_ID ou ULTRAMSG_TOKEN manquant.")
-      return false
-    }
-
-    if (!to || !body) {
-      console.warn("Paramètres WhatsApp incomplets.")
-      return false
-    }
-
-    const payload = new URLSearchParams({
-      token: ULTRAMSG_TOKEN,
-      to,
-      body,
-    })
 
     const response = await fetch(
-      `https://api.ultramsg.com/${ULTRAMSG_INSTANCE_ID}/messages/chat`,
+      "https://api.brevo.com/v3/smtp/email",
       {
         method: "POST",
         headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
+          "Content-Type":
+            "application/json",
+          "api-key": BREVO_API_KEY,
+          Accept: "application/json",
         },
-        body: payload.toString(),
+        body: JSON.stringify({
+          sender: {
+            name: MAIL_FROM_NAME,
+            email: MAIL_FROM,
+          },
+          to: [{ email: to }],
+          subject,
+          htmlContent,
+        }),
       }
     )
 
-    const data = await response.text()
-
     if (!response.ok) {
-      console.error("Erreur UltraMsg :", data)
+      const err = await response.text()
+      console.error(err)
       return false
     }
 
-    console.log("Message WhatsApp UltraMsg envoyé :", data)
     return true
   } catch (error) {
-    console.error("Erreur envoi WhatsApp UltraMsg :", error)
+    console.error(error)
     return false
   }
 }
 
-const envoyerNotificationWhatsApp = async (demande) => {
-  try {
-    if (!WHATSAPP_ADMIN_NUMBER) {
-      console.warn("WHATSAPP_ADMIN_NUMBER absent : notification admin ignorée.")
-      return
-    }
+const envoyerEmailInterne = async (
+  demande
+) => {
+  if (!MAIL_TO) return
 
-    const numeroAdmin = String(WHATSAPP_ADMIN_NUMBER).replace(/\D/g, "")
+  const html = `
+  <h2>Nouvelle demande TAMAL</h2>
+  <p><strong>Nom :</strong> ${demande.nom}</p>
+  <p><strong>Téléphone :</strong> ${demande.telephone}</p>
+  <p><strong>Email :</strong> ${demande.email}</p>
+  <p><strong>Montant :</strong> ${demande.montant} FCFA</p>
+  <p><strong>Objet :</strong> ${demande.typeObjet}</p>
+  <p><strong>Statut :</strong> ${demande.statut}</p>
+  `
 
-    if (!numeroAdmin) {
-      console.warn("Numéro admin invalide : notification admin ignorée.")
-      return
-    }
-
-    const message = [
-      "📩 Nouvelle demande TAMAL",
-      `Nom : ${demande.nom || "-"}`,
-      `Téléphone : ${demande.telephone || "-"}`,
-      `Email : ${demande.email || "-"}`,
-      `Montant : ${demande.montant || "-"} FCFA`,
-      `Objet : ${demande.typeObjet || "-"}`,
-      `Statut : ${demande.statut || "-"}`,
-      `État CRM : ${demande.etatCrm || "-"}`,
-      "➡️ Consultez l’espace admin pour la traiter.",
-    ].join("\n")
-
-    const ok = await envoyerMessageWhatsApp({
-      to: numeroAdmin,
-      body: message,
-    })
-
-    if (ok) {
-      console.log("Notification WhatsApp admin envoyée avec succès.")
-    }
-  } catch (error) {
-    console.error("Erreur notification WhatsApp admin :", error)
-  }
+  await envoyerEmailBrevo({
+    to: MAIL_TO,
+    subject: "Nouvelle demande TAMAL",
+    htmlContent: html,
+  })
 }
 
-const envoyerWhatsAppClientCreation = async (demande) => {
-  try {
-    const numeroClient = String(demande.telephone || "").replace(/\D/g, "")
-
-    if (!numeroClient) {
-      console.warn("Numéro client invalide : WhatsApp création ignoré.")
-      return
-    }
-
-    const message = [
-      `Bonjour ${demande.nom || ""},`,
-      "",
-      "Votre demande de prêt a bien été reçue par TAMAL.",
-      "Notre équipe analyse votre dossier.",
-      "Vous recevrez une réponse dans un délai maximum de 24h.",
-      "",
-      "Merci pour votre confiance.",
-      "TAMAL – Service Liquidité Immédiate",
-    ].join("\n")
-
-    const ok = await envoyerMessageWhatsApp({
-      to: numeroClient,
-      body: message,
-    })
-
-    if (ok) {
-      console.log(`WhatsApp client création envoyé avec succès à ${numeroClient}.`)
-    }
-  } catch (error) {
-    console.error("Erreur WhatsApp client création :", error)
-  }
-}
-
-const envoyerWhatsAppDecisionClient = async (demande) => {
-  try {
-    const numeroClient = String(demande.telephone || "").replace(/\D/g, "")
-
-    if (!numeroClient) {
-      console.warn("Numéro client invalide : WhatsApp décision ignoré.")
-      return
-    }
-
-    let message = null
-
-    if (demande.statut === "acceptée") {
-      message = [
-        `Bonjour ${demande.nom || ""},`,
-        "",
-        "Votre demande TAMAL a été acceptée ✅",
-        `Montant accordé : ${demande.montantAccorde || "-"} FCFA`,
-        `Montant à rembourser : ${demande.montantRemboursement || "-"} FCFA`,
-        `Date de remboursement : ${
-          demande.dateRemboursement
-            ? new Date(demande.dateRemboursement).toLocaleString("fr-FR")
-            : "-"
-        }`,
-        "",
-        "Notre équipe reste disponible pour la suite du traitement.",
-        "TAMAL – Service Liquidité Immédiate",
-      ].join("\n")
-    }
-
-    if (demande.statut === "refusée") {
-      message = [
-        `Bonjour ${demande.nom || ""},`,
-        "",
-        "Après étude, votre demande TAMAL n’a pas été retenue pour le moment ❌",
-        "Vous pouvez reprendre contact avec notre équipe pour toute précision.",
-        "",
-        "TAMAL – Service Liquidité Immédiate",
-      ].join("\n")
-    }
-
-    if (!message) return
-
-    const ok = await envoyerMessageWhatsApp({
-      to: numeroClient,
-      body: message,
-    })
-
-    if (ok) {
-      console.log(`WhatsApp client décision envoyé avec succès à ${numeroClient}.`)
-    }
-  } catch (error) {
-    console.error("Erreur WhatsApp décision client :", error)
-  }
-}
-
-// =========================
-// EMAILS BREVO
-// =========================
-
-const envoyerEmailBrevo = async ({ to, subject, htmlContent }) => {
-  try {
-    if (!BREVO_API_KEY || !MAIL_FROM) {
-      console.warn("Configuration Brevo absente : email ignoré.")
-      return false
-    }
-
-    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "api-key": BREVO_API_KEY,
-        Accept: "application/json",
-      },
-      body: JSON.stringify({
-        sender: {
-          name: MAIL_FROM_NAME,
-          email: MAIL_FROM,
-        },
-        to: [{ email: to }],
-        subject,
-        htmlContent,
-      }),
-    })
-
-    const data = await response.text()
-
-    if (!response.ok) {
-      console.error("Erreur API Brevo :", data)
-      return false
-    }
-
-    console.log(`Email Brevo envoyé avec succès à ${to}.`)
-    return true
-  } catch (error) {
-    console.error("Erreur envoi Brevo :", error)
-    return false
-  }
-}
-
-const envoyerEmailInterne = async (demande) => {
-  try {
-    if (!MAIL_TO) {
-      console.warn("MAIL_TO absent : email interne ignoré.")
-      return
-    }
+const envoyerEmailClientCreation =
+  async (demande) => {
+    if (!demande.email) return
 
     const html = `
-      <div style="font-family: Arial, sans-serif; color: #111; line-height: 1.6;">
-        <h2>Nouvelle demande TAMAL</h2>
-        <p>Une nouvelle demande a été envoyée depuis le site.</p>
-
-        <table style="border-collapse: collapse; width: 100%; max-width: 700px;">
-          <tr>
-            <td style="padding: 8px; border: 1px solid #ddd;"><strong>Nom</strong></td>
-            <td style="padding: 8px; border: 1px solid #ddd;">${demande.nom || "-"}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px; border: 1px solid #ddd;"><strong>Téléphone</strong></td>
-            <td style="padding: 8px; border: 1px solid #ddd;">${demande.telephone || "-"}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px; border: 1px solid #ddd;"><strong>Email</strong></td>
-            <td style="padding: 8px; border: 1px solid #ddd;">${demande.email || "-"}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px; border: 1px solid #ddd;"><strong>Montant</strong></td>
-            <td style="padding: 8px; border: 1px solid #ddd;">${demande.montant || "-"} FCFA</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px; border: 1px solid #ddd;"><strong>Type d'objet</strong></td>
-            <td style="padding: 8px; border: 1px solid #ddd;">${demande.typeObjet || "-"}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px; border: 1px solid #ddd;"><strong>Type de pièce</strong></td>
-            <td style="padding: 8px; border: 1px solid #ddd;">${demande.typePiece || "-"}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px; border: 1px solid #ddd;"><strong>Description</strong></td>
-            <td style="padding: 8px; border: 1px solid #ddd;">${demande.description || "-"}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px; border: 1px solid #ddd;"><strong>Statut</strong></td>
-            <td style="padding: 8px; border: 1px solid #ddd;">${demande.statut || "-"}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px; border: 1px solid #ddd;"><strong>État CRM</strong></td>
-            <td style="padding: 8px; border: 1px solid #ddd;">${demande.etatCrm || "-"}</td>
-          </tr>
-        </table>
-
-        <p style="margin-top: 20px;">Connectez-vous à l’espace admin pour traiter cette demande.</p>
-      </div>
-    `
-
-    await envoyerEmailBrevo({
-      to: MAIL_TO,
-      subject: `Nouvelle demande TAMAL - ${demande.nom || "Client"}`,
-      htmlContent: html,
-    })
-  } catch (error) {
-    console.error("Erreur email interne :", error)
-  }
-}
-
-const envoyerEmailClientCreation = async (demande) => {
-  try {
-    if (!demande.email) {
-      console.warn("Adresse email client absente : email client ignoré.")
-      return
-    }
-
-    const html = `
-      <div style="font-family: Arial, sans-serif; color: #111; line-height: 1.6;">
-        <h2>Votre demande a bien été reçue</h2>
-        <p>Bonjour ${demande.nom || ""},</p>
-        <p>Nous confirmons la bonne réception de votre demande de prêt sur gage sur le site TAMAL.</p>
-        <p>Notre équipe va étudier votre dossier et vous contacter rapidement.</p>
-
-        <div style="margin: 20px 0; padding: 16px; background: #f8f8f6; border: 1px solid #e5e5e5; border-radius: 12px;">
-          <p style="margin: 0 0 8px;"><strong>Montant demandé :</strong> ${demande.montant || "-"} FCFA</p>
-          <p style="margin: 0 0 8px;"><strong>Type d'objet :</strong> ${demande.typeObjet || "-"}</p>
-          <p style="margin: 0;"><strong>Statut initial :</strong> ${demande.statut || "en attente"}</p>
-        </div>
-
-        <p>Merci pour votre confiance.</p>
-        <p><strong>TAMAL</strong><br />Service Liquidité Immédiate</p>
-      </div>
+    <h2>Demande reçue</h2>
+    <p>Bonjour ${demande.nom},</p>
+    <p>Votre demande a bien été reçue.</p>
+    <p>Notre équipe vous contactera rapidement.</p>
     `
 
     await envoyerEmailBrevo({
       to: demande.email,
-      subject: "Confirmation de votre demande TAMAL",
+      subject:
+        "Confirmation de votre demande",
       htmlContent: html,
     })
-  } catch (error) {
-    console.error("Erreur email client création :", error)
   }
-}
 
-const envoyerEmailDecisionClient = async (demande) => {
-  try {
-    if (!demande.email) {
-      console.warn("Pas d'email client pour notification décision.")
-      return
-    }
+const envoyerEmailDecisionClient =
+  async (demande) => {
+    if (!demande.email) return
 
     if (demande.statut === "acceptée") {
       const html = `
-        <div style="font-family: Arial, sans-serif; color: #111; line-height: 1.6;">
-          <h2>Votre demande a été acceptée</h2>
-          <p>Bonjour ${demande.nom || ""},</p>
-          <p>Nous vous informons que votre demande de prêt sur gage a été <strong>acceptée</strong>.</p>
-
-          <div style="margin: 20px 0; padding: 16px; background: #f8f8f6; border: 1px solid #e5e5e5; border-radius: 12px;">
-            <p style="margin: 0 0 8px;"><strong>Montant accordé :</strong> ${demande.montantAccorde || "-"} FCFA</p>
-            <p style="margin: 0 0 8px;"><strong>Montant à rembourser :</strong> ${demande.montantRemboursement || "-"} FCFA</p>
-            <p style="margin: 0;"><strong>Date de remboursement :</strong> ${
-              demande.dateRemboursement
-                ? new Date(demande.dateRemboursement).toLocaleString("fr-FR")
-                : "-"
-            }</p>
-          </div>
-
-          <p>Notre équipe reste disponible pour la suite du traitement.</p>
-          <p><strong>TAMAL</strong><br />Service Liquidité Immédiate</p>
-        </div>
+      <h2>Demande acceptée</h2>
+      <p>Bonjour ${demande.nom},</p>
+      <p>Votre demande a été acceptée.</p>
+      <p><strong>Montant accordé :</strong> ${demande.montantAccorde} FCFA</p>
+      <p><strong>Montant à rembourser :</strong> ${demande.montantRemboursement} FCFA</p>
       `
 
       await envoyerEmailBrevo({
         to: demande.email,
-        subject: "Votre demande TAMAL a été acceptée",
+        subject:
+          "Votre demande a été acceptée",
         htmlContent: html,
       })
     }
 
     if (demande.statut === "refusée") {
       const html = `
-        <div style="font-family: Arial, sans-serif; color: #111; line-height: 1.6;">
-          <h2>Votre demande n’a pas été retenue</h2>
-          <p>Bonjour ${demande.nom || ""},</p>
-          <p>Après étude, votre demande de prêt sur gage n’a pas pu être retenue pour le moment.</p>
-          <p>Vous pouvez reprendre contact avec notre équipe pour toute précision.</p>
-          <p><strong>TAMAL</strong><br />Service Liquidité Immédiate</p>
-        </div>
+      <h2>Demande refusée</h2>
+      <p>Bonjour ${demande.nom},</p>
+      <p>Après étude, votre demande n’a pas été retenue.</p>
       `
 
       await envoyerEmailBrevo({
         to: demande.email,
-        subject: "Mise à jour de votre demande TAMAL",
+        subject:
+          "Mise à jour de votre demande",
         htmlContent: html,
       })
     }
-  } catch (error) {
-    console.error("Erreur email décision client :", error)
   }
-}
+
 // =========================
-// ROUTES TEST
+// TEST
 // =========================
 
 app.get("/", (req, res) => {
-  res.send("Backend TAMAL en cours de fonctionnement")
+  res.send("Backend TAMAL OK")
 })
 
 app.get("/api/test", async (req, res) => {
   try {
     await pool.query("SELECT 1")
-    res.json({ message: "API TAMAL OK" })
-  } catch (error) {
-    console.error("Erreur test base :", error)
-    res.status(500).json({ message: "Connexion base de données échouée" })
+    res.json({
+      message: "API OK",
+    })
+  } catch {
+    res.status(500).json({
+      message: "Erreur DB",
+    })
   }
 })
 
 // =========================
-// ROUTES DEMANDES
+// DEMANDES
 // =========================
 
 app.post(
   "/api/demandes",
   upload.fields([
-    { name: "document", maxCount: 1 },
-    { name: "photo", maxCount: 1 },
+    {
+      name: "document",
+      maxCount: 1,
+    },
+    {
+      name: "photo",
+      maxCount: 1,
+    },
   ]),
   async (req, res) => {
     try {
       const formData = req.body
-      const telephoneFormate = formaterNumeroWhatsApp(
-        formData.telephone,
-        formData.countryCode
-      )
-      const documentFile = req.files?.document ? req.files.document[0] : null
-      const photoFile = req.files?.photo ? req.files.photo[0] : null
 
-      const statut = "en attente"
-      const etatCrm = "En attente"
+      const telephone =
+        formaterNumero(
+          formData.telephone,
+          formData.countryCode
+        )
 
-      const result = await pool.query(
-        `
+      const documentFile =
+        req.files?.document?.[0]
+
+      const photoFile =
+        req.files?.photo?.[0]
+
+      const result =
+        await pool.query(
+          `
         INSERT INTO demandes
         (
           nom,
@@ -574,63 +362,78 @@ app.post(
           etat_crm,
           datecreation
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, CURRENT_TIMESTAMP)
+        VALUES
+        ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,CURRENT_TIMESTAMP)
         RETURNING
-          id,
-          nom,
-          telephone,
-          email,
-          montant,
-          typeobjet AS "typeObjet",
-          typepiece AS "typePiece",
-          description,
-          document,
-          photo,
-          statut,
-          etat_crm AS "etatCrm",
-          datecreation AS "dateCreation"
-        `,
-        [
-          formData.nom || null,
-          telephoneFormate || null,
-          formData.email || null,
-          formData.montant ? Number(formData.montant) : null,
-          formData.typeObjet || null,
-          formData.typePiece || null,
-          formData.description || null,
-          documentFile ? documentFile.filename : null,
-          photoFile ? photoFile.filename : null,
-          statut,
-          etatCrm,
-        ]
-      )
+        id,
+        nom,
+        telephone,
+        email,
+        montant,
+        typeobjet AS "typeObjet",
+        typepiece AS "typePiece",
+        description,
+        document,
+        photo,
+        statut,
+        etat_crm AS "etatCrm",
+        datecreation AS "dateCreation"
+      `,
+          [
+            formData.nom,
+            telephone,
+            formData.email,
+            Number(
+              formData.montant
+            ),
+            formData.typeObjet,
+            formData.typePiece,
+            formData.description,
+            documentFile
+              ? documentFile.filename
+              : null,
+            photoFile
+              ? photoFile.filename
+              : null,
+            "en attente",
+            "En attente",
+          ]
+        )
 
       const demande = result.rows[0]
 
       await Promise.all([
-        envoyerNotificationWhatsApp(demande),
-        envoyerWhatsAppClientCreation(demande),
-        envoyerEmailInterne(demande),
-        envoyerEmailClientCreation(demande),
+        envoyerEmailInterne(
+          demande
+        ),
+        envoyerEmailClientCreation(
+          demande
+        ),
       ])
 
       res.status(201).json({
-        message: "Demande reçue avec succès",
+        message:
+          "Demande créée",
         data: demande,
       })
     } catch (error) {
-      console.error("Erreur lors de la création de la demande :", error)
+      console.error(error)
+
       res.status(500).json({
-        message: "Erreur serveur lors de l'envoi de la demande",
+        message:
+          "Erreur création demande",
       })
     }
   }
 )
 
-app.get("/api/demandes", async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT
+app.get(
+  "/api/demandes",
+  async (req, res) => {
+    try {
+      const result =
+        await pool.query(`
+        SELECT
         id,
         nom,
         telephone,
@@ -649,382 +452,386 @@ app.get("/api/demandes", async (req, res) => {
         montant_remboursement AS "montantRemboursement",
         statut_paiement AS "statutPaiement",
         date_dernier_rappel AS "dateDernierRappel"
-      FROM demandes
-      ORDER BY id DESC
+        FROM demandes
+        ORDER BY id DESC
+      `)
+
+      res.json(result.rows)
+    } catch {
+      res.status(500).json({
+        message:
+          "Erreur lecture demandes",
+      })
+    }
+  }
+)
+
+app.patch(
+  "/api/demandes/:id/statut",
+  async (req, res) => {
+    try {
+      const id = Number(
+        req.params.id
+      )
+
+      const statutRecu =
+        req.body.statut
+
+      const statutPaiement =
+        req.body
+          .statutPaiement ||
+        "non payé"
+
+      const actuel =
+        await pool.query(
+          `
+        SELECT
+        id,
+        statut,
+        nom,
+        email,
+        montant_accorde AS "montantAccorde"
+        FROM demandes
+        WHERE id=$1
+      `,
+          [id]
+        )
+
+      if (
+        actuel.rowCount === 0
+      ) {
+        return res
+          .status(404)
+          .json({
+            message:
+              "Introuvable",
+          })
+      }
+
+      const old =
+        actuel.rows[0]
+
+      const statut =
+        normaliserStatut(
+          statutRecu
+        )
+
+      let montantAccorde =
+        old.montantAccorde
+
+      if (
+        statut ===
+        "acceptée"
+      ) {
+        montantAccorde =
+          req.body
+            .montantAccorde ||
+          montantAccorde
+      }
+
+      let dateRemboursement =
+        null
+
+      if (
+        statut ===
+          "acceptée" &&
+        montantAccorde
+      ) {
+        const d =
+          new Date()
+
+        d.setDate(
+          d.getDate() +
+            7
+        )
+
+        dateRemboursement =
+          d.toISOString()
+      }
+
+      const montantRemboursement =
+        calculerMontantRemboursement(
+          montantAccorde,
+          statutPaiement
+        )
+
+      const statutFinal =
+        statutPaiement ===
+        "payé"
+          ? "remboursée"
+          : statut
+
+      const etatCrm =
+        calculerEtatCrm({
+          statut:
+            statutFinal,
+          dateRemboursement,
+          statutPaiement,
+        })
+
+      const result =
+        await pool.query(
+          `
+        UPDATE demandes
+        SET
+        statut=$1,
+        date_remboursement=$2,
+        montant_accorde=$3,
+        montant_remboursement=$4,
+        statut_paiement=$5,
+        etat_crm=$6
+        WHERE id=$7
+        RETURNING
+        id,
+        nom,
+        telephone,
+        email,
+        montant,
+        typeobjet AS "typeObjet",
+        typepiece AS "typePiece",
+        description,
+        document,
+        photo,
+        statut,
+        datecreation AS "dateCreation",
+        date_remboursement AS "dateRemboursement",
+        etat_crm AS "etatCrm",
+        montant_accorde AS "montantAccorde",
+        montant_remboursement AS "montantRemboursement",
+        statut_paiement AS "statutPaiement",
+        date_dernier_rappel AS "dateDernierRappel"
+      `,
+          [
+            statutFinal,
+            dateRemboursement,
+            montantAccorde,
+            montantRemboursement,
+            statutPaiement,
+            etatCrm,
+            id,
+          ]
+        )
+
+      const demande =
+        result.rows[0]
+
+      const changement =
+        (old.statut !==
+          "acceptée" &&
+          demande.statut ===
+            "acceptée") ||
+        (old.statut !==
+          "refusée" &&
+          demande.statut ===
+            "refusée")
+
+      if (changement) {
+        await envoyerEmailDecisionClient(
+          demande
+        )
+      }
+
+      res.json({
+        message:
+          "Mis à jour",
+        data: demande,
+      })
+    } catch (error) {
+      console.error(error)
+
+      res.status(500).json({
+        message:
+          "Erreur mise à jour",
+      })
+    }
+  }
+)
+
+// =========================
+// LOGIN ADMIN
+// =========================
+
+app.post(
+  "/api/admin/login",
+  async (req, res) => {
+    try {
+      const {
+        username,
+        password,
+      } = req.body
+
+      const result =
+        await pool.query(
+          `
+        SELECT id,username,password,role
+        FROM admins
+        WHERE username=$1
+        AND password=$2
+        LIMIT 1
+      `,
+          [
+            username,
+            password,
+          ]
+        )
+
+      const admin =
+        result.rows[0]
+
+      if (!admin) {
+        return res
+          .status(401)
+          .json({
+            message:
+              "Identifiants invalides",
+          })
+      }
+
+      res.json({
+        message:
+          "Connexion OK",
+        admin: {
+          id: admin.id,
+          username:
+            admin.username,
+          role: admin.role,
+        },
+      })
+    } catch {
+      res.status(500).json({
+        message:
+          "Erreur login",
+      })
+    }
+  }
+)
+
+// =========================
+// ADMINS
+// =========================
+
+app.get(
+  "/api/admins",
+  verifierSuperAdmin,
+  async (req, res) => {
+    const result =
+      await pool.query(`
+      SELECT id,username,password,role
+      FROM admins
+      ORDER BY id ASC
     `)
 
     res.json(result.rows)
-  } catch (error) {
-    console.error("Erreur lors de la lecture des demandes :", error)
-    res.status(500).json({
-      message: "Erreur serveur lors de la lecture des demandes",
-    })
   }
-})
+)
 
-app.patch("/api/demandes/:id/statut", async (req, res) => {
-  try {
-    const id = Number(req.params.id)
-    const statutRecu = req.body?.statut
-    const statutPaiement = req.body?.statutPaiement || "non payé"
+app.post(
+  "/api/admins",
+  verifierSuperAdmin,
+  async (req, res) => {
+    try {
+      const {
+        username,
+        password,
+        role,
+      } = req.body
 
-    if (!id || Number.isNaN(id)) {
-      return res.status(400).json({ message: "ID invalide" })
-    }
-
-    if (!statutRecu) {
-      return res.status(400).json({ message: "Le statut est obligatoire" })
-    }
-
-    const actuelResult = await pool.query(
-      `
-      SELECT
-        id,
-        nom,
-        email,
-        telephone,
-        statut,
-        montant_accorde AS "montantAccorde"
-      FROM demandes
-      WHERE id = $1
-      LIMIT 1
+      const existe =
+        await pool.query(
+          `
+        SELECT id
+        FROM admins
+        WHERE username=$1
       `,
-      [id]
-    )
+          [username]
+        )
 
-    if (actuelResult.rowCount === 0) {
-      return res.status(404).json({ message: "Demande introuvable" })
-    }
-
-    const actuel = actuelResult.rows[0]
-    const statut = normaliserStatut(statutRecu)
-
-    let montantAccorde = actuel.montantAccorde
-
-    if (
-      statut === "acceptée" &&
-      (montantAccorde === null || montantAccorde === undefined)
-    ) {
-      const montantAccordeRecu =
-        req.body?.montantAccorde !== undefined && req.body?.montantAccorde !== ""
-          ? Number(req.body.montantAccorde)
-          : null
-
-      if (!montantAccordeRecu) {
-        return res.status(400).json({
-          message:
-            "Le montant accordé est obligatoire pour accepter une demande.",
-        })
+      if (
+        existe.rowCount > 0
+      ) {
+        return res
+          .status(400)
+          .json({
+            message:
+              "Existe déjà",
+          })
       }
 
-      montantAccorde = montantAccordeRecu
-    }
-
-    let dateRemboursement = req.body?.dateRemboursement || null
-
-    if (statut === "acceptée" && montantAccorde) {
-      const baseDate = new Date()
-      const nbJours = Number(montantAccorde) >= 30000 ? 14 : 7
-      baseDate.setDate(baseDate.getDate() + nbJours)
-      dateRemboursement = baseDate.toISOString()
-    }
-
-    const montantRemboursement = calculerMontantRemboursement(
-      montantAccorde,
-      statutPaiement
-    )
-
-    const statutFinal = statutPaiement === "payé" ? "remboursée" : statut
-
-    const etatCrm = calculerEtatCrm({
-      statut: statutFinal,
-      dateRemboursement,
-      statutPaiement,
-    })
-
-    const result = await pool.query(
-      `
-      UPDATE demandes
-      SET
-        statut = $1,
-        date_remboursement = $2,
-        montant_accorde = $3,
-        montant_remboursement = $4,
-        statut_paiement = $5,
-        etat_crm = $6
-      WHERE id = $7
-      RETURNING
-        id,
-        nom,
-        telephone,
-        email,
-        montant,
-        typeobjet AS "typeObjet",
-        typepiece AS "typePiece",
-        description,
-        document,
-        photo,
-        statut,
-        datecreation AS "dateCreation",
-        date_remboursement AS "dateRemboursement",
-        etat_crm AS "etatCrm",
-        montant_accorde AS "montantAccorde",
-        montant_remboursement AS "montantRemboursement",
-        statut_paiement AS "statutPaiement",
-        date_dernier_rappel AS "dateDernierRappel"
+      await pool.query(
+        `
+        INSERT INTO admins
+        (username,password,role)
+        VALUES($1,$2,$3)
       `,
+        [
+          username,
+          password,
+          role,
+        ]
+      )
+
+      res.json({
+        message:
+          "Admin ajouté",
+      })
+    } catch {
+      res.status(500).json({
+        message:
+          "Erreur ajout admin",
+      })
+    }
+  }
+)
+
+app.patch(
+  "/api/admins/:id/password",
+  verifierSuperAdmin,
+  async (req, res) => {
+    await pool.query(
+      `
+    UPDATE admins
+    SET password=$1
+    WHERE id=$2
+  `,
       [
-        statutFinal,
-        dateRemboursement,
-        montantAccorde,
-        montantRemboursement,
-        statutPaiement,
-        etatCrm,
-        id,
+        req.body.password,
+        req.params.id,
       ]
     )
 
-    const demandeMAJ = result.rows[0]
+    res.json({
+      message:
+        "Mot de passe modifié",
+    })
+  }
+)
 
-    const changementDecision =
-      (actuel.statut !== "acceptée" && demandeMAJ.statut === "acceptée") ||
-      (actuel.statut !== "refusée" && demandeMAJ.statut === "refusée")
-
-    if (changementDecision) {
-      await Promise.all([
-        envoyerEmailDecisionClient(demandeMAJ),
-        envoyerWhatsAppDecisionClient(demandeMAJ),
-      ])
-    }
+app.delete(
+  "/api/admins/:id",
+  verifierSuperAdmin,
+  async (req, res) => {
+    await pool.query(
+      `
+    DELETE FROM admins
+    WHERE id=$1
+  `,
+      [req.params.id]
+    )
 
     res.json({
-      message: "Statut mis à jour avec succès",
-      data: demandeMAJ,
-    })
-  } catch (error) {
-    console.error("Erreur lors de la mise à jour du statut :", error)
-    res.status(500).json({
-      message: "Erreur serveur lors de la mise à jour du statut",
+      message:
+        "Admin supprimé",
     })
   }
-})
+)
 
 // =========================
-// ROUTES AUTH ADMIN
-// =========================
-
-app.post("/api/admin/login", async (req, res) => {
-  try {
-    const { username, password } = req.body
-
-    if (!username || !password) {
-      return res.status(400).json({
-        message: "Nom d'utilisateur et mot de passe requis.",
-      })
-    }
-
-    const result = await pool.query(
-      `
-      SELECT id, username, password, role
-      FROM admins
-      WHERE username = $1 AND password = $2
-      LIMIT 1
-      `,
-      [username, password]
-    )
-
-    const admin = result.rows[0]
-
-    if (!admin) {
-      return res.status(401).json({
-        message: "Identifiants invalides.",
-      })
-    }
-
-    return res.json({
-      message: "Connexion réussie.",
-      admin: {
-        id: admin.id,
-        username: admin.username,
-        role: admin.role,
-      },
-    })
-  } catch (error) {
-    console.error("Erreur login admin :", error)
-    return res.status(500).json({
-      message: "Erreur serveur.",
-    })
-  }
-})
-
-// =========================
-// GESTION ADMINS
-// =========================
-
-app.get("/api/admins", verifierSuperAdmin, async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT id, username, password, role
-      FROM admins
-      ORDER BY id ASC
-    `)
-
-    res.json(result.rows)
-  } catch (error) {
-    console.error("Erreur lecture admins :", error)
-    res.status(500).json({
-      message: "Erreur lors de la récupération des admins.",
-    })
-  }
-})
-
-app.post("/api/admins", verifierSuperAdmin, async (req, res) => {
-  try {
-    const { username, password, role } = req.body
-
-    if (!username || !password || !role) {
-      return res.status(400).json({
-        message: "Tous les champs sont requis.",
-      })
-    }
-
-    if (!["super_admin", "admin"].includes(role)) {
-      return res.status(400).json({
-        message: "Rôle invalide.",
-      })
-    }
-
-    const existe = await pool.query(
-      "SELECT id FROM admins WHERE username = $1 LIMIT 1",
-      [username]
-    )
-
-    if (existe.rowCount > 0) {
-      return res.status(400).json({
-        message: "Ce nom d'utilisateur existe déjà.",
-      })
-    }
-
-    const result = await pool.query(
-      `
-      INSERT INTO admins (username, password, role)
-      VALUES ($1, $2, $3)
-      RETURNING id, username, role
-      `,
-      [username, password, role]
-    )
-
-    res.status(201).json({
-      message: "Admin ajouté avec succès.",
-      admin: result.rows[0],
-    })
-  } catch (error) {
-    console.error("Erreur ajout admin :", error)
-    res.status(500).json({
-      message: "Erreur lors de l'ajout de l'admin.",
-    })
-  }
-})
-
-app.patch("/api/admins/:id/password", verifierSuperAdmin, async (req, res) => {
-  try {
-    const id = Number(req.params.id)
-    const { password } = req.body
-
-    if (!password) {
-      return res.status(400).json({
-        message: "Le nouveau mot de passe est requis.",
-      })
-    }
-
-    const result = await pool.query(
-      `
-      UPDATE admins
-      SET password = $1
-      WHERE id = $2
-      RETURNING id
-      `,
-      [password, id]
-    )
-
-    if (result.rowCount === 0) {
-      return res.status(404).json({
-        message: "Admin introuvable.",
-      })
-    }
-
-    res.json({
-      message: "Mot de passe mis à jour avec succès.",
-    })
-  } catch (error) {
-    console.error("Erreur modification mot de passe :", error)
-    res.status(500).json({
-      message: "Erreur lors de la modification du mot de passe.",
-    })
-  }
-})
-
-app.delete("/api/admins/:id", verifierSuperAdmin, async (req, res) => {
-  try {
-    const id = Number(req.params.id)
-
-    const adminResult = await pool.query(
-      "SELECT id, role FROM admins WHERE id = $1 LIMIT 1",
-      [id]
-    )
-
-    const admin = adminResult.rows[0]
-
-    if (!admin) {
-      return res.status(404).json({
-        message: "Admin introuvable.",
-      })
-    }
-
-    if (admin.role === "super_admin") {
-      return res.status(400).json({
-        message: "Impossible de supprimer un super admin.",
-      })
-    }
-
-    await pool.query("DELETE FROM admins WHERE id = $1", [id])
-
-    res.json({
-      message: "Admin supprimé avec succès.",
-    })
-  } catch (error) {
-    console.error("Erreur suppression admin :", error)
-    res.status(500).json({
-      message: "Erreur lors de la suppression.",
-    })
-  }
-})
-
-// =========================
-// DEBUG
-// =========================
-
-app.get("/api/debug-admins", async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT id, username, role
-      FROM admins
-      ORDER BY id ASC
-    `)
-
-    res.json(result.rows)
-  } catch (error) {
-    console.error("Erreur debug admins :", error)
-    res.status(500).json({
-      message: error.message,
-    })
-  }
-})
-
-// =========================
-// START SERVER
+// START
 // =========================
 
 app.listen(PORT, () => {
-  console.log("Serveur backend lancé sur le port " + PORT)
+  console.log(
+    "Serveur lancé sur port " +
+      PORT
+  )
 })
