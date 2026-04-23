@@ -25,7 +25,7 @@ export default function Formulaire() {
 
   const API_URL = import.meta.env.VITE_API_URL
   const WHATSAPP_ADMIN_NUMBER =
-    import.meta.env.VITE_WHATSAPP_ADMIN_NUMBER || "221778492779"
+    import.meta.env.VITE_WHATSAPP_ADMIN_NUMBER || "254742478145"
 
   const handleChange = (e) => {
     const { name, value } = e.target
