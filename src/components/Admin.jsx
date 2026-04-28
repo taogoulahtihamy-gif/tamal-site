@@ -36,86 +36,109 @@ export default function Admin() {
     return `https://wa.me/${numeroNettoye}?text=${encodeURIComponent(texte)}`
   }
 
-  const ouvrirWhatsAppClient = (numero, texte) => {
-    const lien = construireLienWhatsApp(numero, texte)
+  const formaterDate = (date) => {
+    if (!date) return "-"
+    return new Intl.DateTimeFormat("fr-FR", {
+      dateStyle: "short",
+      timeStyle: "short",
+      timeZone: "Africa/Dakar",
+    }).format(new Date(date))
+  }
 
-    if (!lien) {
-      afficherMessage("Numéro WhatsApp client introuvable.", "error")
-      return
+  const formaterMontant = (montant) => {
+    const montantNombre = Number(montant)
+
+    if (
+      montant === null ||
+      montant === undefined ||
+      montant === "" ||
+      Number.isNaN(montantNombre)
+    ) {
+      return "-"
     }
 
-    window.open(lien, "_blank")
+    return `${montantNombre.toLocaleString("fr-FR")} FCFA`
   }
 
- const construireMessageAction = (demande, actionType, updatedItem) => {
-  const data = updatedItem || demande
+  const calculLocalRemboursement = (montantAccorde) => {
+    const montant = Number(montantAccorde)
 
-  const montantAccorde = Number(data.montantAccorde || 0)
-  const fraisEtBenefice = Math.round(montantAccorde * 0.31)
-  const totalRemboursement = Math.round(montantAccorde * 1.31)
+    if (
+      montantAccorde === null ||
+      montantAccorde === undefined ||
+      montantAccorde === "" ||
+      Number.isNaN(montant) ||
+      montant <= 0
+    ) {
+      return "-"
+    }
 
-  if (actionType === "accepter") {
-    return [
-      `Bonjour ${data.nom || ""},`,
-      "",
-      "Votre demande TAMAL a été acceptée ✅",
-      `Montant accordé : ${
-        montantAccorde > 0
-          ? montantAccorde.toLocaleString("fr-FR")
-          : "-"
-      } FCFA`,
-      `Frais et service TAMAL (31%) : ${
-        montantAccorde > 0
-          ? fraisEtBenefice.toLocaleString("fr-FR")
-          : "-"
-      } FCFA`,
-      `Total à rembourser : ${
-        montantAccorde > 0
-          ? totalRemboursement.toLocaleString("fr-FR")
-          : "-"
-      } FCFA`,
-      `Date de remboursement : ${formaterDate(data.dateRemboursement)}`,
-      "",
-      "Merci de respecter la date de remboursement indiquée afin d’éviter toute pénalité.",
-      "TAMAL – Service Liquidité Immédiate",
-    ].join("\n")
+    return formaterMontant(Math.round(montant * 1.31))
   }
 
-  if (actionType === "refuser") {
-    return [
-      `Bonjour ${data.nom || ""},`,
-      "",
-      "Après étude, votre demande TAMAL n’a pas été retenue pour le moment ❌",
-      "Vous pouvez nous recontacter pour plus d’informations.",
-      "",
-      "TAMAL – Service Liquidité Immédiate",
-    ].join("\n")
-  }
+  const construireMessageAction = (demande, actionType, updatedItem) => {
+    const data = updatedItem || demande
 
-  if (actionType === "payer") {
-    return [
-      `Bonjour ${data.nom || ""},`,
-      "",
-      "Votre dossier TAMAL a été marqué comme remboursé ✅",
-      "",
-      "Merci pour votre confiance.",
-      "TAMAL – Service Liquidité Immédiate",
-    ].join("\n")
-  }
+    const montantAccorde = Number(data.montantAccorde || 0)
+    const fraisEtService = Math.round(montantAccorde * 0.31)
+    const totalRemboursement = Math.round(montantAccorde * 1.31)
 
-  if (actionType === "attente") {
-    return [
-      `Bonjour ${data.nom || ""},`,
-      "",
-      "Votre dossier TAMAL a été remis en attente ⏳",
-      "Notre équipe reviendra vers vous rapidement.",
-      "",
-      "TAMAL – Service Liquidité Immédiate",
-    ].join("\n")
-  }
+    if (actionType === "accepter") {
+      return [
+        `Bonjour ${data.nom || ""},`,
+        "",
+        "Votre demande TAMAL a été acceptée ✅",
+        `Montant accordé : ${
+          montantAccorde > 0 ? montantAccorde.toLocaleString("fr-FR") : "-"
+        } FCFA`,
+        `Frais et service TAMAL (31%) : ${
+          montantAccorde > 0 ? fraisEtService.toLocaleString("fr-FR") : "-"
+        } FCFA`,
+        `Total à rembourser : ${
+          montantAccorde > 0 ? totalRemboursement.toLocaleString("fr-FR") : "-"
+        } FCFA`,
+        `Date de remboursement : ${formaterDate(data.dateRemboursement)}`,
+        "",
+        "Merci de respecter la date de remboursement indiquée afin d’éviter toute pénalité.",
+        "TAMAL – Service Liquidité Immédiate",
+      ].join("\n")
+    }
 
-  return ""
-}
+    if (actionType === "refuser") {
+      return [
+        `Bonjour ${data.nom || ""},`,
+        "",
+        "Après étude, votre demande TAMAL n’a pas été retenue pour le moment ❌",
+        "Vous pouvez nous recontacter pour plus d’informations.",
+        "",
+        "TAMAL – Service Liquidité Immédiate",
+      ].join("\n")
+    }
+
+    if (actionType === "payer") {
+      return [
+        `Bonjour ${data.nom || ""},`,
+        "",
+        "Votre dossier TAMAL a été marqué comme remboursé ✅",
+        "",
+        "Merci pour votre confiance.",
+        "TAMAL – Service Liquidité Immédiate",
+      ].join("\n")
+    }
+
+    if (actionType === "attente") {
+      return [
+        `Bonjour ${data.nom || ""},`,
+        "",
+        "Votre dossier TAMAL a été remis en attente ⏳",
+        "Notre équipe reviendra vers vous rapidement.",
+        "",
+        "TAMAL – Service Liquidité Immédiate",
+      ].join("\n")
+    }
+
+    return ""
+  }
 
   const chargerDemandes = async () => {
     try {
@@ -147,6 +170,7 @@ export default function Admin() {
               : "",
         }
       })
+
       setEdition(initialEdition)
     } catch (error) {
       console.error("Erreur chargement demandes :", error)
@@ -166,24 +190,6 @@ export default function Admin() {
       chargerDemandes()
     }
   }, [estConnecte])
-
-  if (!estConnecte) {
-    return <Navigate to="/login-admin" replace />
-  }
-
-  const formaterDate = (date) => {
-    if (!date) return "-"
-    return new Intl.DateTimeFormat("fr-FR", {
-      dateStyle: "short",
-      timeStyle: "short",
-      timeZone: "Africa/Dakar",
-    }).format(new Date(date))
-  }
-
-  const formaterMontant = (montant) => {
-    if (montant === null || montant === undefined || montant === "") return "-"
-    return `${Number(montant).toLocaleString("fr-FR")} FCFA`
-  }
 
   const getStyleEtatCRM = (etatCrm) => {
     if (etatCrm === "Remboursée") {
@@ -250,25 +256,6 @@ export default function Admin() {
     }))
   }
 
- const calculLocalRemboursement = (montantAccorde) => {
-  if (
-    montantAccorde === null ||
-    montantAccorde === undefined ||
-    montantAccorde === ""
-  ) {
-    return "-"
-  }
-
-  const montant = Number(montantAccorde)
-
-  if (Number.isNaN(montant) || montant <= 0) {
-    return "-"
-  }
-
-  const total = Math.round(montant * 1.31)
-
-  return formaterMontant(total)
-}
   const envoyerAction = async (d, actionType) => {
     try {
       setLoadingActionId(d.id)
@@ -283,10 +270,11 @@ export default function Admin() {
         if (
           montantAccorde === "" ||
           montantAccorde === null ||
-          montantAccorde === undefined
+          montantAccorde === undefined ||
+          Number.isNaN(Number(montantAccorde))
         ) {
           afficherMessage(
-            "Veuillez renseigner le montant accordé avant d’accepter.",
+            "Veuillez renseigner un montant accordé valide avant d’accepter.",
             "error"
           )
           return
@@ -295,6 +283,7 @@ export default function Admin() {
         payload = {
           statut: "acceptée",
           montantAccorde: Number(montantAccorde),
+          montantRemboursement: Math.round(Number(montantAccorde) * 1.31),
           statutPaiement: d.statutPaiement || "non payé",
         }
       }
@@ -338,20 +327,25 @@ export default function Admin() {
       }
 
       const updatedItem = result?.data ?? result
+      const itemFinal = {
+        ...d,
+        ...updatedItem,
+        ...payload,
+      }
 
       setDemandes((prev) =>
         Array.isArray(prev)
-          ? prev.map((item) => (item.id === d.id ? updatedItem : item))
-          : [updatedItem]
+          ? prev.map((item) => (item.id === d.id ? itemFinal : item))
+          : [itemFinal]
       )
 
       setEdition((prev) => ({
         ...prev,
         [d.id]: {
           montantAccorde:
-            updatedItem?.montantAccorde !== null &&
-            updatedItem?.montantAccorde !== undefined
-              ? updatedItem.montantAccorde
+            itemFinal?.montantAccorde !== null &&
+            itemFinal?.montantAccorde !== undefined
+              ? itemFinal.montantAccorde
               : "",
         },
       }))
@@ -359,33 +353,37 @@ export default function Admin() {
       if (actionType === "accepter") {
         afficherMessage(`Demande #${d.id} acceptée avec succès.`)
       }
+
       if (actionType === "refuser") {
         afficherMessage(`Demande #${d.id} refusée avec succès.`)
       }
+
       if (actionType === "payer") {
         afficherMessage(`Demande #${d.id} marquée comme remboursée.`)
       }
+
       if (actionType === "attente") {
         afficherMessage(`Demande #${d.id} remise en attente.`)
       }
 
-      const messageWhatsapp = construireMessageAction(d, actionType, updatedItem)
+      const messageWhatsapp = construireMessageAction(d, actionType, itemFinal)
+      const telephoneClient = itemFinal?.telephone || d?.telephone
 
-    const telephoneClient = updatedItem?.telephone || d?.telephone
+      if (messageWhatsapp && telephoneClient) {
+        const lienWhatsApp = construireLienWhatsApp(
+          telephoneClient,
+          messageWhatsapp
+        )
 
-if (messageWhatsapp && telephoneClient) {
-  const lienWhatsApp = construireLienWhatsApp(telephoneClient, messageWhatsapp)
-
-  if (lienWhatsApp) {
-    window.location.href = lienWhatsApp
-  }
-
-} else {
-  afficherMessage(
-    "Action enregistrée, mais le numéro WhatsApp client est introuvable.",
-    "error"
-  )
-}
+        if (lienWhatsApp) {
+          window.location.href = lienWhatsApp
+        }
+      } else {
+        afficherMessage(
+          "Action enregistrée, mais le numéro WhatsApp client est introuvable.",
+          "error"
+        )
+      }
     } catch (error) {
       console.error("Erreur action dossier :", error)
       afficherMessage(error.message || "Erreur lors de l’action.", "error")
@@ -430,6 +428,10 @@ if (messageWhatsapp && telephoneClient) {
     localStorage.removeItem("adminAuth")
     localStorage.removeItem("adminUser")
     window.location.href = "/login-admin"
+  }
+
+  if (!estConnecte) {
+    return <Navigate to="/login-admin" replace />
   }
 
   return (
@@ -658,7 +660,8 @@ if (messageWhatsapp && telephoneClient) {
 
                     <div className="grid gap-3 text-sm leading-6">
                       <p>
-                        <span className="font-semibold">Nom :</span> {d.nom || "-"}
+                        <span className="font-semibold">Nom :</span>{" "}
+                        {d.nom || "-"}
                       </p>
 
                       <p>
@@ -693,7 +696,9 @@ if (messageWhatsapp && telephoneClient) {
                       )}
 
                       <p>
-                        <span className="font-semibold">Description de l'objet :</span>{" "}
+                        <span className="font-semibold">
+                          Description de l'objet :
+                        </span>{" "}
                         {d.description || "-"}
                       </p>
 
@@ -772,6 +777,7 @@ if (messageWhatsapp && telephoneClient) {
                           }`}
                           placeholder="Ex : 50000"
                         />
+
                         {montantAccordeVerrouille && (
                           <p className="mt-1 text-xs text-gray-500">
                             Montant verrouillé après validation.
@@ -784,10 +790,10 @@ if (messageWhatsapp && telephoneClient) {
                           Montant à rembourser
                         </label>
                         <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 font-semibold text-gray-900">
-                         {calculLocalRemboursement(montantAccordeAffiche)}
+                          {calculLocalRemboursement(montantAccordeAffiche)}
                         </div>
                         <p className="mt-1 text-xs text-gray-500">
-                          Calcul automatique sur la base du montant accordé.
+                          Calcul automatique : montant accordé + 31%.
                         </p>
                       </div>
 
@@ -824,10 +830,9 @@ if (messageWhatsapp && telephoneClient) {
                       </div>
 
                       <div className="rounded-2xl border border-yellow-200 bg-yellow-50 p-4 text-sm leading-6 text-gray-700">
-                        Une notification email est envoyée automatiquement au
-                        client lors d’une acceptation ou d’un refus, si une
-                        adresse email est renseignée. En plus, un message WhatsApp
-                        prérempli s’ouvre pour faciliter le contact.
+                        Le montant à rembourser est calculé avec les frais et
+                        service TAMAL de 31%. Un message WhatsApp prérempli
+                        s’ouvre après acceptation ou changement de statut.
                       </div>
                     </div>
                   </div>
