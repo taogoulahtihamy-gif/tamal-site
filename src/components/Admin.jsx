@@ -368,11 +368,18 @@ return formaterMontant(remboursement + frais)
 
       const messageWhatsapp = construireMessageAction(d, actionType, updatedItem)
 
-      if (messageWhatsapp && updatedItem?.telephone) {
-        setTimeout(() => {
-          ouvrirWhatsAppClient(updatedItem.telephone, messageWhatsapp)
-        }, 300)
-      }
+     const telephoneClient = updatedItem?.telephone || d?.telephone
+
+if (messageWhatsapp && telephoneClient) {
+  setTimeout(() => {
+    ouvrirWhatsAppClient(telephoneClient, messageWhatsapp)
+  }, 300)
+} else {
+  afficherMessage(
+    "Action enregistrée, mais le numéro WhatsApp client est introuvable.",
+    "error"
+  )
+}
     } catch (error) {
       console.error("Erreur action dossier :", error)
       afficherMessage(error.message || "Erreur lors de l’action.", "error")
