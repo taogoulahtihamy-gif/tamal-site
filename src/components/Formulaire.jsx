@@ -27,25 +27,18 @@ export default function Formulaire() {
   const WHATSAPP_ADMIN_NUMBER =
     import.meta.env.VITE_WHATSAPP_ADMIN_NUMBER || "221772616753"
 
-// 🔹 Calcul frais 1%
-const montantNum = parseFloat(formData.montant) || 0
-const fraisService = Math.round(montantNum * 0.31)
-const totalAPayer = montantNum + fraisService
+  const montantNum = parseFloat(formData.montant) || 0
+  const fraisService = Math.round(montantNum * 0.31)
+  const totalAPayer = montantNum + fraisService
 
   const handleChange = (e) => {
     const { name, value } = e.target
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }))
+    setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
   const handleDocumentChange = (e) => {
     const file = e.target.files[0]
-    if (file) {
-      setDocumentFile(file)
-    }
+    if (file) setDocumentFile(file)
   }
 
   const handlePhotoChange = (e) => {
@@ -56,9 +49,7 @@ const totalAPayer = montantNum + fraisService
     }
   }
 
-  const validerEmail = (email) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-  }
+  const validerEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 
   const nettoyerNumero = (numero) => {
     if (!numero) return ""
@@ -71,10 +62,7 @@ const totalAPayer = montantNum + fraisService
 
     if (!numeroNettoye) return ""
     if (!indicatifNettoye) return numeroNettoye
-
-    if (numeroNettoye.startsWith(indicatifNettoye)) {
-      return numeroNettoye
-    }
+    if (numeroNettoye.startsWith(indicatifNettoye)) return numeroNettoye
 
     return `${indicatifNettoye}${numeroNettoye}`
   }
@@ -87,13 +75,8 @@ const totalAPayer = montantNum + fraisService
   const validerFormulaire = () => {
     const nouvellesErreurs = {}
 
-    if (!formData.nom.trim()) {
-      nouvellesErreurs.nom = "Le nom est obligatoire"
-    }
-
-    if (!formData.telephone.trim()) {
-      nouvellesErreurs.telephone = "Le téléphone est obligatoire"
-    }
+    if (!formData.nom.trim()) nouvellesErreurs.nom = "Le nom est obligatoire"
+    if (!formData.telephone.trim()) nouvellesErreurs.telephone = "Le téléphone est obligatoire"
 
     if (formData.countryCode === "custom" && !formData.customCode.trim()) {
       nouvellesErreurs.telephone = "Veuillez entrer l’indicatif pays"
@@ -109,17 +92,9 @@ const totalAPayer = montantNum + fraisService
       nouvellesErreurs.montant = "Le montant doit être au moins de 5 000 FCFA"
     }
 
-    if (!photoFile) {
-      nouvellesErreurs.photo = "La photo de l'objet est obligatoire"
-    }
-
-    if (!formData.description.trim()) {
-      nouvellesErreurs.description = "La description de l'objet est obligatoire"
-    }
-
-    if (!documentFile) {
-      nouvellesErreurs.document = "La copie de la pièce est obligatoire"
-    }
+    if (!photoFile) nouvellesErreurs.photo = "La photo de l'objet est obligatoire"
+    if (!formData.description.trim()) nouvellesErreurs.description = "La description de l'objet est obligatoire"
+    if (!documentFile) nouvellesErreurs.document = "La copie de la pièce est obligatoire"
 
     return nouvellesErreurs
   }
@@ -133,9 +108,7 @@ const totalAPayer = montantNum + fraisService
     setMessageSucces("")
     setMessageErreur("")
 
-    if (Object.keys(nouvellesErreurs).length > 0) {
-      return
-    }
+    if (Object.keys(nouvellesErreurs).length > 0) return
 
     setChargement(true)
 
@@ -152,19 +125,14 @@ const totalAPayer = montantNum + fraisService
       dataToSend.append("telephone", formData.telephone)
       dataToSend.append("email", formData.email)
       dataToSend.append("montant", formData.montant)
-      dataToSend.append("fraisEnvoi", fraisEnvoi)
+      dataToSend.append("fraisService", fraisService)
       dataToSend.append("totalAPayer", totalAPayer)
       dataToSend.append("typeObjet", formData.typeObjet)
       dataToSend.append("typePiece", formData.typePiece)
       dataToSend.append("description", formData.description)
 
-      if (documentFile) {
-        dataToSend.append("document", documentFile)
-      }
-
-      if (photoFile) {
-        dataToSend.append("photo", photoFile)
-      }
+      if (documentFile) dataToSend.append("document", documentFile)
+      if (photoFile) dataToSend.append("photo", photoFile)
 
       const response = await fetch(`${API_URL}/api/demandes`, {
         method: "POST",
@@ -191,7 +159,7 @@ const totalAPayer = montantNum + fraisService
         `Téléphone / WhatsApp : ${numeroClientWhatsapp || "-"}`,
         `Email : ${formData.email}`,
         `Montant souhaité : ${Number(formData.montant).toLocaleString("fr-FR")} FCFA`,
-         `Frais et service TAMAL (31%) : ${fraisService.toLocaleString("fr-FR")} FCFA`,
+        `Frais et service TAMAL (31%) : ${fraisService.toLocaleString("fr-FR")} FCFA`,
         `Total à rembourser : ${totalAPayer.toLocaleString("fr-FR")} FCFA`,
         `Type d'objet : ${formData.typeObjet}`,
         `Type de pièce : ${formData.typePiece}`,
@@ -226,8 +194,8 @@ const totalAPayer = montantNum + fraisService
       setDocumentFile(null)
       setPhotoFile(null)
       setPhotoPreview(null)
-      window.location.href = lienWhatsApp
 
+      window.location.href = lienWhatsApp
     } catch (error) {
       console.error(error)
       setMessageErreur("Une erreur est survenue lors de l'envoi du formulaire.")
@@ -388,39 +356,37 @@ const totalAPayer = montantNum + fraisService
                 className="w-full rounded-xl border border-gray-200 bg-[#faf9f5] px-4 py-3 text-gray-900 outline-none transition focus:border-yellow-500"
               />
 
-     <div className="mt-4 rounded-2xl border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm text-gray-700">
-  <div className="flex items-start gap-2">
-    <span className="text-yellow-600 text-lg">⚠️</span>
-    <p>
-      Les frais de transaction (Wave, Orange Money ou autre moyen de paiement)
-      sont entièrement à la charge du client et doivent être remboursés.
-    </p>
-  </div>
-</div>
+              <div className="mt-4 rounded-2xl border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm text-gray-700">
+                <div className="flex items-start gap-2">
+                  <span className="text-lg text-yellow-600">⚠️</span>
+                  <p>
+                    Les frais de transaction, frais Wave, Orange Money ou autre
+                    moyen de paiement sont entièrement à la charge du client et
+                    inclus dans le montant total à rembourser.
+                  </p>
+                </div>
+              </div>
 
+              {montantNum > 0 && (
+                <div className="mt-4 rounded-xl border border-yellow-200 bg-yellow-50 p-4 text-sm">
+                  <div className="flex justify-between">
+                    <span>Montant demandé</span>
+                    <strong>{montantNum.toLocaleString("fr-FR")} FCFA</strong>
+                  </div>
 
-              {/* FACTURE */}
-{montantNum > 0 && (
-  <div className="mt-4 rounded-xl border border-yellow-200 bg-yellow-50 p-4 text-sm">
-    
-    <div className="flex justify-between">
-      <span>Montant demandé</span>
-      <strong>{montantNum.toLocaleString("fr-FR")} FCFA</strong>
-    </div>
+                  <div className="mt-1 flex justify-between">
+                    <span>Frais et service TAMAL (31%)</span>
+                    <strong>{fraisService.toLocaleString("fr-FR")} FCFA</strong>
+                  </div>
 
-    <div className="flex justify-between mt-1">
-      <span>Frais d’envoi (1%)</span>
-      <strong>{fraisEnvoi.toLocaleString("fr-FR")} FCFA</strong>
-    </div>
+                  <div className="my-2 border-t"></div>
 
-    <div className="my-2 border-t"></div>
-
-    <div className="flex justify-between font-semibold text-yellow-700">
-      <span>Total à rembourser</span>
-      <span>{totalAPayer.toLocaleString("fr-FR")} FCFA</span>
-    </div>
-  </div>
-)}
+                  <div className="flex justify-between font-semibold text-yellow-700">
+                    <span>Total à rembourser</span>
+                    <span>{totalAPayer.toLocaleString("fr-FR")} FCFA</span>
+                  </div>
+                </div>
+              )}
 
               {erreurs.montant && (
                 <p className="mt-2 text-sm text-red-500">{erreurs.montant}</p>

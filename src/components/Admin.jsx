@@ -67,7 +67,13 @@ export default function Admin() {
   const calculLocalRemboursement = (montantAccorde) => {
     const montant = Number(montantAccorde)
 
-    if (!montantAccorde || Number.isNaN(montant) || montant <= 0) {
+    if (
+      montantAccorde === null ||
+      montantAccorde === undefined ||
+      montantAccorde === "" ||
+      Number.isNaN(montant) ||
+      montant <= 0
+    ) {
       return "-"
     }
 
@@ -160,11 +166,12 @@ export default function Admin() {
       setDemandes(liste)
 
       const initialEdition = {}
+
       liste.forEach((d) => {
         initialEdition[d.id] = {
           montantAccorde:
             d.montantAccorde !== null && d.montantAccorde !== undefined
-              ? String(d.montantAccorde)
+              ? d.montantAccorde
               : "",
         }
       })
@@ -326,6 +333,7 @@ export default function Admin() {
       }
 
       const updatedItem = result?.data ?? result
+
       const itemFinal = {
         ...d,
         ...updatedItem,
@@ -344,7 +352,7 @@ export default function Admin() {
           montantAccorde:
             itemFinal?.montantAccorde !== null &&
             itemFinal?.montantAccorde !== undefined
-              ? String(itemFinal.montantAccorde)
+              ? itemFinal.montantAccorde
               : "",
         },
       }))
@@ -575,18 +583,14 @@ export default function Admin() {
         <div className="grid gap-5">
           {demandesFiltrees.map((d) => {
             const etatCRM = getStyleEtatCRM(d.etatCrm)
-            const dataEdition = edition[d.id] || {
-              montantAccorde: "",
-            }
+            const dataEdition = edition[d.id] || { montantAccorde: "" }
 
             const montantAccordeVerrouille =
               d.montantAccorde !== null && d.montantAccorde !== undefined
 
-            const montantAccordeAffiche = String(
-              montantAccordeVerrouille
-                ? d.montantAccorde ?? ""
-                : dataEdition.montantAccorde ?? ""
-            )
+            const montantAccordeAffiche = montantAccordeVerrouille
+              ? d.montantAccorde ?? ""
+              : dataEdition.montantAccorde ?? ""
 
             return (
               <div
@@ -687,7 +691,9 @@ export default function Admin() {
 
                       {d.photo && (
                         <div className="pt-2">
-                          <p className="mb-2 font-semibold">Photo de l'objet :</p>
+                          <p className="mb-2 font-semibold">
+                            Photo de l'objet :
+                          </p>
                           <img
                             src={`${API_URL}/uploads/${d.photo}`}
                             alt={d.typeObjet || "Objet"}
@@ -712,7 +718,9 @@ export default function Admin() {
 
                       {d.document && (
                         <p>
-                          <span className="font-semibold">Copie de la pièce :</span>{" "}
+                          <span className="font-semibold">
+                            Copie de la pièce :
+                          </span>{" "}
                           <a
                             href={`${API_URL}/uploads/${d.document}`}
                             target="_blank"
