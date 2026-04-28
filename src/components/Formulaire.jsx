@@ -388,6 +388,17 @@ const totalAPayer = montantNum + fraisEnvoi
                 className="w-full rounded-xl border border-gray-200 bg-[#faf9f5] px-4 py-3 text-gray-900 outline-none transition focus:border-yellow-500"
               />
 
+     <div className="mt-4 rounded-2xl border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm text-gray-700">
+  <div className="flex items-start gap-2">
+    <span className="text-yellow-600 text-lg">⚠️</span>
+    <p>
+      Les frais de transaction (Wave, Orange Money ou autre moyen de paiement)
+      sont entièrement à la charge du client et doivent être remboursés.
+    </p>
+  </div>
+</div>
+
+
               {/* FACTURE */}
 {montantNum > 0 && (
   <div className="mt-4 rounded-xl border border-yellow-200 bg-yellow-50 p-4 text-sm">
