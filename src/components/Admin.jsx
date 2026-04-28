@@ -368,12 +368,15 @@ return formaterMontant(remboursement + frais)
 
       const messageWhatsapp = construireMessageAction(d, actionType, updatedItem)
 
-     const telephoneClient = updatedItem?.telephone || d?.telephone
+    const telephoneClient = updatedItem?.telephone || d?.telephone
 
 if (messageWhatsapp && telephoneClient) {
-  setTimeout(() => {
-    ouvrirWhatsAppClient(telephoneClient, messageWhatsapp)
-  }, 300)
+  const lienWhatsApp = construireLienWhatsApp(telephoneClient, messageWhatsapp)
+
+  if (lienWhatsApp) {
+    window.location.href = lienWhatsApp
+  }
+
 } else {
   afficherMessage(
     "Action enregistrée, mais le numéro WhatsApp client est introuvable.",

@@ -29,8 +29,8 @@ export default function Formulaire() {
 
 // 🔹 Calcul frais 1%
 const montantNum = parseFloat(formData.montant) || 0
-const fraisEnvoi = montantNum * 0.01
-const totalAPayer = montantNum + fraisEnvoi
+const fraisService = Math.round(montantNum * 0.31)
+const totalAPayer = montantNum + fraisService
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -191,7 +191,7 @@ const totalAPayer = montantNum + fraisEnvoi
         `Téléphone / WhatsApp : ${numeroClientWhatsapp || "-"}`,
         `Email : ${formData.email}`,
         `Montant souhaité : ${Number(formData.montant).toLocaleString("fr-FR")} FCFA`,
-        `Frais (1%) : ${fraisEnvoi.toLocaleString("fr-FR")} FCFA`,
+        `Frais et service TAMAL (31%) : ${fraisService.toLocaleString("fr-FR")} FCFA`,
         `Total à rembourser : ${totalAPayer.toLocaleString("fr-FR")} FCFA`,
         `Type d'objet : ${formData.typeObjet}`,
         `Type de pièce : ${formData.typePiece}`,
@@ -409,7 +409,7 @@ const totalAPayer = montantNum + fraisEnvoi
     </div>
 
     <div className="flex justify-between mt-1">
-      <span>Frais d’envoi (1%)</span>
+      <span>Frais d’envoi (31%)</span>
       <strong>{fraisEnvoi.toLocaleString("fr-FR")} FCFA</strong>
     </div>
 
