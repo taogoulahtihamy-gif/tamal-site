@@ -143,7 +143,7 @@ const remboursementRetard1JourAvecFrais = montantValide
                 <p className="text-sm text-gray-500">Remboursement normal</p>
 
                 <p className="text-xs text-gray-500 mt-1">
-                  Taux appliqué : <span className="font-semibold">30%</span>
+                  Taux appliqué : <span className="font-semibold">31%</span>
                 </p>
 
                 <p className="mt-2 text-2xl font-semibold text-yellow-600">

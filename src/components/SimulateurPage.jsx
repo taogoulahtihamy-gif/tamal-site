@@ -164,7 +164,7 @@ const remboursementRetard1JourAvecFrais = montantValide
                 <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5">
                   <p className="text-sm text-gray-500">Remboursement normal</p>
                   <p className="mt-1 text-xs text-gray-500">
-                    Taux appliqué : <span className="font-semibold">30%</span>
+                    Taux appliqué : <span className="font-semibold">31%</span>
                   </p>
                   <p className="mt-2 text-2xl font-semibold text-yellow-600">
                     {montantValide
