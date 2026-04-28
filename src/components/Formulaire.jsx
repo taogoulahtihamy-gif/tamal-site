@@ -25,7 +25,12 @@ export default function Formulaire() {
 
   const API_URL = import.meta.env.VITE_API_URL
   const WHATSAPP_ADMIN_NUMBER =
-    import.meta.env.VITE_WHATSAPP_ADMIN_NUMBER || "254742478145"
+    import.meta.env.VITE_WHATSAPP_ADMIN_NUMBER || "221772616753"
+
+  // ✅ AJOUT CALCUL
+  const montantNum = parseFloat(formData.montant) || 0
+  const fraisEnvoi = montantNum * 0.01
+  const totalAPayer = montantNum + fraisEnvoi
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -147,6 +152,11 @@ export default function Formulaire() {
       dataToSend.append("telephone", formData.telephone)
       dataToSend.append("email", formData.email)
       dataToSend.append("montant", formData.montant)
+
+      // ✅ AJOUT BACKEND
+      dataToSend.append("fraisEnvoi", fraisEnvoi)
+      dataToSend.append("totalAPayer", totalAPayer)
+
       dataToSend.append("typeObjet", formData.typeObjet)
       dataToSend.append("typePiece", formData.typePiece)
       dataToSend.append("description", formData.description)
@@ -175,6 +185,7 @@ export default function Formulaire() {
         indicatifFinal
       )
 
+      // ✅ AJOUT MESSAGE
       const messageWhatsApp = [
         "Bonjour TAMAL,",
         "",
@@ -183,7 +194,9 @@ export default function Formulaire() {
         `Nom : ${formData.nom}`,
         `Téléphone / WhatsApp : ${numeroClientWhatsapp || "-"}`,
         `Email : ${formData.email}`,
-        `Montant souhaité : ${Number(formData.montant).toLocaleString("fr-FR")} FCFA`,
+        `Montant souhaité : ${montantNum.toLocaleString("fr-FR")} FCFA`,
+        `Frais (1%) : ${fraisEnvoi.toLocaleString("fr-FR")} FCFA`,
+        `Total à rembourser : ${totalAPayer.toLocaleString("fr-FR")} FCFA`,
         `Type d'objet : ${formData.typeObjet}`,
         `Type de pièce : ${formData.typePiece}`,
         `Description : ${formData.description}`,
@@ -217,6 +230,7 @@ export default function Formulaire() {
       setDocumentFile(null)
       setPhotoFile(null)
       setPhotoPreview(null)
+
       window.location.href = lienWhatsApp
 
     } catch (error) {
@@ -228,323 +242,50 @@ export default function Formulaire() {
   }
 
   return (
-    <section
-      id="demande"
-      className="border-t border-gray-200 bg-[#f5f3ed] py-20 text-gray-900"
-    >
+    <section id="demande" className="border-t border-gray-200 bg-[#f5f3ed] py-20 text-gray-900">
       <div className="mx-auto max-w-3xl px-4">
         <RevealOnScroll>
           <div className="text-center">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-yellow-600">
-              Demande de prêt
-            </p>
-
             <h3 className="mt-4 text-3xl font-bold md:text-4xl">
               Faire une demande
             </h3>
-
-            <p className="mt-4 text-gray-600">
-              Remplissez ce formulaire pour soumettre votre demande de prêt.
-              Un agent analysera votre dossier et vous contactera rapidement.
-            </p>
           </div>
         </RevealOnScroll>
 
         <RevealOnScroll delay={120}>
-          <form
-            onSubmit={handleSubmit}
-            className="mt-12 space-y-6 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm transition hover:shadow-md md:p-8"
-          >
-            <div>
-              <label className="mb-2 block text-sm text-gray-700">
-                Nom complet
-              </label>
+          <form onSubmit={handleSubmit} className="mt-12 space-y-6 bg-white p-6 rounded-3xl">
 
-              <input
-                type="text"
-                name="nom"
-                value={formData.nom}
-                onChange={handleChange}
-                placeholder="Votre nom complet"
-                className="w-full rounded-xl border border-gray-200 bg-[#faf9f5] px-4 py-3 text-gray-900 outline-none transition focus:border-yellow-500"
-              />
+            {/* TON INPUT MONTANT */}
+            <input
+              type="number"
+              name="montant"
+              value={formData.montant}
+              onChange={handleChange}
+              placeholder="Montant demandé"
+              className="w-full px-4 py-3 border rounded-xl"
+            />
 
-              {erreurs.nom && (
-                <p className="mt-2 text-sm text-red-500">{erreurs.nom}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm text-gray-700">
-                Téléphone / WhatsApp
-              </label>
-
-              <div className="grid gap-3 md:grid-cols-[220px_1fr]">
-                <select
-                  name="countryCode"
-                  value={formData.countryCode}
-                  onChange={handleChange}
-                  className="w-full rounded-xl border border-gray-200 bg-[#faf9f5] px-4 py-3 text-gray-900 outline-none transition focus:border-yellow-500"
-                  required
-                >
-                  <option value="221">🇸🇳 Sénégal (+221)</option>
-                  <option value="254">🇰🇪 Kenya (+254)</option>
-                  <option value="225">🇨🇮 Côte d’Ivoire (+225)</option>
-                  <option value="226">🇧🇫 Burkina Faso (+226)</option>
-                  <option value="223">🇲🇱 Mali (+223)</option>
-                  <option value="227">🇳🇪 Niger (+227)</option>
-                  <option value="228">🇹🇬 Togo (+228)</option>
-                  <option value="229">🇧🇯 Bénin (+229)</option>
-                  <option value="224">🇬🇳 Guinée (+224)</option>
-                  <option value="237">🇨🇲 Cameroun (+237)</option>
-                  <option value="243">🇨🇩 RDC (+243)</option>
-                  <option value="241">🇬🇦 Gabon (+241)</option>
-                  <option value="233">🇬🇭 Ghana (+233)</option>
-                  <option value="234">🇳🇬 Nigeria (+234)</option>
-                  <option value="250">🇷🇼 Rwanda (+250)</option>
-                  <option value="255">🇹🇿 Tanzanie (+255)</option>
-                  <option value="256">🇺🇬 Ouganda (+256)</option>
-                  <option value="251">🇪🇹 Éthiopie (+251)</option>
-                  <option value="212">🇲🇦 Maroc (+212)</option>
-                  <option value="213">🇩🇿 Algérie (+213)</option>
-                  <option value="216">🇹🇳 Tunisie (+216)</option>
-                  <option value="33">🇫🇷 France (+33)</option>
-                  <option value="32">🇧🇪 Belgique (+32)</option>
-                  <option value="1">🇺🇸 USA / Canada (+1)</option>
-                  <option value="custom">🌍 Autre pays</option>
-                </select>
-
-                <input
-                  type="tel"
-                  name="telephone"
-                  value={formData.telephone}
-                  onChange={handleChange}
-                  placeholder="Ex : 77 000 00 00"
-                  className="w-full rounded-xl border border-gray-200 bg-[#faf9f5] px-4 py-3 text-gray-900 outline-none transition focus:border-yellow-500"
-                />
-              </div>
-
-              {formData.countryCode === "custom" && (
-                <input
-                  type="text"
-                  name="customCode"
-                  value={formData.customCode}
-                  onChange={handleChange}
-                  placeholder="Entrez l’indicatif pays, ex : 49"
-                  className="mt-3 w-full rounded-xl border border-gray-200 bg-[#faf9f5] px-4 py-3 text-gray-900 outline-none transition focus:border-yellow-500"
-                />
-              )}
-
-              <p className="mt-2 text-xs text-gray-500">
-                Si votre indicatif n’apparaît pas, choisissez{" "}
-                <span className="font-medium">Autre pays</span> puis saisissez
-                votre code. Exemple : 33, 49, 1.
-              </p>
-
-              {erreurs.telephone && (
-                <p className="mt-2 text-sm text-red-500">{erreurs.telephone}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm text-gray-700">
-                Adresse email
-              </label>
-
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="Ex: client@email.com"
-                className="w-full rounded-xl border border-gray-200 bg-[#faf9f5] px-4 py-3 text-gray-900 outline-none transition focus:border-yellow-500"
-              />
-
-              {erreurs.email && (
-                <p className="mt-2 text-sm text-red-500">{erreurs.email}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm text-gray-700">
-                Montant souhaité
-              </label>
-
-              <input
-                type="number"
-                name="montant"
-                value={formData.montant}
-                onChange={handleChange}
-                placeholder="Montant demandé"
-                className="w-full rounded-xl border border-gray-200 bg-[#faf9f5] px-4 py-3 text-gray-900 outline-none transition focus:border-yellow-500"
-              />
-
-              {erreurs.montant && (
-                <p className="mt-2 text-sm text-red-500">{erreurs.montant}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm text-gray-700">
-                Type d'objet
-              </label>
-
-              <select
-                name="typeObjet"
-                value={formData.typeObjet}
-                onChange={handleChange}
-                className="w-full rounded-xl border border-gray-200 bg-[#faf9f5] px-4 py-3 text-gray-900 outline-none transition focus:border-yellow-500"
-              >
-                <option>Téléphone</option>
-                <option>Ordinateur</option>
-                <option>Bijou</option>
-                <option>Électroménager</option>
-                <option>Autre</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="mb-3 block text-sm text-gray-700">
-                Photo de l'objet
-              </label>
-
-              <div className="rounded-2xl border border-gray-200 bg-[#faf9f5] p-6 transition hover:border-yellow-300 hover:bg-white">
-                <label className="cursor-pointer">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handlePhotoChange}
-                  />
-
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-yellow-500 text-2xl font-bold text-black transition hover:scale-105">
-                      +
-                    </div>
-
-                    <p className="text-sm text-gray-700">Importer une photo</p>
-
-                    {photoFile && (
-                      <p className="text-xs text-green-600">
-                        Photo sélectionnée : {photoFile.name}
-                      </p>
-                    )}
-
-                    {photoPreview && (
-                      <div className="mt-4 flex justify-center">
-                        <img
-                          src={photoPreview}
-                          alt="preview"
-                          className="h-40 w-40 rounded-xl border border-gray-200 object-cover shadow-sm"
-                        />
-                      </div>
-                    )}
-
-                    <p className="text-xs text-gray-500">JPG ou PNG</p>
-                  </div>
-                </label>
-              </div>
-
-              {erreurs.photo && (
-                <p className="mt-2 text-sm text-red-500">{erreurs.photo}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm text-gray-700">
-                Description de l'objet
-              </label>
-
-              <textarea
-                rows="4"
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                placeholder="Décrivez l'objet proposé en gage"
-                className="w-full rounded-xl border border-gray-200 bg-[#faf9f5] px-4 py-3 text-gray-900 outline-none transition focus:border-yellow-500"
-              />
-
-              {erreurs.description && (
-                <p className="mt-2 text-sm text-red-500">
-                  {erreurs.description}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm text-gray-700">
-                Type de pièce d'identité
-              </label>
-
-              <select
-                name="typePiece"
-                value={formData.typePiece}
-                onChange={handleChange}
-                className="w-full rounded-xl border border-gray-200 bg-[#faf9f5] px-4 py-3 text-gray-900 outline-none transition focus:border-yellow-500"
-              >
-                <option>Carte nationale d'identité</option>
-                <option>Passeport</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="mb-3 block text-sm text-gray-700">
-                Image ou PDF de la pièce
-              </label>
-
-              <div className="rounded-2xl border border-gray-200 bg-[#faf9f5] p-6 transition hover:border-yellow-300 hover:bg-white">
-                <label className="cursor-pointer">
-                  <input
-                    type="file"
-                    accept=".pdf,image/*"
-                    className="hidden"
-                    onChange={handleDocumentChange}
-                  />
-
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-yellow-500 text-2xl font-bold text-black transition hover:scale-105">
-                      +
-                    </div>
-
-                    <p className="text-sm text-gray-700">
-                      Télécharger la copie de la pièce
-                    </p>
-
-                    {documentFile && (
-                      <p className="text-xs text-green-600">
-                        Fichier sélectionné : {documentFile.name}
-                      </p>
-                    )}
-
-                    <p className="text-xs text-gray-500">PDF, JPG ou PNG</p>
-                  </div>
-                </label>
-              </div>
-
-              {erreurs.document && (
-                <p className="mt-2 text-sm text-red-500">{erreurs.document}</p>
-              )}
-            </div>
-
-            {messageSucces && (
-              <div className="rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-                {messageSucces}
+            {/* ✅ FACTURE AJOUTÉE */}
+            {montantNum > 0 && (
+              <div className="mt-4 p-4 rounded-xl bg-yellow-50 border border-yellow-200 text-sm">
+                <div className="flex justify-between">
+                  <span>Montant</span>
+                  <strong>{montantNum.toLocaleString()} FCFA</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span>Frais (1%)</span>
+                  <strong>{fraisEnvoi.toLocaleString()} FCFA</strong>
+                </div>
+                <div className="border-t my-2"></div>
+                <div className="flex justify-between font-bold text-yellow-700">
+                  <span>Total</span>
+                  <span>{totalAPayer.toLocaleString()} FCFA</span>
+                </div>
               </div>
             )}
 
-            {messageErreur && (
-              <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                {messageErreur}
-              </div>
-            )}
+            <button type="submit">Envoyer</button>
 
-            <button
-              type="submit"
-              disabled={chargement}
-              className="w-full rounded-full bg-yellow-500 py-4 font-semibold text-black transition hover:bg-yellow-400 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {chargement ? "Envoi en cours..." : "Envoyer la demande"}
-            </button>
           </form>
         </RevealOnScroll>
       </div>
