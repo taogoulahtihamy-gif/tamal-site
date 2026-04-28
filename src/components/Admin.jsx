@@ -47,71 +47,75 @@ export default function Admin() {
     window.open(lien, "_blank")
   }
 
-  const construireMessageAction = (demande, actionType, updatedItem) => {
-    const data = updatedItem || demande
+ const construireMessageAction = (demande, actionType, updatedItem) => {
+  const data = updatedItem || demande
 
-const montantAccorde = Number(data.montantAccorde || 0)
-const remboursementBase = Number(
-  data.montantRemboursement || Math.round(montantAccorde * 1.3)
-)
-const fraisPaiement = Math.round(montantAccorde * 0.01)
-const totalRemboursement = remboursementBase + fraisPaiement
+  const montantAccorde = Number(data.montantAccorde || 0)
+  const fraisEtBenefice = Math.round(montantAccorde * 0.31)
+  const totalRemboursement = Math.round(montantAccorde * 1.31)
 
-
-    if (actionType === "accepter") {
-      return [
-        `Bonjour ${data.nom || ""},`,
-        "",
-        "Votre demande TAMAL a été acceptée ✅",
-        `Montant accordé : ${
-          data.montantAccorde !== null && data.montantAccorde !== undefined
-            ? Number(data.montantAccorde).toLocaleString("fr-FR")
-            : "-"
-        } FCFA`,
-       `Frais Wave / Orange Money (1%) : ${fraisPaiement.toLocaleString("fr-FR")} FCFA`,
-        `Total à rembourser : ${totalRemboursement.toLocaleString("fr-FR")} FCFA`,
-        `Date de remboursement : ${formaterDate(data.dateRemboursement)}`,
-        "",
-        "Merci de nous contacter pour la suite du traitement.",
-        "TAMAL – Service Liquidité Immédiate",
-      ].join("\n")
-    }
-
-    if (actionType === "refuser") {
-      return [
-        `Bonjour ${data.nom || ""},`,
-        "",
-        "Après étude, votre demande TAMAL n’a pas été retenue pour le moment ❌",
-        "Vous pouvez nous recontacter pour plus d’informations.",
-        "",
-        "TAMAL – Service Liquidité Immédiate",
-      ].join("\n")
-    }
-
-    if (actionType === "payer") {
-      return [
-        `Bonjour ${data.nom || ""},`,
-        "",
-        "Votre dossier TAMAL a été marqué comme remboursé ✅",
-        "",
-        "Merci pour votre confiance.",
-        "TAMAL – Service Liquidité Immédiate",
-      ].join("\n")
-    }
-
-    if (actionType === "attente") {
-      return [
-        `Bonjour ${data.nom || ""},`,
-        "",
-        "Votre dossier TAMAL a été remis en attente ⏳",
-        "Notre équipe reviendra vers vous rapidement.",
-        "",
-        "TAMAL – Service Liquidité Immédiate",
-      ].join("\n")
-    }
-
-    return ""
+  if (actionType === "accepter") {
+    return [
+      `Bonjour ${data.nom || ""},`,
+      "",
+      "Votre demande TAMAL a été acceptée ✅",
+      `Montant accordé : ${
+        montantAccorde > 0
+          ? montantAccorde.toLocaleString("fr-FR")
+          : "-"
+      } FCFA`,
+      `Frais et service TAMAL (31%) : ${
+        montantAccorde > 0
+          ? fraisEtBenefice.toLocaleString("fr-FR")
+          : "-"
+      } FCFA`,
+      `Total à rembourser : ${
+        montantAccorde > 0
+          ? totalRemboursement.toLocaleString("fr-FR")
+          : "-"
+      } FCFA`,
+      `Date de remboursement : ${formaterDate(data.dateRemboursement)}`,
+      "",
+      "Merci de respecter la date de remboursement indiquée afin d’éviter toute pénalité.",
+      "TAMAL – Service Liquidité Immédiate",
+    ].join("\n")
   }
+
+  if (actionType === "refuser") {
+    return [
+      `Bonjour ${data.nom || ""},`,
+      "",
+      "Après étude, votre demande TAMAL n’a pas été retenue pour le moment ❌",
+      "Vous pouvez nous recontacter pour plus d’informations.",
+      "",
+      "TAMAL – Service Liquidité Immédiate",
+    ].join("\n")
+  }
+
+  if (actionType === "payer") {
+    return [
+      `Bonjour ${data.nom || ""},`,
+      "",
+      "Votre dossier TAMAL a été marqué comme remboursé ✅",
+      "",
+      "Merci pour votre confiance.",
+      "TAMAL – Service Liquidité Immédiate",
+    ].join("\n")
+  }
+
+  if (actionType === "attente") {
+    return [
+      `Bonjour ${data.nom || ""},`,
+      "",
+      "Votre dossier TAMAL a été remis en attente ⏳",
+      "Notre équipe reviendra vers vous rapidement.",
+      "",
+      "TAMAL – Service Liquidité Immédiate",
+    ].join("\n")
+  }
+
+  return ""
+}
 
   const chargerDemandes = async () => {
     try {
