@@ -176,8 +176,8 @@ const remboursementRetard1JourAvecFrais = montantValide
                 <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5">
                   <p className="text-sm text-gray-500">Après 1 jour de retard</p>
                   <p className="mt-1 text-xs text-gray-500">
-                    Le taux passe de <span className="font-semibold">30%</span>{" "}
-                    à <span className="font-semibold">35%</span>
+                    Le taux passe de <span className="font-semibold">31%</span>{" "}
+                    à <span className="font-semibold">36%</span>
                   </p>
                   <p className="mt-2 text-2xl font-semibold text-yellow-600">
                     {montantValide
