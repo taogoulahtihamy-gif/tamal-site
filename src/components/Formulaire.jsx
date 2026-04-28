@@ -191,7 +191,7 @@ const totalAPayer = montantNum + fraisService
         `Téléphone / WhatsApp : ${numeroClientWhatsapp || "-"}`,
         `Email : ${formData.email}`,
         `Montant souhaité : ${Number(formData.montant).toLocaleString("fr-FR")} FCFA`,
-        `Frais et service TAMAL (31%) : ${fraisService.toLocaleString("fr-FR")} FCFA`,
+         `Frais et service TAMAL (31%) : ${fraisService.toLocaleString("fr-FR")} FCFA`,
         `Total à rembourser : ${totalAPayer.toLocaleString("fr-FR")} FCFA`,
         `Type d'objet : ${formData.typeObjet}`,
         `Type de pièce : ${formData.typePiece}`,
@@ -409,7 +409,7 @@ const totalAPayer = montantNum + fraisService
     </div>
 
     <div className="flex justify-between mt-1">
-      <span>Frais d’envoi (31%)</span>
+      <span>Frais d’envoi (1%)</span>
       <strong>{fraisEnvoi.toLocaleString("fr-FR")} FCFA</strong>
     </div>
 

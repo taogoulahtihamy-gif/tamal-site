@@ -250,22 +250,25 @@ export default function Admin() {
     }))
   }
 
-  const calculLocalRemboursement = (montantAccorde) => {
-    if (
-      montantAccorde === null ||
-      montantAccorde === undefined ||
-      montantAccorde === ""
-    ) {
-      return "-"
-    }
-
-    const montant = Number(montantAccorde)
-const remboursement = Math.round(montant * 1.3)
-const frais = Math.round(montant * 0.01)
-
-return formaterMontant(remboursement + frais)
+ const calculLocalRemboursement = (montantAccorde) => {
+  if (
+    montantAccorde === null ||
+    montantAccorde === undefined ||
+    montantAccorde === ""
+  ) {
+    return "-"
   }
 
+  const montant = Number(montantAccorde)
+
+  if (Number.isNaN(montant) || montant <= 0) {
+    return "-"
+  }
+
+  const total = Math.round(montant * 1.31)
+
+  return formaterMontant(total)
+}
   const envoyerAction = async (d, actionType) => {
     try {
       setLoadingActionId(d.id)
@@ -781,9 +784,7 @@ if (messageWhatsapp && telephoneClient) {
                           Montant à rembourser
                         </label>
                         <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 font-semibold text-gray-900">
-                          {d.montantRemboursement
-                            ? formaterMontant(d.montantRemboursement)
-                            : calculLocalRemboursement(montantAccordeAffiche)}
+                         {calculLocalRemboursement(montantAccordeAffiche)}
                         </div>
                         <p className="mt-1 text-xs text-gray-500">
                           Calcul automatique sur la base du montant accordé.
