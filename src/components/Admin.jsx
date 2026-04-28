@@ -50,57 +50,66 @@ export default function Admin() {
   }
 
   const formaterMontant = (montant) => {
-    const montantNombre = Number(montant)
+    const nombre = Number(montant)
 
     if (
       montant === null ||
       montant === undefined ||
       montant === "" ||
-      Number.isNaN(montantNombre)
+      Number.isNaN(nombre)
     ) {
       return "-"
     }
 
-    return `${montantNombre.toLocaleString("fr-FR")} FCFA`
+    return `${nombre.toLocaleString("fr-FR")} FCFA`
   }
 
-  const calculLocalRemboursement = (montantAccorde) => {
-    const montant = Number(montantAccorde)
+  const calculerMontants = (montant) => {
+    const montantAccorde = Number(montant || 0)
+    const serviceTamal = Math.round(montantAccorde * 0.3)
+    const fraisPaiement = Math.round(montantAccorde * 0.01)
+    const totalRemboursement =
+      montantAccorde + serviceTamal + fraisPaiement
 
-    if (
-      montantAccorde === null ||
-      montantAccorde === undefined ||
-      montantAccorde === "" ||
-      Number.isNaN(montant) ||
-      montant <= 0
-    ) {
+    return {
+      montantAccorde,
+      serviceTamal,
+      fraisPaiement,
+      totalRemboursement,
+    }
+  }
+
+  const calculLocalRemboursement = (montant) => {
+    const { totalRemboursement } = calculerMontants(montant)
+
+    if (!montant || totalRemboursement <= 0) {
       return "-"
     }
 
-    return formaterMontant(Math.round(montant * 1.31))
+    return formaterMontant(totalRemboursement)
   }
 
   const construireMessageAction = (demande, actionType, updatedItem) => {
     const data = updatedItem || demande
 
-    const montantAccorde = Number(data.montantAccorde || 0)
-    const fraisEtService = Math.round(montantAccorde * 0.31)
-    const totalRemboursement = Math.round(montantAccorde * 1.31)
+    const {
+      montantAccorde,
+      serviceTamal,
+      fraisPaiement,
+      totalRemboursement,
+    } = calculerMontants(data.montantAccorde)
 
     if (actionType === "accepter") {
       return [
         `Bonjour ${data.nom || ""},`,
         "",
         "Votre demande TAMAL a été acceptée ✅",
-        `Montant accordé : ${
-          montantAccorde > 0 ? montantAccorde.toLocaleString("fr-FR") : "-"
-        } FCFA`,
-        `Frais et service TAMAL (31%) : ${
-          montantAccorde > 0 ? fraisEtService.toLocaleString("fr-FR") : "-"
-        } FCFA`,
-        `Total à rembourser : ${
-          montantAccorde > 0 ? totalRemboursement.toLocaleString("fr-FR") : "-"
-        } FCFA`,
+        "",
+        `Montant accordé : ${formaterMontant(montantAccorde)}`,
+        `Service TAMAL (30%) : ${formaterMontant(serviceTamal)}`,
+        `Frais Wave / Orange Money (1%) : ${formaterMontant(fraisPaiement)}`,
+        "",
+        `Total à rembourser : ${formaterMontant(totalRemboursement)}`,
         `Date de remboursement : ${formaterDate(data.dateRemboursement)}`,
         "",
         "Merci de respecter la date de remboursement indiquée afin d’éviter toute pénalité.",
@@ -286,10 +295,12 @@ export default function Admin() {
           return
         }
 
+        const { totalRemboursement } = calculerMontants(montantAccorde)
+
         payload = {
           statut: "acceptée",
           montantAccorde: Number(montantAccorde),
-          montantRemboursement: Math.round(Number(montantAccorde) * 1.31),
+          montantRemboursement: totalRemboursement,
           statutPaiement: d.statutPaiement || "non payé",
         }
       }
@@ -297,7 +308,8 @@ export default function Admin() {
       if (actionType === "refuser") {
         payload = {
           statut: "refusée",
-          montantAccorde: d.montantAccorde ?? currentEdit.montantAccorde ?? null,
+          montantAccorde:
+            d.montantAccorde ?? currentEdit.montantAccorde ?? null,
           statutPaiement: d.statutPaiement || "non payé",
         }
       }
@@ -305,7 +317,8 @@ export default function Admin() {
       if (actionType === "payer") {
         payload = {
           statut: "remboursée",
-          montantAccorde: d.montantAccorde ?? currentEdit.montantAccorde ?? null,
+          montantAccorde:
+            d.montantAccorde ?? currentEdit.montantAccorde ?? null,
           statutPaiement: "payé",
         }
       }
@@ -313,7 +326,8 @@ export default function Admin() {
       if (actionType === "attente") {
         payload = {
           statut: "en attente",
-          montantAccorde: d.montantAccorde ?? currentEdit.montantAccorde ?? null,
+          montantAccorde:
+            d.montantAccorde ?? currentEdit.montantAccorde ?? null,
           statutPaiement: d.statutPaiement || "non payé",
         }
       }
@@ -592,6 +606,9 @@ export default function Admin() {
               ? d.montantAccorde ?? ""
               : dataEdition.montantAccorde ?? ""
 
+            const { serviceTamal, fraisPaiement, totalRemboursement } =
+              calculerMontants(montantAccordeAffiche)
+
             return (
               <div
                 key={d.id}
@@ -795,18 +812,23 @@ export default function Admin() {
                         )}
                       </div>
 
-                      <div>
-                        <label className="mb-1 block text-sm font-semibold text-gray-700">
-                          Montant à rembourser
-                        </label>
-
-                        <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 font-semibold text-gray-900">
-                          {calculLocalRemboursement(montantAccordeAffiche)}
+                      <div className="rounded-2xl border border-yellow-200 bg-yellow-50 p-4 text-sm leading-6 text-gray-700">
+                        <div className="flex justify-between">
+                          <span>Service TAMAL (30%)</span>
+                          <strong>{formaterMontant(serviceTamal)}</strong>
                         </div>
 
-                        <p className="mt-1 text-xs text-gray-500">
-                          Calcul automatique : montant accordé + 31%.
-                        </p>
+                        <div className="mt-1 flex justify-between">
+                          <span>Frais Wave / Orange Money (1%)</span>
+                          <strong>{formaterMontant(fraisPaiement)}</strong>
+                        </div>
+
+                        <div className="my-2 border-t border-yellow-200"></div>
+
+                        <div className="flex justify-between font-bold text-yellow-700">
+                          <span>Total à rembourser</span>
+                          <span>{formaterMontant(totalRemboursement)}</span>
+                        </div>
                       </div>
 
                       <div>
@@ -846,9 +868,9 @@ export default function Admin() {
                       </div>
 
                       <div className="rounded-2xl border border-yellow-200 bg-yellow-50 p-4 text-sm leading-6 text-gray-700">
-                        Le montant à rembourser est calculé avec les frais et
-                        service TAMAL de 31%. Un message WhatsApp prérempli
-                        s’ouvre après acceptation ou changement de statut.
+                        Le montant du message WhatsApp est identique au total
+                        affiché ici : montant accordé + service TAMAL 30% +
+                        frais de paiement 1%.
                       </div>
                     </div>
                   </div>
