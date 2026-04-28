@@ -217,10 +217,8 @@ export default function Formulaire() {
       setDocumentFile(null)
       setPhotoFile(null)
       setPhotoPreview(null)
+      window.location.href = lienWhatsApp
 
-      setTimeout(() => {
-        window.open(lienWhatsApp, "_blank")
-      }, 700)
     } catch (error) {
       console.error(error)
       setMessageErreur("Une erreur est survenue lors de l'envoi du formulaire.")
