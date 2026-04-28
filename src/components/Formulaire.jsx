@@ -27,9 +27,11 @@ export default function Formulaire() {
   const WHATSAPP_ADMIN_NUMBER =
     import.meta.env.VITE_WHATSAPP_ADMIN_NUMBER || "221772616753"
 
+  // ✅ Calcul correct TAMAL
   const montantNum = parseFloat(formData.montant) || 0
-  const fraisService = Math.round(montantNum * 0.31)
-  const totalAPayer = montantNum + fraisService
+  const serviceTamal = Math.round(montantNum * 0.3)
+  const fraisPaiement = Math.round(montantNum * 0.01)
+  const totalAPayer = montantNum + serviceTamal + fraisPaiement
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -76,7 +78,10 @@ export default function Formulaire() {
     const nouvellesErreurs = {}
 
     if (!formData.nom.trim()) nouvellesErreurs.nom = "Le nom est obligatoire"
-    if (!formData.telephone.trim()) nouvellesErreurs.telephone = "Le téléphone est obligatoire"
+
+    if (!formData.telephone.trim()) {
+      nouvellesErreurs.telephone = "Le téléphone est obligatoire"
+    }
 
     if (formData.countryCode === "custom" && !formData.customCode.trim()) {
       nouvellesErreurs.telephone = "Veuillez entrer l’indicatif pays"
@@ -92,9 +97,17 @@ export default function Formulaire() {
       nouvellesErreurs.montant = "Le montant doit être au moins de 5 000 FCFA"
     }
 
-    if (!photoFile) nouvellesErreurs.photo = "La photo de l'objet est obligatoire"
-    if (!formData.description.trim()) nouvellesErreurs.description = "La description de l'objet est obligatoire"
-    if (!documentFile) nouvellesErreurs.document = "La copie de la pièce est obligatoire"
+    if (!photoFile) {
+      nouvellesErreurs.photo = "La photo de l'objet est obligatoire"
+    }
+
+    if (!formData.description.trim()) {
+      nouvellesErreurs.description = "La description de l'objet est obligatoire"
+    }
+
+    if (!documentFile) {
+      nouvellesErreurs.document = "La copie de la pièce est obligatoire"
+    }
 
     return nouvellesErreurs
   }
@@ -125,8 +138,11 @@ export default function Formulaire() {
       dataToSend.append("telephone", formData.telephone)
       dataToSend.append("email", formData.email)
       dataToSend.append("montant", formData.montant)
-      dataToSend.append("fraisService", fraisService)
+
+      dataToSend.append("serviceTamal", serviceTamal)
+      dataToSend.append("fraisPaiement", fraisPaiement)
       dataToSend.append("totalAPayer", totalAPayer)
+
       dataToSend.append("typeObjet", formData.typeObjet)
       dataToSend.append("typePiece", formData.typePiece)
       dataToSend.append("description", formData.description)
@@ -158,8 +174,9 @@ export default function Formulaire() {
         `Nom : ${formData.nom}`,
         `Téléphone / WhatsApp : ${numeroClientWhatsapp || "-"}`,
         `Email : ${formData.email}`,
-        `Montant souhaité : ${Number(formData.montant).toLocaleString("fr-FR")} FCFA`,
-        `Frais et service TAMAL (31%) : ${fraisService.toLocaleString("fr-FR")} FCFA`,
+        `Montant souhaité : ${montantNum.toLocaleString("fr-FR")} FCFA`,
+        `Service TAMAL (30%) : ${serviceTamal.toLocaleString("fr-FR")} FCFA`,
+        `Frais Wave / Orange Money (1%) : ${fraisPaiement.toLocaleString("fr-FR")} FCFA`,
         `Total à rembourser : ${totalAPayer.toLocaleString("fr-FR")} FCFA`,
         `Type d'objet : ${formData.typeObjet}`,
         `Type de pièce : ${formData.typePiece}`,
@@ -360,9 +377,8 @@ export default function Formulaire() {
                 <div className="flex items-start gap-2">
                   <span className="text-lg text-yellow-600">⚠️</span>
                   <p>
-                    Les frais de transaction, frais Wave, Orange Money ou autre
-                    moyen de paiement sont entièrement à la charge du client et
-                    inclus dans le montant total à rembourser.
+                    Les frais Wave, Orange Money ou autre moyen de paiement sont
+                    à la charge du client et sont inclus dans le total à rembourser.
                   </p>
                 </div>
               </div>
@@ -375,11 +391,16 @@ export default function Formulaire() {
                   </div>
 
                   <div className="mt-1 flex justify-between">
-                    <span>Frais et service TAMAL (31%)</span>
-                    <strong>{fraisService.toLocaleString("fr-FR")} FCFA</strong>
+                    <span>Service TAMAL (30%)</span>
+                    <strong>{serviceTamal.toLocaleString("fr-FR")} FCFA</strong>
                   </div>
 
-                  <div className="my-2 border-t"></div>
+                  <div className="mt-1 flex justify-between">
+                    <span>Frais Wave / Orange Money (1%)</span>
+                    <strong>{fraisPaiement.toLocaleString("fr-FR")} FCFA</strong>
+                  </div>
+
+                  <div className="my-2 border-t border-yellow-200"></div>
 
                   <div className="flex justify-between font-semibold text-yellow-700">
                     <span>Total à rembourser</span>
