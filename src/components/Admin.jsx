@@ -50,6 +50,14 @@ export default function Admin() {
   const construireMessageAction = (demande, actionType, updatedItem) => {
     const data = updatedItem || demande
 
+const montantAccorde = Number(data.montantAccorde || 0)
+const remboursementBase = Number(
+  data.montantRemboursement || Math.round(montantAccorde * 1.3)
+)
+const fraisPaiement = Math.round(montantAccorde * 0.01)
+const totalRemboursement = remboursementBase + fraisPaiement
+
+
     if (actionType === "accepter") {
       return [
         `Bonjour ${data.nom || ""},`,
@@ -60,11 +68,8 @@ export default function Admin() {
             ? Number(data.montantAccorde).toLocaleString("fr-FR")
             : "-"
         } FCFA`,
-        `Montant à rembourser : ${
-          data.montantRemboursement !== null && data.montantRemboursement !== undefined
-            ? Number(data.montantRemboursement).toLocaleString("fr-FR")
-            : "-"
-        } FCFA`,
+       `Frais Wave / Orange Money (1%) : ${fraisPaiement.toLocaleString("fr-FR")} FCFA`,
+        `Total à rembourser : ${totalRemboursement.toLocaleString("fr-FR")} FCFA`,
         `Date de remboursement : ${formaterDate(data.dateRemboursement)}`,
         "",
         "Merci de nous contacter pour la suite du traitement.",
@@ -250,7 +255,11 @@ export default function Admin() {
       return "-"
     }
 
-    return formaterMontant(Math.round(Number(montantAccorde) * 1.3))
+    const montant = Number(montantAccorde)
+const remboursement = Math.round(montant * 1.3)
+const frais = Math.round(montant * 0.01)
+
+return formaterMontant(remboursement + frais)
   }
 
   const envoyerAction = async (d, actionType) => {
