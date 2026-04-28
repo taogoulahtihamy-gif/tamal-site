@@ -19,10 +19,7 @@ export default function Admin() {
   const afficherMessage = (texte, type = "success") => {
     setMessage(texte)
     setMessageType(type)
-
-    setTimeout(() => {
-      setMessage("")
-    }, 3500)
+    setTimeout(() => setMessage(""), 3500)
   }
 
   const nettoyerNumero = (numero) => {
@@ -38,11 +35,18 @@ export default function Admin() {
 
   const formaterDate = (date) => {
     if (!date) return "-"
+
+    const parsedDate = new Date(date)
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return "-"
+    }
+
     return new Intl.DateTimeFormat("fr-FR", {
       dateStyle: "short",
       timeStyle: "short",
       timeZone: "Africa/Dakar",
-    }).format(new Date(date))
+    }).format(parsedDate)
   }
 
   const formaterMontant = (montant) => {
@@ -63,13 +67,7 @@ export default function Admin() {
   const calculLocalRemboursement = (montantAccorde) => {
     const montant = Number(montantAccorde)
 
-    if (
-      montantAccorde === null ||
-      montantAccorde === undefined ||
-      montantAccorde === "" ||
-      Number.isNaN(montant) ||
-      montant <= 0
-    ) {
+    if (!montantAccorde || Number.isNaN(montant) || montant <= 0) {
       return "-"
     }
 
@@ -166,7 +164,7 @@ export default function Admin() {
         initialEdition[d.id] = {
           montantAccorde:
             d.montantAccorde !== null && d.montantAccorde !== undefined
-              ? d.montantAccorde
+              ? String(d.montantAccorde)
               : "",
         }
       })
@@ -271,7 +269,8 @@ export default function Admin() {
           montantAccorde === "" ||
           montantAccorde === null ||
           montantAccorde === undefined ||
-          Number.isNaN(Number(montantAccorde))
+          Number.isNaN(Number(montantAccorde)) ||
+          Number(montantAccorde) <= 0
         ) {
           afficherMessage(
             "Veuillez renseigner un montant accordé valide avant d’accepter.",
@@ -345,7 +344,7 @@ export default function Admin() {
           montantAccorde:
             itemFinal?.montantAccorde !== null &&
             itemFinal?.montantAccorde !== undefined
-              ? itemFinal.montantAccorde
+              ? String(itemFinal.montantAccorde)
               : "",
         },
       }))
@@ -450,7 +449,7 @@ export default function Admin() {
             <p className="mt-1 text-xs text-gray-500">
               Connecté en tant que{" "}
               <span className="font-semibold text-gray-900">
-                {adminUser?.username}
+                {adminUser?.username || "-"}
               </span>{" "}
               —{" "}
               <span className="text-yellow-600">
@@ -583,9 +582,11 @@ export default function Admin() {
             const montantAccordeVerrouille =
               d.montantAccorde !== null && d.montantAccorde !== undefined
 
-            const montantAccordeAffiche = montantAccordeVerrouille
-              ? d.montantAccorde
-              : dataEdition.montantAccorde
+            const montantAccordeAffiche = String(
+              montantAccordeVerrouille
+                ? d.montantAccorde ?? ""
+                : dataEdition.montantAccorde ?? ""
+            )
 
             return (
               <div
@@ -759,6 +760,7 @@ export default function Admin() {
                         <label className="mb-1 block text-sm font-semibold text-gray-700">
                           Montant accordé
                         </label>
+
                         <input
                           type="number"
                           value={montantAccordeAffiche}
@@ -789,9 +791,11 @@ export default function Admin() {
                         <label className="mb-1 block text-sm font-semibold text-gray-700">
                           Montant à rembourser
                         </label>
+
                         <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 font-semibold text-gray-900">
                           {calculLocalRemboursement(montantAccordeAffiche)}
                         </div>
+
                         <p className="mt-1 text-xs text-gray-500">
                           Calcul automatique : montant accordé + 31%.
                         </p>
@@ -801,9 +805,11 @@ export default function Admin() {
                         <label className="mb-1 block text-sm font-semibold text-gray-700">
                           Date de remboursement
                         </label>
+
                         <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 font-semibold text-gray-900">
                           {formaterDate(d.dateRemboursement)}
                         </div>
+
                         <p className="mt-1 text-xs text-gray-500">
                           Date calculée automatiquement après acceptation.
                         </p>
@@ -814,6 +820,7 @@ export default function Admin() {
                           <p className="text-xs uppercase tracking-wide text-gray-500">
                             Statut paiement
                           </p>
+
                           <p className="mt-2 text-base font-semibold text-gray-900">
                             {d.statutPaiement || "non payé"}
                           </p>
@@ -823,6 +830,7 @@ export default function Admin() {
                           <p className="text-xs uppercase tracking-wide text-gray-500">
                             Dernier rappel
                           </p>
+
                           <p className="mt-2 text-base font-semibold text-gray-900">
                             {formaterDate(d.dateDernierRappel)}
                           </p>
