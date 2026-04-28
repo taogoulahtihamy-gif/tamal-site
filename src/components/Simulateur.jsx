@@ -15,7 +15,18 @@ export default function Simulateur() {
   const remboursementRetard1Jour = montantValide
     ? Math.round(montantNombre * 1.35)
     : null
+// 🔹 Frais 1%
+const fraisPaiement = montantValide
+  ? Math.round(montantNombre * 0.01)
+  : null
 
+const remboursementNormalAvecFrais = montantValide
+  ? remboursementNormal + fraisPaiement
+  : null
+
+const remboursementRetard1JourAvecFrais = montantValide
+  ? remboursementRetard1Jour + fraisPaiement
+  : null
   const penaliteJournaliere = 2000
 
   const formatMontant = (valeur) => {
@@ -113,6 +124,21 @@ export default function Simulateur() {
                 </p>
               </div>
 
+{montantValide && (
+  <div className="mt-4 rounded-2xl border border-yellow-300 bg-yellow-50 p-4 text-sm text-gray-700">
+    <div className="flex justify-between">
+      <span>Frais Wave / Orange Money (1%)</span>
+      <strong className="text-yellow-700">
+        {formatMontant(fraisPaiement)} FCFA
+      </strong>
+    </div>
+
+    <p className="mt-2 text-xs">
+      ⚠️ Ces frais sont inclus dans le montant total à rembourser.
+    </p>
+  </div>
+)}
+
               <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5">
                 <p className="text-sm text-gray-500">Remboursement normal</p>
 
@@ -122,7 +148,7 @@ export default function Simulateur() {
 
                 <p className="mt-2 text-2xl font-semibold text-yellow-600">
                   {montantValide
-                    ? `${formatMontant(remboursementNormal)} FCFA`
+                    ? `${formatMontant(remboursementNormalAvecFrais)} FCFA`
                     : "--"}
                 </p>
               </div>
@@ -131,13 +157,13 @@ export default function Simulateur() {
                 <p className="text-sm text-gray-500">Après 1 jour de retard</p>
 
                 <p className="text-xs text-gray-500 mt-1">
-                  Le taux passe de <span className="font-semibold">30%</span> à{" "}
-                  <span className="font-semibold">35%</span>
+                  Le taux passe de <span className="font-semibold">31%</span> à{" "}
+                  <span className="font-semibold">36%</span>
                 </p>
 
                 <p className="mt-2 text-2xl font-semibold text-yellow-600">
                   {montantValide
-                    ? `${formatMontant(remboursementRetard1Jour)} FCFA`
+                    ? `${formatMontant(remboursementRetard1JourAvecFrais)} FCFA`
                     : "--"}
                 </p>
               </div>
@@ -153,7 +179,7 @@ export default function Simulateur() {
 
             <div className="mt-4 rounded-xl border border-yellow-200 bg-yellow-50 p-4 text-sm text-gray-700">
               ⚠️ Les frais de transaction (Mobile Money ou autre moyen de
-              paiement) sont entièrement supportés par le client et ne sont pas
+              paiement) sont entièrement supportés par le client et sont pas
               inclus dans le montant du remboursement affiché dans ce
               simulateur.
             </div>

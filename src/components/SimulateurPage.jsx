@@ -16,6 +16,19 @@ export default function SimulateurPage() {
   const remboursementRetard1Jour = montantValide
     ? Math.round(montantNombre * 1.35)
     : null
+   
+// 🔹 Frais 1%
+const fraisPaiement = montantValide
+  ? Math.round(montantNombre * 0.01)
+  : null
+
+const remboursementNormalAvecFrais = montantValide
+  ? remboursementNormal + fraisPaiement
+  : null
+
+const remboursementRetard1JourAvecFrais = montantValide
+  ? remboursementRetard1Jour + fraisPaiement
+  : null
 
   const penaliteJournaliere = 2000
 
@@ -67,7 +80,7 @@ export default function SimulateurPage() {
 
                 <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600 md:text-base">
                   Le simulateur vous donne une estimation immédiate selon le
-                  montant demandé. Les frais de transaction ne sont pas inclus.
+                  montant demandé. Les frais de transaction sont pas inclus.
                 </p>
               </div>
 
@@ -133,6 +146,21 @@ export default function SimulateurPage() {
                   </p>
                 </div>
 
+{montantValide && (
+  <div className="mt-4 rounded-2xl border border-yellow-300 bg-yellow-50 p-4 text-sm text-gray-700">
+    <div className="flex justify-between">
+      <span>Frais Wave / Orange Money (1%)</span>
+      <strong className="text-yellow-700">
+        {formatMontant(fraisPaiement)} FCFA
+      </strong>
+    </div>
+
+    <p className="mt-2 text-xs">
+      ⚠️ Ces frais sont inclus dans le montant total à rembourser.
+    </p>
+  </div>
+)}
+
                 <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5">
                   <p className="text-sm text-gray-500">Remboursement normal</p>
                   <p className="mt-1 text-xs text-gray-500">
@@ -140,7 +168,7 @@ export default function SimulateurPage() {
                   </p>
                   <p className="mt-2 text-2xl font-semibold text-yellow-600">
                     {montantValide
-                      ? `${formatMontant(remboursementNormal)} FCFA`
+                      ? `${formatMontant(remboursementNormalAvecFrais)} FCFA`
                       : "--"}
                   </p>
                 </div>
@@ -153,7 +181,7 @@ export default function SimulateurPage() {
                   </p>
                   <p className="mt-2 text-2xl font-semibold text-yellow-600">
                     {montantValide
-                      ? `${formatMontant(remboursementRetard1Jour)} FCFA`
+                      ? `${formatMontant(remboursementRetard1JourAvecFrais)} FCFA`
                       : "--"}
                   </p>
                 </div>
