@@ -40,8 +40,7 @@ export default function Formulaire() {
   }
 
   const handleDocumentChange = (e) => {
-    const file = e.target.files[0]
-    setDocumentFile(file || null)
+    setDocumentFile(e.target.files[0] || null)
   }
 
   const handlePhotoChange = (e) => {
@@ -74,37 +73,15 @@ export default function Formulaire() {
   const validerFormulaire = () => {
     const newErreurs = {}
 
-    if (!formData.nom.trim()) {
-      newErreurs.nom = "Le nom est obligatoire"
-    }
-
-    if (!formData.telephone.trim()) {
-      newErreurs.telephone = "Le téléphone est obligatoire"
-    }
-
-    if (!formData.email.trim()) {
-      newErreurs.email = "L'email est obligatoire"
-    }
-
-    if (!formData.montant || Number(formData.montant) <= 0) {
+    if (!formData.nom.trim()) newErreurs.nom = "Le nom est obligatoire"
+    if (!formData.telephone.trim()) newErreurs.telephone = "Le téléphone est obligatoire"
+    if (!formData.email.trim()) newErreurs.email = "L'email est obligatoire"
+    if (!formData.montant || Number(formData.montant) <= 0)
       newErreurs.montant = "Le montant demandé est obligatoire"
-    }
-
-    if (!formData.typeObjet.trim()) {
-      newErreurs.typeObjet = "Le type d'objet est obligatoire"
-    }
-
-    if (!formData.typePiece.trim()) {
-      newErreurs.typePiece = "Le type de pièce est obligatoire"
-    }
-
-    if (!formData.description.trim()) {
+    if (!formData.description.trim())
       newErreurs.description = "La description est obligatoire"
-    }
-
-    if (formData.countryCode === "custom" && !formData.customCode.trim()) {
+    if (formData.countryCode === "custom" && !formData.customCode.trim())
       newErreurs.customCode = "Le code pays est obligatoire"
-    }
 
     setErreurs(newErreurs)
     return Object.keys(newErreurs).length === 0
@@ -149,13 +126,8 @@ Dans l’attente d’une suite favorable, veuillez agréer mes salutations disti
       data.append("description", formData.description)
       data.append("messageClient", messageClient)
 
-      if (documentFile) {
-        data.append("document", documentFile)
-      }
-
-      if (photoFile) {
-        data.append("photo", photoFile)
-      }
+      if (documentFile) data.append("document", documentFile)
+      if (photoFile) data.append("photo", photoFile)
 
       const response = await fetch(`${API_URL}/api/demandes`, {
         method: "POST",
@@ -187,10 +159,7 @@ Dans l’attente d’une suite favorable, veuillez agréer mes salutations disti
       setPhotoPreview(null)
       setErreurs({})
     } catch (error) {
-      console.error(error)
-      setMessageErreur(
-        error.message || "Une erreur est survenue. Veuillez réessayer."
-      )
+      setMessageErreur(error.message || "Une erreur est survenue. Veuillez réessayer.")
     } finally {
       setChargement(false)
     }
@@ -209,10 +178,7 @@ Dans l’attente d’une suite favorable, veuillez agréer mes salutations disti
             </p>
           </div>
 
-          <form
-            onSubmit={handleSubmit}
-            className="bg-white rounded-3xl shadow-xl p-6 md:p-10 space-y-6"
-          >
+          <form onSubmit={handleSubmit} className="bg-white rounded-3xl shadow-xl p-6 md:p-10 space-y-6">
             {messageSucces && (
               <div className="p-4 rounded-xl bg-green-50 text-green-700 border border-green-200">
                 {messageSucces}
@@ -237,9 +203,7 @@ Dans l’attente d’une suite favorable, veuillez agréer mes salutations disti
                 placeholder="Votre nom complet"
                 className="w-full border border-slate-300 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
               />
-              {erreurs.nom && (
-                <p className="text-red-500 text-sm mt-1">{erreurs.nom}</p>
-              )}
+              {erreurs.nom && <p className="text-red-500 text-sm mt-1">{erreurs.nom}</p>}
             </div>
 
             <div>
@@ -286,12 +250,8 @@ Dans l’attente d’une suite favorable, veuillez agréer mes salutations disti
                 />
               )}
 
-              {erreurs.telephone && (
-                <p className="text-red-500 text-sm mt-1">{erreurs.telephone}</p>
-              )}
-              {erreurs.customCode && (
-                <p className="text-red-500 text-sm mt-1">{erreurs.customCode}</p>
-              )}
+              {erreurs.telephone && <p className="text-red-500 text-sm mt-1">{erreurs.telephone}</p>}
+              {erreurs.customCode && <p className="text-red-500 text-sm mt-1">{erreurs.customCode}</p>}
             </div>
 
             <div>
@@ -306,9 +266,7 @@ Dans l’attente d’une suite favorable, veuillez agréer mes salutations disti
                 placeholder="votre@email.com"
                 className="w-full border border-slate-300 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
               />
-              {erreurs.email && (
-                <p className="text-red-500 text-sm mt-1">{erreurs.email}</p>
-              )}
+              {erreurs.email && <p className="text-red-500 text-sm mt-1">{erreurs.email}</p>}
             </div>
 
             <div>
@@ -323,9 +281,7 @@ Dans l’attente d’une suite favorable, veuillez agréer mes salutations disti
                 placeholder="60000"
                 className="w-full border border-slate-300 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
               />
-              {erreurs.montant && (
-                <p className="text-red-500 text-sm mt-1">{erreurs.montant}</p>
-              )}
+              {erreurs.montant && <p className="text-red-500 text-sm mt-1">{erreurs.montant}</p>}
             </div>
 
             <div>
@@ -344,9 +300,6 @@ Dans l’attente d’une suite favorable, veuillez agréer mes salutations disti
                 <option value="Électroménager">Électroménager</option>
                 <option value="Autre">Autre</option>
               </select>
-              {erreurs.typeObjet && (
-                <p className="text-red-500 text-sm mt-1">{erreurs.typeObjet}</p>
-              )}
             </div>
 
             <div>
@@ -359,16 +312,11 @@ Dans l’attente d’une suite favorable, veuillez agréer mes salutations disti
                 onChange={handleChange}
                 className="w-full border border-slate-300 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="Carte nationale d'identité">
-                  Carte nationale d'identité
-                </option>
+                <option value="Carte nationale d'identité">Carte nationale d'identité</option>
                 <option value="Passeport">Passeport</option>
                 <option value="Permis de conduire">Permis de conduire</option>
                 <option value="Carte consulaire">Carte consulaire</option>
               </select>
-              {erreurs.typePiece && (
-                <p className="text-red-500 text-sm mt-1">{erreurs.typePiece}</p>
-              )}
             </div>
 
             <div>
@@ -383,9 +331,7 @@ Dans l’attente d’une suite favorable, veuillez agréer mes salutations disti
                 rows="4"
                 className="w-full border border-slate-300 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 resize-none"
               />
-              {erreurs.description && (
-                <p className="text-red-500 text-sm mt-1">{erreurs.description}</p>
-              )}
+              {erreurs.description && <p className="text-red-500 text-sm mt-1">{erreurs.description}</p>}
             </div>
 
             <div>
