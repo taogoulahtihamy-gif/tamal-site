@@ -27,12 +27,6 @@ export default function Formulaire() {
   const WHATSAPP_ADMIN_NUMBER =
     import.meta.env.VITE_WHATSAPP_ADMIN_NUMBER || "221772616753"
 
-  // ✅ Calcul correct TAMAL
-  const montantNum = parseFloat(formData.montant) || 0
-  const serviceTamal = Math.round(montantNum * 0.3)
-  const fraisPaiement = Math.round(montantNum * 0.01)
-  const totalAPayer = montantNum + serviceTamal + fraisPaiement
-
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
@@ -138,11 +132,6 @@ export default function Formulaire() {
       dataToSend.append("telephone", formData.telephone)
       dataToSend.append("email", formData.email)
       dataToSend.append("montant", formData.montant)
-
-      dataToSend.append("serviceTamal", serviceTamal)
-      dataToSend.append("fraisPaiement", fraisPaiement)
-      dataToSend.append("totalAPayer", totalAPayer)
-
       dataToSend.append("typeObjet", formData.typeObjet)
       dataToSend.append("typePiece", formData.typePiece)
       dataToSend.append("description", formData.description)
@@ -169,15 +158,12 @@ export default function Formulaire() {
       const messageWhatsApp = [
         "Bonjour TAMAL,",
         "",
-        "Je viens d'envoyer une demande de prêt sur gage.",
+        "Vous avez reçu une nouvelle demande de prêt sur gage.",
         "",
         `Nom : ${formData.nom}`,
         `Téléphone / WhatsApp : ${numeroClientWhatsapp || "-"}`,
         `Email : ${formData.email}`,
-        `Montant souhaité : ${montantNum.toLocaleString("fr-FR")} FCFA`,
-        `Service TAMAL (30%) : ${serviceTamal.toLocaleString("fr-FR")} FCFA`,
-        `Frais Wave / Orange Money (1%) : ${fraisPaiement.toLocaleString("fr-FR")} FCFA`,
-        `Total à rembourser : ${totalAPayer.toLocaleString("fr-FR")} FCFA`,
+        `Montant demandé : ${Number(formData.montant).toLocaleString("fr-FR")} FCFA`,
         `Type d'objet : ${formData.typeObjet}`,
         `Type de pièce : ${formData.typePiece}`,
         `Description : ${formData.description}`,
@@ -377,37 +363,11 @@ export default function Formulaire() {
                 <div className="flex items-start gap-2">
                   <span className="text-lg text-yellow-600">⚠️</span>
                   <p>
-                    Les frais Wave, Orange Money ou autre moyen de paiement sont
-                    à la charge du client et sont inclus dans le total à rembourser.
+                    Le service TAMAL applique des frais de service de 30% sur le
+                    montant accordé.
                   </p>
                 </div>
               </div>
-
-              {montantNum > 0 && (
-                <div className="mt-4 rounded-xl border border-yellow-200 bg-yellow-50 p-4 text-sm">
-                  <div className="flex justify-between">
-                    <span>Montant demandé</span>
-                    <strong>{montantNum.toLocaleString("fr-FR")} FCFA</strong>
-                  </div>
-
-                  <div className="mt-1 flex justify-between">
-                    <span>Service TAMAL (30%)</span>
-                    <strong>{serviceTamal.toLocaleString("fr-FR")} FCFA</strong>
-                  </div>
-
-                  <div className="mt-1 flex justify-between">
-                    <span>Frais Wave / Orange Money (1%)</span>
-                    <strong>{fraisPaiement.toLocaleString("fr-FR")} FCFA</strong>
-                  </div>
-
-                  <div className="my-2 border-t border-yellow-200"></div>
-
-                  <div className="flex justify-between font-semibold text-yellow-700">
-                    <span>Total à rembourser</span>
-                    <span>{totalAPayer.toLocaleString("fr-FR")} FCFA</span>
-                  </div>
-                </div>
-              )}
 
               {erreurs.montant && (
                 <p className="mt-2 text-sm text-red-500">{erreurs.montant}</p>

@@ -64,55 +64,19 @@ export default function Admin() {
     return `${nombre.toLocaleString("fr-FR")} FCFA`
   }
 
-  const calculerMontants = (montant) => {
-    const montantAccorde = Number(montant || 0)
-    const serviceTamal = Math.round(montantAccorde * 0.3)
-    const fraisPaiement = Math.round(montantAccorde * 0.01)
-    const totalRemboursement =
-      montantAccorde + serviceTamal + fraisPaiement
-
-    return {
-      montantAccorde,
-      serviceTamal,
-      fraisPaiement,
-      totalRemboursement,
-    }
-  }
-
-  const calculLocalRemboursement = (montant) => {
-    const { totalRemboursement } = calculerMontants(montant)
-
-    if (!montant || totalRemboursement <= 0) {
-      return "-"
-    }
-
-    return formaterMontant(totalRemboursement)
-  }
-
   const construireMessageAction = (demande, actionType, updatedItem) => {
     const data = updatedItem || demande
-
-    const {
-      montantAccorde,
-      serviceTamal,
-      fraisPaiement,
-      totalRemboursement,
-    } = calculerMontants(data.montantAccorde)
 
     if (actionType === "accepter") {
       return [
         `Bonjour ${data.nom || ""},`,
         "",
-        "Votre demande TAMAL a été acceptée ✅",
+        "Votre demande TAMAL a été acceptée.",
         "",
-        `Montant accordé : ${formaterMontant(montantAccorde)}`,
-        `Service TAMAL (30%) : ${formaterMontant(serviceTamal)}`,
-        `Frais Wave / Orange Money (1%) : ${formaterMontant(fraisPaiement)}`,
-        "",
-        `Total à rembourser : ${formaterMontant(totalRemboursement)}`,
+        `Montant accordé : ${formaterMontant(data.montantAccorde)}`,
         `Date de remboursement : ${formaterDate(data.dateRemboursement)}`,
         "",
-        "Merci de respecter la date de remboursement indiquée afin d’éviter toute pénalité.",
+        "Merci de nous contacter pour la suite du traitement.",
         "TAMAL – Service Liquidité Immédiate",
       ].join("\n")
     }
@@ -121,7 +85,7 @@ export default function Admin() {
       return [
         `Bonjour ${data.nom || ""},`,
         "",
-        "Après étude, votre demande TAMAL n’a pas été retenue pour le moment ❌",
+        "Après étude, votre demande TAMAL n’a pas été retenue pour le moment.",
         "Vous pouvez nous recontacter pour plus d’informations.",
         "",
         "TAMAL – Service Liquidité Immédiate",
@@ -132,7 +96,7 @@ export default function Admin() {
       return [
         `Bonjour ${data.nom || ""},`,
         "",
-        "Votre dossier TAMAL a été marqué comme remboursé ✅",
+        "Votre dossier TAMAL a été marqué comme remboursé.",
         "",
         "Merci pour votre confiance.",
         "TAMAL – Service Liquidité Immédiate",
@@ -143,7 +107,7 @@ export default function Admin() {
       return [
         `Bonjour ${data.nom || ""},`,
         "",
-        "Votre dossier TAMAL a été remis en attente ⏳",
+        "Votre dossier TAMAL a été remis en attente.",
         "Notre équipe reviendra vers vous rapidement.",
         "",
         "TAMAL – Service Liquidité Immédiate",
@@ -295,12 +259,9 @@ export default function Admin() {
           return
         }
 
-        const { totalRemboursement } = calculerMontants(montantAccorde)
-
         payload = {
           statut: "acceptée",
           montantAccorde: Number(montantAccorde),
-          montantRemboursement: totalRemboursement,
           statutPaiement: d.statutPaiement || "non payé",
         }
       }
@@ -606,9 +567,6 @@ export default function Admin() {
               ? d.montantAccorde ?? ""
               : dataEdition.montantAccorde ?? ""
 
-            const { serviceTamal, fraisPaiement, totalRemboursement } =
-              calculerMontants(montantAccordeAffiche)
-
             return (
               <div
                 key={d.id}
@@ -812,25 +770,6 @@ export default function Admin() {
                         )}
                       </div>
 
-                      <div className="rounded-2xl border border-yellow-200 bg-yellow-50 p-4 text-sm leading-6 text-gray-700">
-                        <div className="flex justify-between">
-                          <span>Service TAMAL (30%)</span>
-                          <strong>{formaterMontant(serviceTamal)}</strong>
-                        </div>
-
-                        <div className="mt-1 flex justify-between">
-                          <span>Frais Wave / Orange Money (1%)</span>
-                          <strong>{formaterMontant(fraisPaiement)}</strong>
-                        </div>
-
-                        <div className="my-2 border-t border-yellow-200"></div>
-
-                        <div className="flex justify-between font-bold text-yellow-700">
-                          <span>Total à rembourser</span>
-                          <span>{formaterMontant(totalRemboursement)}</span>
-                        </div>
-                      </div>
-
                       <div>
                         <label className="mb-1 block text-sm font-semibold text-gray-700">
                           Date de remboursement
@@ -868,9 +807,8 @@ export default function Admin() {
                       </div>
 
                       <div className="rounded-2xl border border-yellow-200 bg-yellow-50 p-4 text-sm leading-6 text-gray-700">
-                        Le montant du message WhatsApp est identique au total
-                        affiché ici : montant accordé + service TAMAL 30% +
-                        frais de paiement 1%.
+                        Les messages WhatsApp restent simples : montant,
+                        téléphone, email et informations principales du dossier.
                       </div>
                     </div>
                   </div>
