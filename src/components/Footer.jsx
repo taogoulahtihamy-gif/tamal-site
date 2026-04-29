@@ -88,12 +88,12 @@ export default function Footer() {
 
               <div>
                 <p className="text-gray-500 text-xs uppercase">Téléphone</p>
-                <p className="font-semibold">+221 77 849 27 79</p>
+                <p className="font-semibold">+221 77 261 67 53</p>
               </div>
 
               <div>
                 <p className="text-gray-500 text-xs uppercase">WhatsApp</p>
-                <p className="font-semibold">+221 77 849 27 79</p>
+                <p className="font-semibold">+221 77 261 67 53</p>
               </div>
 
               <div>
