@@ -157,7 +157,7 @@ export default function Formulaire() {
 
       const messageWhatsApp = [
         "Bonjour TAMAL,",
-        "Je viens solliciter auprès de vous pour solliciter un prêt.",
+        "Je viens auprès de vous pour solliciter un prêt.",
         "",
         `Nom : ${formData.nom}`,
         `Téléphone / WhatsApp : ${numeroClientWhatsapp || "-"}`,
@@ -258,7 +258,7 @@ export default function Formulaire() {
                 Téléphone / WhatsApp
               </label>
 
-              <div className="grid gap-3 md:grid-cols-[220px_1fr]">
+              <div className="grid grid-cols-[135px_1fr] gap-3">
                 <select
                   name="countryCode"
                   value={formData.countryCode}
